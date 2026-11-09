@@ -1,0 +1,570 @@
+/* ==========================================================================
+   Export / import wizard (tw-*), src/components/transfer/TransferWizard.tsx.
+   Built on the md-* dialog (modal.css); centered instead of dragged.
+   ========================================================================== */
+
+.shellium-shell .tw-overlay {
+  display: grid;
+  place-items: center;
+}
+
+.shellium-shell .md-dialog.tw-dialog {
+  position: relative;
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(760px, calc(100vh - 48px));
+}
+
+.shellium-shell .tw-body {
+  gap: 12px;
+}
+
+/* ---------------------------------------------------------------- steps */
+
+.shellium-shell .tw-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0 0 4px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--ui-border);
+  list-style: none;
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .tw-steps li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.shellium-shell .tw-step-dot {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: 50%;
+  font-size: var(--ui-fs-xs);
+}
+
+.shellium-shell .tw-steps li.current {
+  color: var(--ui-text-strong);
+  font-weight: 600;
+}
+
+.shellium-shell .tw-steps li.current .tw-step-dot {
+  border-color: var(--ui-accent);
+  background: var(--ui-accent);
+  color: #fff;
+}
+
+.shellium-shell .tw-steps li.done {
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .tw-steps li.done .tw-step-dot {
+  border-color: var(--ui-accent-border);
+  color: var(--ui-accent-text);
+}
+
+/* ---------------------------------------------------------------- format choice */
+
+.shellium-shell .tw-choices {
+  display: grid;
+  gap: 10px;
+}
+
+.shellium-shell .md-dialog .tw-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-r-lg);
+  background: var(--ui-surface-2);
+  color: var(--ui-text-muted);
+  text-align: left;
+}
+
+.shellium-shell .md-dialog .tw-choice:hover {
+  border-color: var(--ui-accent-border);
+}
+
+.shellium-shell .md-dialog .tw-choice.selected {
+  border-color: var(--ui-accent);
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-text);
+}
+
+.shellium-shell .tw-choice span,
+.shellium-shell .tw-check-text,
+.shellium-shell .tw-switch-row > span,
+.shellium-shell .tw-radio > span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.shellium-shell .tw-choice strong,
+.shellium-shell .tw-switch-row strong,
+.shellium-shell .tw-radio strong {
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs);
+  font-weight: 600;
+}
+
+.shellium-shell .tw-choice small,
+.shellium-shell .tw-check small,
+.shellium-shell .tw-switch-row small,
+.shellium-shell .tw-radio small {
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+  line-height: 1.45;
+}
+
+/* ---------------------------------------------------------------- checkboxes / groups */
+
+.shellium-shell .tw-dialog input[type="checkbox"]:not(.sh-switch),
+.shellium-shell .tw-dialog input[type="radio"] {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin: 2px 0 0;
+  accent-color: var(--ui-accent);
+}
+
+.shellium-shell .tw-check,
+.shellium-shell .tw-radio,
+.shellium-shell .tw-switch-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .tw-check.disabled {
+  opacity: 0.55;
+}
+
+.shellium-shell .tw-group {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ui-border);
+}
+
+.shellium-shell .tw-group-title {
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.shellium-shell .tw-indent {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-left: 25px;
+}
+
+.shellium-shell .tw-switch-row .sh-switch {
+  margin-top: 1px;
+}
+
+/* ---------------------------------------------------------------- folder tree */
+
+.shellium-shell .tw-tree {
+  max-height: 220px;
+  padding: 4px 0;
+  overflow-y: auto;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r);
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .tw-folder {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding-right: 10px;
+  color: var(--ui-text);
+}
+
+.shellium-shell .tw-folder:hover {
+  background: var(--ui-surface-3);
+}
+
+.shellium-shell .tw-dialog .tw-folder input[type="checkbox"] {
+  margin: 0;
+}
+
+.shellium-shell .tw-folder svg {
+  flex: none;
+  color: var(--ui-text-faint);
+}
+
+.shellium-shell .tw-folder-all {
+  padding-left: 8px;
+  border-bottom: 1px solid var(--ui-border);
+  color: var(--ui-text-strong);
+  font-weight: 500;
+}
+
+.shellium-shell .tw-folder-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .tw-count {
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------- misc rows */
+
+.shellium-shell .tw-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-sm);
+  font-weight: 500;
+}
+
+.shellium-shell .tw-inline > span {
+  flex: none;
+}
+
+.shellium-shell .md-input.tw-select {
+  height: 32px;
+}
+
+.shellium-shell .tw-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r);
+  font-size: var(--ui-fs-sm);
+  line-height: 1.45;
+}
+
+.shellium-shell .tw-note svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.shellium-shell .tw-note-warn {
+  border-color: var(--ui-warn-border);
+  background: var(--ui-warn-soft);
+  color: var(--ui-warn);
+}
+
+.shellium-shell .tw-note-danger {
+  border-color: var(--ui-danger-border);
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger);
+}
+
+.shellium-shell .tw-issues {
+  display: block;
+}
+
+.shellium-shell .tw-issues summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.shellium-shell .tw-issues ul {
+  max-height: 120px;
+  margin: 8px 0 0;
+  padding-left: 22px;
+  overflow-y: auto;
+  color: var(--ui-text);
+}
+
+.shellium-shell .tw-file {
+  margin: 0;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .tw-file strong {
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .tw-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shellium-shell .tw-choose {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.shellium-shell .tw-meter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: -4px;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-xs);
+}
+
+.shellium-shell .tw-meter-bar {
+  flex: 1;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--ui-surface-3);
+}
+
+.shellium-shell .tw-meter-bar span {
+  display: block;
+  width: 8%;
+  height: 100%;
+  background: var(--ui-danger);
+  transition: width 0.15s ease;
+}
+
+.shellium-shell .tw-meter-1 .tw-meter-bar span {
+  width: 60%;
+  background: var(--ui-warn);
+}
+
+.shellium-shell .tw-meter-2 .tw-meter-bar span {
+  width: 100%;
+  background: var(--ui-ok);
+}
+
+.shellium-shell .tw-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--ui-text);
+  line-height: 1.45;
+}
+
+.shellium-shell .tw-list strong {
+  color: var(--ui-text-strong);
+  font-weight: 600;
+}
+
+.shellium-shell .tw-list-compact {
+  gap: 2px;
+}
+
+/* ---------------------------------------------------------------- conflicts */
+
+.shellium-shell .tw-conflict {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--ui-warn-border);
+  border-radius: var(--ui-r-lg);
+}
+
+.shellium-shell .tw-conflict-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--ui-warn-soft);
+  color: var(--ui-warn);
+}
+
+.shellium-shell .tw-conflict-head svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.shellium-shell .tw-conflict-head div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shellium-shell .tw-conflict-head strong {
+  color: var(--ui-text-strong);
+  font-weight: 600;
+}
+
+.shellium-shell .tw-conflict-head small {
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+  line-height: 1.45;
+}
+
+.shellium-shell .tw-conflict-list {
+  max-height: 180px;
+  padding: 6px 14px;
+  overflow-y: auto;
+}
+
+.shellium-shell .tw-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .tw-table th {
+  padding: 4px 8px 4px 0;
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-xs);
+  font-weight: 600;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.shellium-shell .tw-table td {
+  padding: 5px 8px 5px 0;
+  border-top: 1px solid var(--ui-border);
+  color: var(--ui-text-strong);
+  vertical-align: top;
+}
+
+.shellium-shell .tw-table td small {
+  display: block;
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .tw-table td.tw-diff {
+  color: var(--ui-warn);
+}
+
+.shellium-shell .tw-mono {
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-xs);
+}
+
+.shellium-shell .tw-conflict-question {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--ui-border);
+  background: var(--ui-surface-2);
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-sm);
+  font-weight: 500;
+}
+
+.shellium-shell .tw-conflict-question span {
+  margin-right: auto;
+}
+
+.shellium-shell .md-dialog .tw-conflict-question button {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-r);
+  background: var(--ui-surface-1);
+  color: var(--ui-text);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .md-dialog .tw-conflict-question button:hover {
+  border-color: var(--ui-accent-border);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .md-dialog .tw-conflict-question button.selected {
+  border-color: var(--ui-accent);
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-text);
+}
+
+/* ---------------------------------------------------------------- done */
+
+.shellium-shell .tw-done {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.shellium-shell .tw-done > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.shellium-shell .tw-done strong {
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-md);
+}
+
+.shellium-shell .tw-done-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ui-ok-soft);
+  color: var(--ui-ok);
+}
+
+.shellium-shell .tw-path {
+  margin: 0;
+  color: var(--ui-text-muted);
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-xs);
+  word-break: break-all;
+}
+
+/* Field mapping step (XML / unrecognized CSV): target | source field | sample values. */
+.shellium-shell .tw-map {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shellium-shell .tw-map-row {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 220px) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.shellium-shell .tw-map-row > label {
+  display: flex;
+  flex-direction: column;
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-sm);
+  font-weight: 500;
+}
+
+.shellium-shell .tw-map-row > label small {
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-xs);
+  font-weight: 400;
+}
+
+.shellium-shell .tw-map-sample {
+  overflow: hidden;
+  color: var(--ui-text-muted);
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

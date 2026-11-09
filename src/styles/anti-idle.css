@@ -1,0 +1,120 @@
+/* ==========================================================================
+   Anti-idle box (components/common/AntiIdleFields.tsx): Options > Terminal and the connect dialog.
+   ========================================================================== */
+
+.shellium-shell .ai-box {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r);
+  background: var(--ui-surface-2);
+}
+
+/* Both rows share columns (check | text | "every" | seconds | "seconds"), like SecureCRT's box. */
+.shellium-shell .ai-row {
+  display: grid;
+  grid-template-columns: 158px minmax(60px, 1fr) max-content 72px max-content;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+}
+
+/* Narrow (the connect dialog's side pane): the string's text field moves under its checkbox. */
+@container (max-width: 470px) {
+  .shellium-shell .ai-row {
+    grid-template-columns: minmax(0, 1fr) max-content 64px max-content;
+  }
+
+  .shellium-shell .ai-spacer {
+    display: none;
+  }
+
+  .shellium-shell .ai-box input.ai-text {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+.shellium-shell .ai-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-sm);
+  cursor: pointer;
+}
+
+.shellium-shell .ai-check input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--ui-accent);
+  cursor: pointer;
+}
+
+.shellium-shell .ai-word {
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .ai-box input.ai-number,
+.shellium-shell .ai-box input.ai-text {
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-r-sm);
+  background: var(--ui-surface-1);
+  color: var(--ui-text-strong);
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .ai-box input.ai-number {
+  width: 72px;
+  min-width: 0;
+}
+
+.shellium-shell .ai-box input.ai-text {
+  width: 100%;
+  min-width: 0;
+}
+
+.shellium-shell .ai-box input.ai-number:focus,
+.shellium-shell .ai-box input.ai-text:focus {
+  border-color: var(--ui-accent);
+  outline: 2px solid var(--ui-accent-soft);
+}
+
+.shellium-shell .ai-box input:disabled {
+  opacity: 0.55;
+}
+
+.shellium-shell .ai-hint,
+.shellium-shell .ai-warn {
+  margin: 0;
+  font-size: var(--ui-fs-xs);
+  line-height: 1.45;
+}
+
+.shellium-shell .ai-hint {
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .ai-warn {
+  color: var(--ui-warn);
+}
+
+/* Options > Terminal: the box sits under the row's title instead of beside it. */
+.shellium-shell .op-row.op-row-stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.shellium-shell .op-row-stack .ai-box {
+  background: var(--ui-surface-1);
+}

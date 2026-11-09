@@ -1,0 +1,1354 @@
+/* ==========================================================================
+   Terminal pane extras on tokens.css:
+   - ft-*: Terminal / SFTP view tabs and the dual-pane SFTP file browser
+   - tf-*: the terminal find bar
+   Replaces the terminal-view-tabs / terminal-sftp-* / terminal-find-panel
+   rules in terminal.css. The pane layout rules these need are restated here
+   (not inherited from terminal.css) so that file can be deleted later.
+   ========================================================================== */
+
+.shellium-shell .terminal-pane {
+  position: relative;
+}
+
+.shellium-shell .terminal-pane.terminal-pane-sftp-tabs {
+  flex-direction: column;
+  gap: 0;
+}
+
+/* While SFTP is showing, the session card uses the UI surface instead of the terminal color. */
+.shellium-shell .sh-modern .sh-surface:has(.ft-mode) {
+  background: var(--ui-surface-1);
+}
+
+.shellium-shell .ft-mode {
+  background: var(--ui-surface-1);
+}
+
+/* ---------------------------------------------------------------- view tabs */
+
+.shellium-shell .ft-tabs {
+  display: flex;
+  flex: none;
+  align-items: flex-end;
+  gap: 2px;
+  height: 38px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--ui-border);
+  background: var(--ui-surface-1);
+  font-family: var(--ui-sans);
+}
+
+.shellium-shell .ft-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 4px 0 2px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: var(--ui-r) var(--ui-r) 0 0;
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .ft-tab:hover {
+  background: var(--ui-surface-2);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .ft-tab.active {
+  height: 33px;
+  margin-bottom: -1px;
+  border-color: var(--ui-border);
+  background: var(--ui-surface-1);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .ft-tab.active::before {
+  position: absolute;
+  top: -1px;
+  right: 8px;
+  left: 8px;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: var(--ui-accent);
+  content: "";
+}
+
+.shellium-shell .ft-tab-main {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 100%;
+  padding: 0 8px 0 10px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: var(--ui-chrome-fs);
+  font-weight: 500;
+}
+
+.shellium-shell .ft-tab-close {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--ui-text-faint);
+}
+
+.shellium-shell .ft-tab-close:hover {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+/* ---------------------------------------------------------------- panel */
+
+.shellium-shell .ft-panel {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--ui-surface-1);
+  color: var(--ui-text);
+  font-family: var(--ui-sans);
+  font-size: var(--ui-fs);
+}
+
+.shellium-shell .ft-panel button,
+.shellium-shell .ft-panel input {
+  font-family: inherit;
+}
+
+.shellium-shell .ft-progress {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--ui-border);
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .ft-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.shellium-shell .ft-progress-msg {
+  flex: none;
+  max-width: 45%;
+  overflow: hidden;
+  color: var(--ui-text-strong);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .ft-progress-meta {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .ft-progress-track {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ui-surface-3);
+}
+
+.shellium-shell .ft-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ui-accent);
+  transition: width 0.2s;
+}
+
+.shellium-shell .ft-progress-done .ft-progress-track span {
+  background: var(--ui-ok);
+}
+
+.shellium-shell .ft-progress-error .ft-progress-track span,
+.shellium-shell .ft-progress-canceled .ft-progress-track span {
+  background: var(--ui-danger);
+}
+
+.shellium-shell .ft-progress-error .ft-progress-msg {
+  color: var(--ui-danger);
+}
+
+.shellium-shell .ft-panes {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(260px, var(--ft-local-width, 46%)) 9px minmax(260px, 1fr);
+  min-height: 0;
+}
+
+/* With the drives sidebar the local side needs room for it plus a usable file list. */
+.shellium-shell .ft-panes:has(.ft-places) {
+  grid-template-columns: minmax(calc(var(--ft-places-w, 172px) + 268px), var(--ft-local-width, 46%)) 9px minmax(260px, 1fr);
+}
+
+/* Local side: the drives / folders sidebar (LocalPlaces) next to the local pane. */
+.shellium-shell .ft-local {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
+
+.shellium-shell .ft-local > .ft-pane {
+  flex: 1;
+}
+
+.shellium-shell .ft-places {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 14px;
+  width: var(--ft-places-w, 172px);
+  min-height: 0;
+  padding: 12px 6px;
+  overflow-y: auto;
+  border-right: 1px solid var(--ui-border);
+  background: var(--ui-surface-2);
+}
+
+/* Border between the sidebar and the local list (same handle as the script manager's sb-resizer). */
+.shellium-shell .ft-places-resizer {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: col-resize !important;
+}
+
+.shellium-shell .ft-places-resizer::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  width: 8px;
+  content: "";
+  cursor: col-resize !important;
+}
+
+.shellium-shell .ft-places-resizer:hover::after,
+.shellium-shell .ft-places-resizer:focus-visible::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -2px;
+  width: 3px;
+  background: var(--ui-accent);
+  content: "";
+}
+
+.shellium-shell .ft-places-resizer:focus-visible {
+  outline: none;
+}
+
+.shellium-shell .ft-places-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.shellium-shell .ft-places-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 20px;
+  padding: 0 8px 4px;
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.shellium-shell .ft-places-refresh {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: none;
+  color: var(--ui-text-faint);
+  cursor: pointer;
+}
+
+.shellium-shell .ft-places-refresh:hover:not(:disabled) {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .ft-place {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 4px;
+  width: 100%;
+  min-height: 28px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: none;
+  color: var(--ui-text);
+  font: inherit;
+  font-size: var(--ui-fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.shellium-shell .ft-place svg {
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .ft-place:hover:not(:disabled) {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .ft-place.active {
+  background: var(--ui-surface-sel);
+  color: var(--ui-text-strong);
+  font-weight: 500;
+}
+
+.shellium-shell .ft-place.active svg {
+  color: var(--ui-accent-text);
+}
+
+.shellium-shell .ft-place:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.shellium-shell .ft-place:focus-visible,
+.shellium-shell .ft-places-refresh:focus-visible {
+  outline: 2px solid var(--ui-accent-border);
+  outline-offset: -2px;
+}
+
+.shellium-shell .ft-place-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .ft-place-name {
+  color: var(--ui-text-muted);
+  font-weight: 400;
+}
+
+/* Used space of a drive, under its name; red from 90 %. */
+.shellium-shell .ft-drive-usage {
+  grid-column: 2;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--ui-border-strong);
+}
+
+.shellium-shell .ft-drive-usage span {
+  display: block;
+  height: 100%;
+  background: var(--ui-accent);
+}
+
+.shellium-shell .ft-drive-usage.full span {
+  background: var(--ui-danger);
+}
+
+.shellium-shell .ft-places-empty {
+  padding: 4px 8px;
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .ft-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  /* the columns follow the pane's width (narrow window or splitter), see "Narrow panes" below */
+  container: ft-pane / inline-size;
+}
+
+.shellium-shell .ft-pane-head {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  min-height: 46px;
+  padding: 8px 10px 6px 14px;
+}
+
+.shellium-shell .ft-pane-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-md);
+  font-weight: 600;
+}
+
+.shellium-shell .ft-pane-title svg {
+  flex: none;
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .ft-pane-host {
+  overflow: hidden;
+  color: var(--ui-text-muted);
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-xs);
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .ft-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+}
+
+.shellium-shell .ft-tool {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: none;
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .ft-tool:hover:not(:disabled) {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .ft-tool.active {
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-text);
+}
+
+.shellium-shell .ft-tool-danger:hover:not(:disabled) {
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger);
+}
+
+.shellium-shell .ft-tool:disabled {
+  opacity: 0.35;
+}
+
+.shellium-shell .ft-tool:focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: 1px;
+}
+
+.shellium-shell .ft-tools-sep {
+  width: 1px;
+  height: 18px;
+  margin: 0 5px;
+  background: var(--ui-border);
+}
+
+.shellium-shell .ft-tools .sh-btn {
+  margin-left: 2px;
+}
+
+.shellium-shell .ft-path {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  height: 32px;
+  margin: 0 10px 8px;
+  padding: 0 2px 0 10px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-r);
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .ft-path:focus-within {
+  border-color: var(--ui-accent);
+  box-shadow: 0 0 0 3px var(--ui-accent-soft);
+}
+
+.shellium-shell .ft-path input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--ui-text-strong);
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .ft-path .ft-tool {
+  width: 26px;
+  height: 26px;
+}
+
+/* Name | Size | Modified - shared by the column header and the rows. */
+.shellium-shell .ft-columns,
+.shellium-shell .ft-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 84px 136px;
+  align-items: center;
+  column-gap: 12px;
+}
+
+.shellium-shell .ft-columns {
+  flex: none;
+  padding: 6px 22px 6px 20px;
+  border-top: 1px solid var(--ui-border);
+  border-bottom: 1px solid var(--ui-border);
+  background: var(--ui-surface-2);
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.shellium-shell .ft-columns span:nth-child(2) {
+  text-align: right;
+}
+
+.shellium-shell .ft-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: 4px 8px;
+  overflow: auto;
+}
+
+.shellium-shell .ft-row {
+  flex: none;
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: none;
+  color: var(--ui-text);
+  text-align: left;
+}
+
+.shellium-shell .ft-row:hover {
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .ft-row.selected {
+  background: var(--ui-surface-sel);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .ft-row:focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: -2px;
+}
+
+.shellium-shell .ft-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.shellium-shell .ft-name > span {
+  overflow: hidden;
+  font-size: var(--ui-fs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .ft-row.selected .ft-name > span {
+  font-weight: 500;
+}
+
+.shellium-shell .ft-icon-dir {
+  flex: none;
+  color: var(--ui-accent);
+}
+
+.shellium-shell .ft-icon-file {
+  flex: none;
+  color: var(--ui-text-faint);
+}
+
+.shellium-shell .ft-size,
+.shellium-shell .ft-time {
+  overflow: hidden;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.shellium-shell .ft-size {
+  text-align: right;
+}
+
+.shellium-shell .ft-empty {
+  padding: 24px 12px;
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-sm);
+  text-align: center;
+}
+
+.shellium-shell .ft-status {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 30px;
+  padding: 0 14px;
+  border-top: 1px solid var(--ui-border);
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-xs);
+}
+
+.shellium-shell .ft-status > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .ft-status-error {
+  color: var(--ui-danger);
+}
+
+.shellium-shell .ft-status-loading,
+.shellium-shell .ft-status-connecting,
+.shellium-shell .ft-status-transferring {
+  color: var(--ui-accent-text);
+}
+
+.shellium-shell .ft-status-selection {
+  color: var(--ui-text-strong);
+  font-weight: 500;
+}
+
+/* New folder / rename / delete, inline above the remote list. */
+.shellium-shell .ft-inline {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 10px 8px;
+  padding: 8px 8px 8px 12px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-r);
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .ft-inline-danger {
+  border-color: var(--ui-danger-border);
+  background: var(--ui-danger-soft);
+}
+
+.shellium-shell .ft-inline strong {
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-sm);
+  font-weight: 600;
+}
+
+.shellium-shell .ft-inline input {
+  flex: 1;
+  min-width: 120px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-r-sm);
+  outline: 0;
+  background: var(--ui-surface-1);
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .ft-inline input:focus {
+  border-color: var(--ui-accent);
+}
+
+.shellium-shell .ft-inline-text {
+  flex: 1;
+  min-width: 0;
+  color: var(--ui-text);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .ft-inline-text b {
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .ft-inline-error {
+  flex-basis: 100%;
+  color: var(--ui-danger);
+  font-size: var(--ui-fs-xs);
+}
+
+.shellium-shell .ft-splitter {
+  position: relative;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: col-resize !important;
+}
+
+.shellium-shell .ft-splitter::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 4px;
+  width: 1px;
+  background: var(--ui-border);
+  content: "";
+}
+
+.shellium-shell .ft-splitter:hover::after {
+  left: 3px;
+  width: 3px;
+  background: var(--ui-accent);
+}
+
+/* Narrow windows: stack local over remote (the splitter handler is off below 760px). */
+@media (max-width: 760px) {
+  .shellium-shell .ft-panes,
+  .shellium-shell .ft-panes:has(.ft-places) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .shellium-shell .ft-splitter {
+    display: none;
+  }
+
+  .shellium-shell .ft-splitter + .ft-pane {
+    border-top: 1px solid var(--ui-border);
+  }
+}
+
+/* ---------------------------------------------------------------- find bar */
+
+.shellium-shell .tf-bar {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: min(380px, calc(100% - 32px));
+  height: 38px;
+  padding: 0 4px 0 10px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-r-lg);
+  background: var(--ui-surface-1);
+  box-shadow: var(--ui-shadow-pop);
+  color: var(--ui-text);
+  font-family: var(--ui-sans);
+}
+
+.shellium-shell .terminal-pane-sftp-tabs .tf-bar {
+  top: 48px;
+}
+
+.shellium-shell .tf-icon {
+  flex: none;
+  margin-right: 6px;
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .tf-bar input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--ui-text-strong);
+  font-family: inherit;
+  font-size: var(--ui-fs);
+}
+
+.shellium-shell .tf-bar input::placeholder {
+  color: var(--ui-text-faint);
+}
+
+.shellium-shell .tf-status {
+  flex: none;
+  max-width: 120px;
+  margin-right: 4px;
+  overflow: hidden;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-xs);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .tf-btn {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: none;
+  color: var(--ui-text-muted);
+  font-family: inherit;
+}
+
+.shellium-shell .tf-btn:hover:not(:disabled) {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .tf-btn:disabled {
+  opacity: 0.35;
+}
+
+.shellium-shell .tf-case {
+  font-size: var(--ui-fs-sm);
+  font-weight: 600;
+}
+
+.shellium-shell .tf-case.active {
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-text);
+}
+
+.shellium-shell .tf-sep {
+  width: 1px;
+  height: 18px;
+  margin: 0 3px;
+  background: var(--ui-border);
+}
+
+/* ==========================================================================
+   SFTP browser v2 (src/components/files/): sortable multi-select panes, drag and
+   drop, the transfer queue, files open for editing and the SFTP dialogs.
+   ========================================================================== */
+
+.shellium-shell .ft-panel[hidden] {
+  display: none;
+}
+
+/* Remote rows add a permissions column. */
+.shellium-shell .ft-columns.ft-columns-remote,
+.shellium-shell .ft-row.ft-row-remote {
+  grid-template-columns: minmax(0, 1fr) 76px 136px 84px;
+}
+
+/*
+ * Narrow panes (narrow window or splitter): the name column keeps its room. Below 560 px the
+ * permissions column goes (the chmod dialog still shows them), below 420 px the modified column too.
+ */
+@container ft-pane (max-width: 560px) {
+  .shellium-shell .ft-columns.ft-columns-remote,
+  .shellium-shell .ft-row.ft-row-remote {
+    grid-template-columns: minmax(0, 1fr) 76px 136px;
+  }
+
+  .shellium-shell .ft-columns .ft-sort.ft-col-permissions,
+  .shellium-shell .ft-row .ft-perm {
+    display: none;
+  }
+}
+
+@container ft-pane (max-width: 420px) {
+  .shellium-shell .ft-columns,
+  .shellium-shell .ft-row,
+  .shellium-shell .ft-columns.ft-columns-remote,
+  .shellium-shell .ft-row.ft-row-remote {
+    grid-template-columns: minmax(0, 1fr) 76px;
+  }
+
+  .shellium-shell .ft-columns .ft-sort.ft-col-modifiedAt,
+  .shellium-shell .ft-row .ft-time {
+    display: none;
+  }
+}
+
+.shellium-shell .ft-columns .ft-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.shellium-shell .ft-columns .ft-sort:nth-child(2) {
+  justify-content: flex-end;
+}
+
+.shellium-shell .ft-columns .ft-sort:hover,
+.shellium-shell .ft-columns .ft-sort.active {
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .ft-list:focus-visible {
+  outline: 2px solid var(--ui-accent-border);
+  outline-offset: -2px;
+}
+
+.shellium-shell .ft-row {
+  cursor: default;
+  user-select: none;
+}
+
+.shellium-shell .ft-perm {
+  overflow: hidden;
+  color: var(--ui-text-muted);
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-xs);
+  white-space: nowrap;
+}
+
+/* Drop targets: the whole list (current folder) or a folder row. */
+.shellium-shell .ft-list.ft-drop,
+.shellium-shell .ft-row.ft-drop-row {
+  box-shadow: inset 0 0 0 2px var(--ui-accent);
+  background: var(--ui-accent-soft);
+}
+
+/* ---------------------------------------------------------------- transfer queue */
+
+/* The queue gives way first in a short window: the panes keep room for a few rows. */
+.shellium-shell .ft-panel:not([hidden]) > .ft-panes {
+  min-height: 220px;
+}
+
+.shellium-shell .ft-queue {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  min-height: 37px;
+  max-height: 40%;
+  border-top: 1px solid var(--ui-border);
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .ft-queue-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 6px;
+}
+
+.shellium-shell .ft-queue-toggle {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: none;
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-sm);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.shellium-shell .ft-queue-count {
+  color: var(--ui-text-muted);
+  font-weight: 400;
+}
+
+.shellium-shell .ft-queue-list {
+  min-height: 0;
+  margin: 0;
+  padding: 0 8px 8px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.shellium-shell .ft-job {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: var(--ui-r);
+}
+
+.shellium-shell .ft-job + .ft-job {
+  border-top: 1px solid var(--ui-border);
+}
+
+.shellium-shell .ft-job-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ui-surface-3);
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .ft-job-running .ft-job-icon,
+.shellium-shell .ft-job-planning .ft-job-icon {
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-text);
+}
+
+.shellium-shell .ft-job-done .ft-job-icon {
+  background: var(--ui-ok-soft);
+  color: var(--ui-ok);
+}
+
+.shellium-shell .ft-job-error .ft-job-icon {
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger);
+}
+
+.shellium-shell .ft-job-conflicts .ft-job-icon {
+  background: var(--ui-warn-soft);
+  color: var(--ui-warn);
+}
+
+.shellium-shell .ft-job-paused .ft-job-icon {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .ft-job-paused .ft-progress-track span {
+  background: var(--ui-text-faint);
+}
+
+.shellium-shell .ft-tool.ft-tool-start {
+  color: var(--ui-accent-text);
+}
+
+.shellium-shell .ft-spin {
+  animation: ft-spin 1s linear infinite;
+}
+
+@keyframes ft-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.shellium-shell .ft-job-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.shellium-shell .ft-job-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.shellium-shell .ft-job-line strong {
+  overflow: hidden;
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-sm);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .ft-job-status {
+  flex: none;
+  margin-left: auto;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-xs);
+}
+
+.shellium-shell .ft-job-conflicts .ft-job-status {
+  color: var(--ui-warn);
+  font-weight: 600;
+}
+
+.shellium-shell .ft-job-error .ft-job-status,
+.shellium-shell .ft-job-error .ft-job-meta {
+  color: var(--ui-danger);
+}
+
+.shellium-shell .ft-job-meta {
+  overflow: hidden;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-xs);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- files open for editing */
+
+.shellium-shell .ft-edits {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.shellium-shell .ft-edit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 4px 10px 4px 14px;
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-text);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .ft-edit + .ft-edit {
+  border-top: 1px solid var(--ui-border);
+}
+
+.shellium-shell .ft-edit-changed {
+  background: var(--ui-warn-soft);
+  color: var(--ui-warn);
+}
+
+.shellium-shell .ft-edit-conflict,
+.shellium-shell .ft-edit-error {
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger);
+}
+
+.shellium-shell .ft-edit-uploaded {
+  background: var(--ui-ok-soft);
+  color: var(--ui-ok);
+}
+
+.shellium-shell .ft-edit-path {
+  overflow: hidden;
+  max-width: 45%;
+  color: var(--ui-text-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .ft-edit-msg {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .ft-mono {
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-sm);
+}
+
+/* ---------------------------------------------------------------- SFTP dialogs */
+
+.shellium-shell .ft-modal {
+  display: grid;
+  place-items: center;
+}
+
+.shellium-shell .md-dialog.ft-modal-dialog {
+  position: relative;
+  width: min(460px, calc(100vw - 32px));
+}
+
+.shellium-shell .md-dialog.ft-modal-dialog.wide {
+  width: min(760px, calc(100vw - 32px));
+}
+
+.shellium-shell .ft-choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-sm);
+  font-weight: 500;
+}
+
+.shellium-shell .ft-choice label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-r);
+  color: var(--ui-text);
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.shellium-shell .ft-choice label.selected {
+  border-color: var(--ui-accent);
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-text);
+}
+
+.shellium-shell .ft-choice input {
+  accent-color: var(--ui-accent);
+}
+
+.shellium-shell .ft-conflicts {
+  max-height: 280px;
+  overflow: auto;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r);
+}
+
+.shellium-shell .ft-conflicts table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .ft-conflicts th {
+  position: sticky;
+  top: 0;
+  padding: 6px 10px;
+  background: var(--ui-surface-2);
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-xs);
+  font-weight: 600;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.shellium-shell .ft-conflicts td {
+  max-width: 260px;
+  padding: 6px 10px;
+  border-top: 1px solid var(--ui-border);
+  color: var(--ui-text-strong);
+  vertical-align: top;
+}
+
+.shellium-shell .ft-conflicts td.ft-mono {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .ft-conflicts small {
+  display: block;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-xs);
+}
+
+.shellium-shell .ft-conflicts small.ft-newer {
+  color: var(--ui-ok);
+}
+
+.shellium-shell .ft-select {
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-r-sm);
+  background: var(--ui-surface-2);
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .ft-note {
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .ft-warn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--ui-warn-border);
+  border-radius: var(--ui-r);
+  background: var(--ui-warn-soft);
+  color: var(--ui-warn);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .ft-delete-list {
+  max-height: 160px;
+  margin: 0;
+  padding-left: 18px;
+  overflow-y: auto;
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .ft-chmod {
+  border-collapse: collapse;
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .ft-chmod th,
+.shellium-shell .ft-chmod td {
+  padding: 6px 14px 6px 0;
+  color: var(--ui-text-strong);
+  font-weight: 500;
+  text-align: left;
+}
+
+.shellium-shell .ft-chmod thead th {
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.shellium-shell .ft-chmod input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--ui-accent);
+}
+
+/* The dialog takes focus itself when it opens (from the terminal behind); no focus ring for that. */
+.shellium-shell .md-dialog.ft-modal-dialog:focus {
+  outline: none;
+}

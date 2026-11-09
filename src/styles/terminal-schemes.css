@@ -1,0 +1,281 @@
+/* ==========================================================================
+   Terminal color schemes (ts-*): the preview card, the gallery and editor in
+   Options > Terminal, the scheme select per environment (op-env-scheme) and
+   per host (pl-scheme). Preview colors come from the scheme itself (inline).
+   ========================================================================== */
+
+.shellium-shell .ts-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 9px 10px 8px;
+  border-radius: var(--ui-r-sm);
+  font-family: var(--ui-mono);
+  font-size: 10.5px;
+  line-height: 1.45;
+  white-space: nowrap;
+  overflow: hidden;
+  text-align: left;
+}
+
+.shellium-shell .ts-preview-large {
+  gap: 2px;
+  padding: 14px 16px 12px;
+  font-size: 12.5px;
+  border: 1px solid var(--ui-border);
+}
+
+.shellium-shell .ts-cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+}
+
+.shellium-shell .ts-swatches {
+  display: grid;
+  grid-template-columns: repeat(16, 1fr);
+  gap: 2px;
+  margin-top: 6px;
+}
+
+.shellium-shell .ts-swatches span {
+  height: 6px;
+  border-radius: 2px;
+}
+
+.shellium-shell .ts-preview-large .ts-swatches span {
+  height: 10px;
+}
+
+/* ---------- gallery ---------- */
+.shellium-shell .ts-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.shellium-shell .ts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
+  gap: 10px;
+}
+
+.shellium-shell .ts-card {
+  position: relative;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r);
+  background: var(--ui-surface-1);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+/* The preview text does not wrap: keep it inside the card at any UI scale (it is clipped). */
+.shellium-shell .ts-card .ts-preview {
+  width: 100%;
+  min-width: 0;
+}
+
+.shellium-shell .ts-card:hover {
+  border-color: var(--ui-border-strong);
+}
+
+.shellium-shell .ts-card.selected {
+  border-color: var(--ui-accent);
+  box-shadow: 0 0 0 1px var(--ui-accent);
+}
+
+.shellium-shell .ts-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 100%;
+  padding: 6px 6px 8px;
+  border: 0;
+  background: none;
+  color: var(--ui-text);
+  cursor: pointer;
+}
+
+.shellium-shell .ts-card-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 3px;
+  font-size: var(--ui-fs-sm);
+  font-weight: 500;
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .ts-card.selected .ts-card-name svg {
+  color: var(--ui-accent);
+}
+
+.shellium-shell .ts-card-tools {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  display: flex;
+  gap: 2px;
+}
+
+.shellium-shell .ts-card-tools button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: none;
+  color: var(--ui-text-muted);
+  cursor: pointer;
+}
+
+.shellium-shell .ts-card-tools button:hover {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .ts-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.shellium-shell .ts-hint {
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-xs);
+}
+
+/* ---------- editor ---------- */
+.shellium-shell .ts-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-r);
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .ts-editor > .ts-preview {
+  order: -1;
+}
+
+.shellium-shell .ts-editor-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.shellium-shell .ts-name {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-sm);
+  font-weight: 500;
+}
+
+.shellium-shell .ts-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.shellium-shell .ts-color {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ui-text);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .ts-editor input[type="color"] {
+  width: 30px;
+  height: 24px;
+  padding: 1px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: 6px;
+  background: var(--ui-surface-1);
+  cursor: pointer;
+}
+
+.shellium-shell .ts-ansi {
+  display: grid;
+  grid-template-columns: 56px repeat(8, 40px);
+  gap: 6px 8px;
+  align-items: center;
+}
+
+.shellium-shell .ts-ansi-row {
+  display: contents;
+}
+
+.shellium-shell .ts-ansi-head {
+  color: var(--ui-text-muted);
+  font-size: 10px;
+  text-align: center;
+}
+
+.shellium-shell .ts-ansi-label {
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-xs);
+}
+
+.shellium-shell .ts-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ---------- per environment / per host ---------- */
+.shellium-shell .op-env-scheme {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ui-text);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .op-env-scheme .op-select {
+  width: 200px;
+}
+
+.shellium-shell .pl-scheme {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 14px;
+  align-items: start;
+}
+
+.shellium-shell .pl-hint {
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-xs);
+  line-height: 1.4;
+}
+
+/* The selection overlay sits above the text: the scheme's selection color, translucent. */
+.shellium-shell .terminal-custom-selection span {
+  background: color-mix(in srgb, var(--sh-term-selection, #5aa9ff) 62%, transparent);
+}
+
+/* Options > Terminal > Selection "Inverse colors" (default, SecureCRT-style): white cells blended
+   with "difference" invert what is under them - background turns light, text dark. The blend is
+   on the container (not the spans): a positioned, z-indexed overlay is its own stacking context,
+   and spans blending inside it would only see its transparent backdrop. */
+.shellium-shell .terminal-custom-selection.terminal-selection-inverse {
+  mix-blend-mode: difference;
+}
+
+.shellium-shell .terminal-custom-selection.terminal-selection-inverse span {
+  background: #ffffff;
+}
+
+/* xterm paints its scroll viewport black inline; the strip below the last row showed it. The
+   scheme's background must win, hence !important (inline style). */
+.shellium-shell .terminal-viewport .xterm-viewport {
+  background-color: var(--sh-terminal-bg, #0b0d0e) !important;
+}

@@ -1,0 +1,766 @@
+/* ==========================================================================
+   Workspace layout "A": one app bar,
+   no host sidebar, session tabs on top (strip) or left / right (a resizable
+   session list), a Home tab and the quick-connect menu. Loaded after
+   shell.css; where a rule here restates a shell.css selector it replaces
+   the old sidebar / classic-layout behavior.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- app bar */
+
+/* Menus, host search and the SFTP / Record / Scripts actions share one row now. */
+.shellium-shell .sh-titlebar {
+  height: 46px;
+  border-bottom: 0;
+}
+
+.shellium-shell .sh-titlebar-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.shellium-shell .sh-titlebar-actions .sh-divider {
+  width: 1px;
+  height: 20px;
+  margin: 0 6px;
+  background: var(--ui-border);
+}
+
+/* ---------------------------------------------------------------- frame */
+
+.shellium-shell .sh-modern {
+  display: flex;
+  flex-direction: column;
+}
+
+.shellium-shell .sh-modern-split {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.shellium-shell .sh-modern-split > .sh-main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------- tabs: shared */
+
+.shellium-shell .sh-tab-home {
+  gap: 7px;
+  border: 0;
+  background: none;
+  color: var(--ui-text-muted);
+  font-family: inherit;
+  text-align: left;
+}
+
+.shellium-shell .sh-tab-home svg {
+  flex: none;
+}
+
+.shellium-shell .sh-tab-home .sh-tab-title {
+  color: inherit;
+}
+
+.shellium-shell .sh-tab-home:hover,
+.shellium-shell .sh-tab-home.active {
+  color: var(--ui-text-strong);
+}
+
+/* Options tab (next to Home while open): a title button, an unsaved-changes dot and a close button. */
+.shellium-shell .sh-tab-options {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.shellium-shell .sh-tabs-strip .sh-tab-options {
+  padding-right: 6px;
+}
+
+.shellium-shell .sh-tab-options-main {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.shellium-shell .sh-tab-options-dirty {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ui-warn);
+}
+
+/* ---------------------------------------------------------------- tabs: top strip */
+
+.shellium-shell .sh-tabs-strip .sh-tab-home {
+  flex: none;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+}
+
+.shellium-shell .sh-tabs-strip .sh-tab-new {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  width: auto;
+  padding: 0 6px;
+}
+
+.shellium-shell .sh-tab-new.open {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+/* ---------------------------------------------------------------- tabs: left / right list */
+
+.shellium-shell .sh-modern .sh-tabs-vertical {
+  flex: none;
+  width: var(--sidebar-w, 248px);
+  padding: 10px 8px;
+  border-right: 1px solid var(--ui-border);
+  border-left: 0;
+}
+
+.shellium-shell .sh-modern-tabs-right .sh-tabs-vertical {
+  order: 2;
+  border-right: 0;
+  border-left: 1px solid var(--ui-border);
+}
+
+.shellium-shell .sh-modern-tabs-left .sh-tabs-resizer {
+  right: -3px;
+  left: auto;
+}
+
+.shellium-shell .sh-modern-tabs-right .sh-tabs-resizer {
+  right: auto;
+  left: -3px;
+}
+
+.shellium-shell .sh-tabs-vertical .sh-tab-home {
+  flex: none;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: var(--ui-r);
+}
+
+.shellium-shell .sh-tab-new-row {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  margin-top: 2px;
+  padding: 0 10px 0 12px;
+  border: 1px dashed var(--ui-border-strong);
+  border-radius: var(--ui-r);
+  background: none;
+  color: var(--ui-text);
+  font-family: inherit;
+  font-size: var(--ui-chrome-fs);
+  font-weight: 500;
+  text-align: left;
+}
+
+.shellium-shell .sh-tab-new-row span {
+  flex: 1;
+}
+
+.shellium-shell .sh-tab-new-row:hover,
+.shellium-shell .sh-tab-new-row.open {
+  border-style: solid;
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .sh-tabs-label {
+  display: flex;
+  flex: none;
+  justify-content: space-between;
+  padding: 12px 6px 4px;
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.shellium-shell .sh-tabs-label span {
+  color: var(--ui-text-muted);
+}
+
+/* ---------------------------------------------------------------- main body */
+
+.shellium-shell .sh-main-body.sh-main-body-home {
+  padding: 0;
+}
+
+/* ---------------------------------------------------------------- Home */
+
+.shellium-shell .hm {
+  grid-area: term;
+  min-height: 0;
+  overflow: auto;
+  color: var(--ui-text);
+  font-family: var(--ui-sans);
+}
+
+.shellium-shell .hm button {
+  font-family: inherit;
+}
+
+.shellium-shell .hm-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 28px clamp(16px, 4vw, 40px) 40px;
+}
+
+.shellium-shell .hm-head h1 {
+  margin: 0;
+  color: var(--ui-text-strong);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.shellium-shell .hm-head p {
+  margin: 4px 0 0;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs);
+}
+
+.shellium-shell .hm-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-r-lg);
+  background: var(--ui-surface-1);
+  color: var(--ui-text-faint);
+}
+
+.shellium-shell .hm-search:focus-within {
+  border-color: var(--ui-accent);
+  box-shadow: 0 0 0 4px var(--ui-accent-soft);
+}
+
+.shellium-shell .hm-search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--ui-text-strong);
+  font-family: inherit;
+  font-size: var(--ui-fs-md);
+}
+
+.shellium-shell .hm-search input::placeholder {
+  color: var(--ui-text-faint);
+}
+
+.shellium-shell .hm-search-hint {
+  flex: none;
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .hm-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: -6px;
+}
+
+/* Environment filter chips: each carries its environment's tint (--env from environmentStyle());
+   "All" has no --env and falls back to neutral / the accent. A chip with no hosts is dimmed. */
+.shellium-shell .hm-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--env, var(--ui-text-muted)) 9%, var(--ui-surface-1));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--env, var(--ui-text-muted)) 16%, transparent);
+  color: var(--env, var(--ui-text));
+  font-size: var(--ui-fs-sm);
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  transition: background-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.shellium-shell .hm-filter-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--env, var(--ui-text-muted));
+}
+
+.shellium-shell .hm-filter b {
+  color: var(--ui-text-muted);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.shellium-shell .hm-filter.empty {
+  opacity: 0.55;
+}
+
+.shellium-shell .hm-filter:hover {
+  background: color-mix(in srgb, var(--env, var(--ui-text-muted)) 14%, var(--ui-surface-1));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--env, var(--ui-text-muted)) 30%, transparent);
+}
+
+.shellium-shell .hm-filter.on {
+  background: color-mix(in srgb, var(--env, var(--ui-accent)) 20%, var(--ui-surface-1));
+  box-shadow: inset 0 0 0 1px var(--env, var(--ui-accent)), 0 0 18px -6px var(--env, var(--ui-accent));
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell[data-theme="light"] .hm-filter.on {
+  box-shadow: inset 0 0 0 1px var(--env, var(--ui-accent));
+}
+
+.shellium-shell .hm-filter.on .hm-filter-dot {
+  background: var(--env, var(--ui-accent));
+  box-shadow: 0 0 8px var(--env, var(--ui-accent));
+}
+
+.shellium-shell[data-theme="light"] .hm-filter.on .hm-filter-dot {
+  box-shadow: none;
+}
+
+.shellium-shell .hm-filter.on b {
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .hm-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shellium-shell .hm-section-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.shellium-shell .hm-section-title h2 {
+  margin: 0;
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-md);
+  font-weight: 600;
+}
+
+.shellium-shell .hm-section-title button,
+.shellium-shell .hm-empty button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ui-accent-text);
+  font-size: var(--ui-fs-sm);
+  font-weight: 500;
+}
+
+.shellium-shell .hm-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  border: 1px dashed var(--ui-border-strong);
+  border-radius: var(--ui-r-lg);
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .hm-empty svg {
+  flex: none;
+  color: var(--ui-warn);
+}
+
+.shellium-shell .hm-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ui-text-faint);
+}
+
+.shellium-shell .hm-dot.live {
+  background: var(--ui-ok);
+  box-shadow: 0 0 0 3px var(--ui-ok-soft);
+}
+
+.shellium-shell .hm-host {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.shellium-shell .hm-host-name {
+  overflow: hidden;
+  color: var(--ui-text-strong);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .hm-host-meta,
+.shellium-shell .hm-mono {
+  overflow: hidden;
+  color: var(--ui-text-muted);
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .hm-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px;
+}
+
+.shellium-shell .hm-card {
+  display: flex;
+  flex-direction: column;
+  /* stretch, not the legacy flex-start: the rows must take the card's width to truncate / wrap */
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r-lg);
+  background: var(--ui-surface-1);
+  text-align: left;
+}
+
+.shellium-shell .hm-card:hover {
+  border-color: var(--ui-border-strong);
+  box-shadow: 0 8px 20px -14px rgba(0, 0, 0, 0.5);
+}
+
+.shellium-shell .hm-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+/* Long names ("192.168.1.10 - db-host-01") wrap to two lines so their distinct end stays visible. */
+.shellium-shell .hm-card-top .hm-host-name {
+  display: -webkit-box;
+  flex: 1;
+  min-width: 0;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.shellium-shell .hm-card-top .hm-dot {
+  margin-top: calc((1lh - 7px) / 2);
+}
+
+.shellium-shell .hm-card-top > :last-child:not(.hm-host-name) {
+  flex: none;
+}
+
+.shellium-shell .hm-card-foot {
+  display: flex;
+  margin-top: auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-xs);
+}
+
+.shellium-shell .hm-card-foot span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .hm-card-foot b {
+  flex: none;
+  color: var(--ui-accent-text);
+  font-weight: 600;
+}
+
+.shellium-shell .hm-table {
+  width: 100%;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r-lg);
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  background: var(--ui-surface-1);
+  font-size: var(--ui-fs);
+}
+
+.shellium-shell .hm-table th {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--ui-border);
+  background: var(--ui-surface-2);
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.shellium-shell .hm-table td {
+  max-width: 280px;
+  padding: 8px 14px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--ui-border);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .hm-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.shellium-shell .hm-table tbody tr:hover td {
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .hm-muted {
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .hm-cell-action {
+  width: 1%;
+  text-align: right;
+}
+
+.shellium-shell .hm-results {
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r-lg);
+  background: var(--ui-surface-1);
+}
+
+.shellium-shell .hm-result {
+  display: grid;
+  grid-template-columns: 7px minmax(160px, 1.2fr) auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: var(--ui-r);
+  background: none;
+  text-align: left;
+}
+
+.shellium-shell .hm-result.active {
+  background: var(--ui-surface-sel);
+}
+
+.shellium-shell .hm-result > .sh-env:empty {
+  display: none;
+}
+
+.shellium-shell .hm-path {
+  overflow: hidden;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .hm-action {
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-sm);
+  font-weight: 500;
+}
+
+.shellium-shell .hm-result.active .hm-action {
+  color: var(--ui-accent-text);
+}
+
+/* ---------------------------------------------------------------- quick connect menu */
+
+.shellium-shell .qc-menu {
+  position: fixed;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  width: 380px;
+  max-height: min(520px, calc(100vh - 80px));
+  overflow: hidden;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-r-lg);
+  background: var(--ui-surface-1);
+  box-shadow: var(--ui-shadow-pop);
+  color: var(--ui-text);
+  font-family: var(--ui-sans);
+}
+
+.shellium-shell .qc-menu button {
+  font-family: inherit;
+}
+
+.shellium-shell .qc-search {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--ui-border);
+  color: var(--ui-text-faint);
+}
+
+.shellium-shell .qc-search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--ui-text-strong);
+  font-family: inherit;
+  font-size: var(--ui-fs-md);
+}
+
+.shellium-shell .qc-body {
+  flex: 1;
+  min-height: 0;
+  padding: 4px 6px 6px;
+  overflow-y: auto;
+}
+
+.shellium-shell .qc-label {
+  padding: 10px 8px 4px;
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.shellium-shell .qc-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: none;
+  text-align: left;
+}
+
+.shellium-shell .qc-item.active {
+  background: var(--ui-surface-sel);
+}
+
+.shellium-shell .qc-icon {
+  flex: none;
+  width: 14px;
+  color: var(--ui-text-faint);
+}
+
+.shellium-shell .qc-icon-star {
+  color: var(--ui-warn);
+  fill: currentColor;
+}
+
+.shellium-shell .qc-host {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.shellium-shell .qc-host-name {
+  overflow: hidden;
+  color: var(--ui-text-strong);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .qc-host-meta {
+  overflow: hidden;
+  color: var(--ui-text-muted);
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .qc-when {
+  flex: none;
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-xs);
+}
+
+.shellium-shell .qc-empty {
+  padding: 18px 10px;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+  text-align: center;
+}
+
+.shellium-shell .qc-foot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 0;
+  border-top: 1px solid var(--ui-border);
+  background: var(--ui-surface-2);
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+  text-align: left;
+}
+
+.shellium-shell .qc-foot:hover .qc-foot-link {
+  text-decoration: underline;
+}
+
+.shellium-shell .qc-foot-link {
+  color: var(--ui-accent-text);
+  font-weight: 600;
+}

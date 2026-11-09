@@ -1,0 +1,668 @@
+/* ==========================================================================
+   Options dialog (op-*), built on tokens.css. The legacy options-panel /
+   option-row rules in palette.css target the old class names and no longer
+   match this markup; .shellium-shell prefixes outrank its generic element rules.
+   Text follows the "UI font size" option through --ui-chrome-fs.
+   ========================================================================== */
+
+/*
+ * Options as a tab next to Home (OptionsView): the whole stage, category list on the left, the page
+ * on the right with the Apply / Revert bar under it.
+ */
+.shellium-shell .op-page {
+  grid-area: term;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--ui-surface-1);
+  color: var(--ui-text);
+  font-family: var(--ui-sans);
+  font-size: var(--ui-chrome-fs);
+}
+
+.shellium-shell .op-page[hidden] {
+  display: none;
+}
+
+.shellium-shell .op-page button,
+.shellium-shell .op-page input,
+.shellium-shell .op-page select,
+.shellium-shell .op-page label {
+  font-family: inherit;
+  line-height: 1.2;
+}
+
+.shellium-shell .op-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 6px 10px 14px;
+}
+
+.shellium-shell .op-title strong {
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-lg);
+  font-weight: 600;
+}
+
+.shellium-shell .op-title span {
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+  line-height: 1.35;
+}
+
+/* ---------- Body: category nav + content ---------- */
+
+.shellium-shell .op-body {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Right column: the scrolling page and the Apply / Revert bar under it. */
+.shellium-shell .op-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.shellium-shell .op-nav {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 2px;
+  width: 220px;
+  padding: 16px 12px;
+  overflow-y: auto;
+  border-right: 1px solid var(--ui-border);
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .op-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--ui-r);
+  background: none;
+  color: var(--ui-text);
+  font-size: var(--ui-chrome-fs);
+  font-weight: 500;
+  text-align: left;
+}
+
+.shellium-shell .op-nav-item svg {
+  flex: none;
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .op-nav-item:hover {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .op-nav-item.active {
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-text);
+}
+
+.shellium-shell .op-nav-item.active svg {
+  color: var(--ui-accent-text);
+}
+
+.shellium-shell .op-nav-item:focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: -2px;
+}
+
+.shellium-shell .op-content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Readable line length on wide windows; the scheme gallery and lists use the full width up to it. */
+.shellium-shell .op-content-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 960px;
+  padding: 24px 32px 32px;
+}
+
+.shellium-shell .op-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 8px;
+}
+
+.shellium-shell .op-section-head .sh-btn {
+  flex: none;
+}
+
+.shellium-shell .op-section-head h3 {
+  margin: 0 0 3px;
+  color: var(--ui-text-strong);
+  font-size: calc(var(--ui-chrome-fs) + 2px);
+  font-weight: 600;
+}
+
+.shellium-shell .op-section-head p {
+  margin: 0;
+  color: var(--ui-text-muted);
+  font-size: calc(var(--ui-chrome-fs) - 1px);
+}
+
+/* ---------- Setting rows: text left, control right ---------- */
+
+.shellium-shell .op-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r-lg);
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .op-row-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.shellium-shell .op-row-text strong {
+  color: var(--ui-text-strong);
+  font-size: var(--ui-chrome-fs);
+  font-weight: 600;
+}
+
+.shellium-shell .op-row-text > span {
+  color: var(--ui-text-muted);
+  font-size: calc(var(--ui-chrome-fs) - 1px);
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.shellium-shell .op-row-control {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.shellium-shell .op-path {
+  align-self: flex-start;
+  max-width: 100%;
+  margin-top: 4px;
+  padding: 4px 8px;
+  overflow: hidden;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r-sm);
+  background: var(--ui-surface-1);
+  color: var(--ui-text);
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .op-path.is-empty {
+  color: var(--ui-text-faint);
+  font-family: var(--ui-sans);
+  font-style: italic;
+}
+
+/* ---------- Controls ---------- */
+
+.shellium-shell .op-select,
+.shellium-shell .op-input {
+  min-width: 200px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-r);
+  outline: 0;
+  background: var(--ui-surface-1);
+  color: var(--ui-text-strong);
+  font-size: var(--ui-chrome-fs);
+  font-weight: 400;
+}
+
+.shellium-shell .op-select option {
+  background: var(--ui-surface-1);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .op-select:focus,
+.shellium-shell .op-input:focus {
+  border-color: var(--ui-accent);
+  box-shadow: 0 0 0 3px var(--ui-accent-soft);
+}
+
+.shellium-shell .op-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: var(--ui-fs-xs);
+  font-weight: 600;
+}
+
+.shellium-shell .op-badge-ok {
+  background: var(--ui-ok-soft);
+  color: var(--ui-ok);
+}
+
+.shellium-shell .op-badge-warn {
+  background: var(--ui-warn-soft);
+  color: var(--ui-warn);
+}
+
+/* ---------- Inline form (security setup) ---------- */
+
+.shellium-shell .op-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r-lg);
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .op-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--ui-text);
+  font-size: calc(var(--ui-chrome-fs) - 1px);
+  font-weight: 500;
+}
+
+.shellium-shell .op-field .op-input {
+  width: 100%;
+  min-width: 0;
+}
+
+.shellium-shell .op-form-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+}
+
+/* ---------- Messages ---------- */
+
+.shellium-shell .op-alert {
+  padding: 9px 12px;
+  border: 1px solid;
+  border-radius: var(--ui-r);
+  font-size: calc(var(--ui-chrome-fs) - 1px);
+  line-height: 1.45;
+}
+
+.shellium-shell .op-alert-error {
+  border-color: var(--ui-danger-border);
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger);
+}
+
+.shellium-shell .op-alert-ok {
+  border-color: transparent;
+  background: var(--ui-ok-soft);
+  color: var(--ui-ok);
+}
+
+.shellium-shell .op-alert-info {
+  border-color: var(--ui-border);
+  background: var(--ui-surface-2);
+  color: var(--ui-text-muted);
+}
+
+/* ---------- Footer ---------- */
+
+.shellium-shell .op-footer {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 32px;
+  border-top: 1px solid var(--ui-border);
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .op-footer-status {
+  flex: 1;
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .op-footer-status.is-dirty {
+  color: var(--ui-warn);
+}
+
+/* ---------- Environments ---------- */
+
+.shellium-shell .op-env {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r-lg);
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .op-env-main {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.shellium-shell .op-env-preview {
+  min-width: 52px;
+  height: 32px;
+  justify-content: center;
+  font-size: 11px;
+}
+
+.shellium-shell .op-env-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.shellium-shell .op-env-field > span {
+  color: var(--ui-text-strong);
+  font-size: calc(var(--ui-chrome-fs) - 1px);
+  font-weight: 500;
+}
+
+.shellium-shell .op-env-name {
+  flex: 1;
+}
+
+.shellium-shell .op-env-badge {
+  width: 110px;
+}
+
+.shellium-shell .op-env-field .op-input {
+  width: 100%;
+  min-width: 0;
+}
+
+.shellium-shell .op-env-badge .op-input {
+  font-family: var(--ui-mono);
+  text-transform: uppercase;
+}
+
+.shellium-shell .op-env-delete {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-r);
+  background: none;
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .op-env-delete:hover {
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger);
+}
+
+.shellium-shell .op-env-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  padding-left: 62px;
+}
+
+.shellium-shell .op-env-colors {
+  display: flex;
+  gap: 6px;
+}
+
+.shellium-shell .op-env-color {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--env);
+}
+
+.shellium-shell .op-env-color.selected {
+  box-shadow: 0 0 0 2px var(--ui-surface-2), 0 0 0 4px var(--env);
+}
+
+.shellium-shell .op-env-color:focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: 3px;
+}
+
+.shellium-shell .op-env-warn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ui-text);
+  font-size: calc(var(--ui-chrome-fs) - 1px);
+}
+
+.shellium-shell .op-env-usage {
+  margin-left: auto;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-xs);
+}
+
+/* ---------- Trusted host keys (KnownHostsPanel) ---------- */
+
+.shellium-shell .op-kh {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.shellium-shell .op-kh-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.shellium-shell .op-kh-search {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-r);
+  background: var(--ui-surface-1);
+  color: var(--ui-text-faint);
+}
+
+.shellium-shell .op-kh-search:focus-within {
+  border-color: var(--ui-accent);
+  box-shadow: 0 0 0 3px var(--ui-accent-soft);
+}
+
+.shellium-shell .op-kh-search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--ui-text-strong);
+  font-size: var(--ui-chrome-fs);
+}
+
+.shellium-shell .op-kh-count {
+  flex: none;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .op-kh-list {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r-lg);
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .op-kh-empty {
+  padding: 18px 16px;
+  color: var(--ui-text-muted);
+  font-size: calc(var(--ui-chrome-fs) - 1px);
+}
+
+.shellium-shell .op-kh-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 54px;
+  padding: 8px 10px 8px 14px;
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.shellium-shell .op-kh-row:last-child {
+  border-bottom: 0;
+}
+
+.shellium-shell .op-kh-row.confirming {
+  background: var(--ui-danger-soft);
+}
+
+.shellium-shell .op-kh-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.shellium-shell .op-kh-host {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.shellium-shell .op-kh-host strong {
+  overflow: hidden;
+  color: var(--ui-text-strong);
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-sm);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .op-kh-port {
+  margin-left: -8px;
+  color: var(--ui-text-muted);
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .op-kh-type,
+.shellium-shell .op-kh-source {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--ui-surface-3);
+  color: var(--ui-text-muted);
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+.shellium-shell .op-kh-source {
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-text);
+}
+
+.shellium-shell .op-kh-fingerprint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.shellium-shell .op-kh-fingerprint code {
+  overflow: hidden;
+  color: var(--ui-text-muted);
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .op-kh-copied {
+  color: var(--ui-ok);
+  font-size: var(--ui-fs-xs);
+}
+
+.shellium-shell .op-kh-seen {
+  flex: none;
+  width: 84px;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-xs);
+  text-align: right;
+}
+
+.shellium-shell .op-kh-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: none;
+  color: var(--ui-text-faint);
+}
+
+.shellium-shell .op-kh-icon:hover {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .op-kh-remove {
+  width: 30px;
+  height: 30px;
+}
+
+.shellium-shell .op-kh-remove:hover {
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger);
+}
+
+.shellium-shell .op-kh-confirm {
+  display: flex;
+  flex: none;
+  gap: 6px;
+}

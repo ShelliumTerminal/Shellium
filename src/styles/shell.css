@@ -1,0 +1,1551 @@
+/* ==========================================================================
+   Application shell: title bar, toolbar, session tabs (top / left / right),
+   script bar (top / bottom / left / right), status bar, empty state.
+
+   Built only on tokens.css. Every selector is prefixed with .shellium-shell so
+   it outranks the generic ".shellium-shell button" rules in the legacy
+   palette.css without !important. The legacy stylesheet targets the old
+   class names (app-toolbar, session-tab, script-button-bar, status-bar...),
+   which this markup no longer uses.
+   ========================================================================== */
+
+.shellium-shell {
+  --ui-sans: "Inter Variable", "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --ui-chrome-fs: var(--sh-ui-font-size, 13px);
+}
+
+.shellium-shell .sh-chrome,
+.shellium-shell .sh-statusbar,
+.shellium-shell .sh-context-menu {
+  font-family: var(--ui-sans);
+  color: var(--ui-text);
+}
+
+.shellium-shell .sh-chrome button,
+.shellium-shell .sh-context-menu button {
+  font-family: inherit;
+  line-height: 1.2;
+}
+
+.shellium-shell kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--ui-border-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--ui-surface-2);
+  color: var(--ui-text-muted);
+  font: 500 10px/1.4 var(--ui-sans);
+}
+
+/* ---------------------------------------------------------------- chrome */
+
+.shellium-shell .sh-chrome {
+  flex: none;
+  position: relative;
+  z-index: 20;
+  background: var(--ui-surface-1);
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.shellium-shell .sh-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 42px;
+  padding: 0 8px 0 12px;
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.shellium-shell .sh-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.shellium-shell .sh-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+}
+
+/*
+ * The mark's _ cursor blinks like a terminal cursor (BrandMark `blink`). Like xterm's cursor it
+ * ignores prefers-reduced-motion: Windows reports that whenever "Animation effects" is off.
+ */
+.shellium-shell .sh-brand-cursor {
+  animation: sh-brand-cursor-blink 1.1s step-end infinite;
+}
+
+@keyframes sh-brand-cursor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.shellium-shell .sh-brand-word {
+  display: flex;
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .sh-menubar {
+  display: flex;
+  gap: 2px;
+}
+
+.shellium-shell .sh-menu-group {
+  position: relative;
+}
+
+.shellium-shell .sh-menu-group > button {
+  height: 28px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: none;
+  color: var(--ui-text);
+  font-size: var(--ui-chrome-fs);
+  font-weight: 450;
+}
+
+.shellium-shell .sh-menu-group > button:hover,
+.shellium-shell .sh-menu-group > button.active {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .sh-menu-popover,
+.shellium-shell .sh-context-menu,
+.shellium-shell .sh-scriptbar-menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  padding: 5px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r-lg);
+  background: var(--ui-surface-1);
+  box-shadow: var(--ui-shadow-pop);
+}
+
+.shellium-shell .sh-menu-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 50;
+}
+
+.shellium-shell .sh-menu-popover-right {
+  left: auto;
+  right: 0;
+}
+
+.shellium-shell .sh-context-menu {
+  position: fixed;
+  z-index: 60;
+  min-width: 190px;
+}
+
+.shellium-shell .sh-menu-popover button,
+.shellium-shell .sh-context-menu button,
+.shellium-shell .sh-scriptbar-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: none;
+  color: var(--ui-text-strong);
+  font-size: var(--ui-chrome-fs);
+  font-weight: 450;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.shellium-shell .sh-menu-popover button:hover:not(:disabled),
+.shellium-shell .sh-context-menu button:hover:not(:disabled),
+.shellium-shell .sh-scriptbar-menu button:hover:not(:disabled) {
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-text);
+}
+
+.shellium-shell .sh-menu-popover button:disabled,
+.shellium-shell .sh-context-menu button:disabled,
+.shellium-shell .sh-scriptbar-menu button:disabled {
+  color: var(--ui-text-faint);
+}
+
+.shellium-shell .sh-command-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(420px, 34vw);
+  height: 28px;
+  margin: 0 auto;
+  padding: 0 7px 0 10px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r);
+  background: var(--ui-surface-2);
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+  text-align: left;
+}
+
+.shellium-shell .sh-command-search span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .sh-command-search:hover {
+  border-color: var(--ui-border-strong);
+  color: var(--ui-text);
+}
+
+.shellium-shell .sh-titlebar-actions {
+  display: flex;
+  gap: 2px;
+  flex: none;
+}
+
+.shellium-shell .sh-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: none;
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .sh-icon-btn:hover:not(:disabled) {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .sh-icon-btn:disabled {
+  opacity: 0.4;
+}
+
+.shellium-shell .sh-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 11px;
+  border: 1px solid transparent;
+  border-radius: var(--ui-r);
+  background: none;
+  color: var(--ui-text);
+  font-size: var(--ui-chrome-fs);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.shellium-shell .sh-tool:hover:not(:disabled) {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .sh-tool:disabled {
+  opacity: 0.45;
+}
+
+.shellium-shell .sh-tool-record svg {
+  color: var(--ui-danger);
+}
+
+.shellium-shell .sh-tool-record.is-recording {
+  border-color: var(--ui-danger-border);
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger);
+}
+
+.shellium-shell .sh-tool-record.is-recording svg {
+  fill: currentColor;
+}
+
+.shellium-shell .sh-divider {
+  width: 1px;
+  height: 20px;
+  margin: 0 6px;
+  background: var(--ui-border);
+}
+
+.shellium-shell .sh-btn {
+  font-family: inherit;
+}
+
+.shellium-shell .sh-surface {
+  grid-area: term;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.shellium-shell .sh-surface[hidden] {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- session tabs */
+
+.shellium-shell .sh-tabs {
+  grid-area: tabs;
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  background: var(--ui-surface-1);
+}
+
+.shellium-shell .sh-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .sh-tab-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ui-text-faint);
+}
+
+.shellium-shell .sh-tab-connected .sh-tab-dot {
+  background: var(--ui-ok);
+  box-shadow: 0 0 0 3px var(--ui-ok-soft);
+}
+
+.shellium-shell .sh-tab-connecting .sh-tab-dot {
+  background: var(--ui-warn);
+  box-shadow: 0 0 0 3px var(--ui-warn-soft);
+}
+
+.shellium-shell .sh-tab-disconnected .sh-tab-title {
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .sh-tab-main {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  /* Buttons won't shrink below their text in a flex row unless their overflow is clipped. */
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+}
+
+.shellium-shell .sh-tab-title {
+  overflow: hidden;
+  color: var(--ui-text-strong);
+  font-size: var(--ui-chrome-fs);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .sh-tab-close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--ui-text-faint);
+}
+
+.shellium-shell .sh-tab-close:hover {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+/* Unread output in a background session (SecureCRT-style): the whole tab is tinted and
+   its title highlighted until the user switches to it (App clears hasUnreadActivity). */
+.shellium-shell .sh-tab.has-activity,
+.shellium-shell .sh-tabs-strip .sh-tab.has-activity:hover,
+.shellium-shell .sh-tabs-vertical .sh-tab.has-activity:hover {
+  border-color: var(--ui-accent-border);
+  background: var(--ui-accent-soft);
+}
+
+.shellium-shell .sh-tab.has-activity .sh-tab-title {
+  color: var(--ui-accent-text);
+  font-weight: 600;
+}
+
+.shellium-shell .sh-tab.has-activity::after {
+  content: "";
+  order: 1;
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ui-accent);
+}
+
+.shellium-shell .sh-tab-close {
+  order: 2;
+}
+
+/* Session ended (exit, dropped connection): the tab turns red until it is reconnected or
+   closed. Placed after the unread rules so red wins over the unread tint. */
+.shellium-shell .sh-tab.sh-tab-disconnected,
+.shellium-shell .sh-tabs-strip .sh-tab.sh-tab-disconnected:hover,
+.shellium-shell .sh-tabs-vertical .sh-tab.sh-tab-disconnected:hover,
+.shellium-shell .sh-tabs-strip .sh-tab.sh-tab-disconnected.active,
+.shellium-shell .sh-tabs-vertical .sh-tab.sh-tab-disconnected.active {
+  border-color: var(--ui-danger-border);
+  background: var(--ui-danger-soft);
+}
+
+.shellium-shell .sh-tab.sh-tab-disconnected .sh-tab-title {
+  color: var(--ui-danger);
+  font-weight: 600;
+}
+
+.shellium-shell .sh-tab.sh-tab-disconnected .sh-tab-dot {
+  background: var(--ui-danger);
+  box-shadow: 0 0 0 3px var(--ui-danger-soft);
+}
+
+.shellium-shell .sh-tabs-strip .sh-tab.sh-tab-disconnected.active::before {
+  background: var(--ui-danger);
+}
+
+.shellium-shell .sh-tabs-vertical .sh-tab.sh-tab-disconnected.active {
+  box-shadow: inset 2px 0 0 var(--ui-danger);
+}
+
+.shellium-shell .sh-tab.sh-tab-disconnected::after {
+  display: none;
+}
+
+.shellium-shell .sh-tab.dragging {
+  opacity: 0.55;
+}
+
+/* Top: a classic tab strip. */
+.shellium-shell .sh-tabs-strip {
+  align-items: flex-end;
+  gap: 2px;
+  height: 38px;
+  padding: 0 8px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--ui-border);
+  scrollbar-width: none;
+}
+
+.shellium-shell .sh-tabs-strip .sh-tab {
+  flex: 0 1 240px;
+  height: 32px;
+  padding: 0 6px 0 12px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: var(--ui-r) var(--ui-r) 0 0;
+}
+
+.shellium-shell .sh-tabs-strip .sh-tab-main {
+  align-items: baseline;
+  gap: 7px;
+}
+
+/* In the narrow top strip the host name wins; the user@host meta gives way first. */
+.shellium-shell .sh-tabs-strip .sh-tab-title {
+  /* Never shrink (even a fraction of a pixel triggers the ellipsis); only clip past the tab width. */
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.shellium-shell .sh-tabs-strip .sh-tab:hover {
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .sh-tabs-strip .sh-tab.active {
+  height: 33px;
+  margin-bottom: -1px;
+  border-color: var(--ui-border);
+  background: var(--ui-bg);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .sh-tabs-strip .sh-tab.active::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 10px;
+  right: 10px;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: var(--ui-accent);
+}
+
+.shellium-shell .sh-tab-new {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 28px;
+  margin: 0 0 3px 2px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: none;
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .sh-tab-new:hover {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+/* Left / right: a session panel with search, like the prototype's sidebar. */
+.shellium-shell .sh-tabs-vertical {
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 8px 10px;
+  overflow: hidden auto;
+}
+
+.shellium-shell .sh-tabs-vertical .sh-tab,
+.shellium-shell .sh-tabs-vertical .sh-tab {
+  flex: none;
+  min-height: 46px;
+  padding: 6px 6px 6px 10px;
+  border-radius: var(--ui-r);
+}
+
+.shellium-shell .sh-tabs-vertical .sh-tab-main,
+.shellium-shell .sh-tabs-vertical .sh-tab-main {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shellium-shell .sh-tabs-vertical .sh-tab-title {
+  max-width: 100%;
+}
+
+.shellium-shell .sh-tabs-vertical .sh-tab:hover,
+.shellium-shell .sh-tabs-vertical .sh-tab:hover {
+  background: var(--ui-surface-3);
+}
+
+.shellium-shell .sh-tabs-vertical .sh-tab.active,
+.shellium-shell .sh-tabs-vertical .sh-tab.active {
+  background: var(--ui-surface-sel);
+  box-shadow: inset 2px 0 0 var(--ui-accent);
+}
+
+.shellium-shell .sh-tabs-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.shellium-shell .sh-tabs-resizer:hover {
+  background: var(--ui-accent-soft);
+}
+
+/* ---------------------------------------------------------------- script bar */
+
+.shellium-shell .sh-scriptbar {
+  grid-area: bar;
+  position: relative;
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+  background: var(--ui-surface-1);
+}
+
+/* Horizontal: sizes match the overflow measurement in App.tsx (6px gap, 12px padding, 78px "more"). */
+.shellium-shell .sh-scriptbar-h {
+  align-items: center;
+  height: 44px;
+  padding: 0 6px;
+}
+
+.shellium-shell .sh-scriptbar-at-bottom {
+  border-top: 1px solid var(--ui-border);
+}
+
+.shellium-shell .sh-scriptbar-at-top {
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.shellium-shell .sh-scriptbar-v {
+  flex-direction: column;
+  width: var(--script-bar-size, 220px);
+  padding: 10px 8px;
+  overflow: hidden auto;
+}
+
+.shellium-shell .sh-scriptbar-at-left {
+  border-right: 1px solid var(--ui-border);
+}
+
+.shellium-shell .sh-scriptbar-at-right {
+  border-left: 1px solid var(--ui-border);
+}
+
+.shellium-shell .sh-scriptbar-category {
+  flex: none;
+  height: 30px;
+  max-width: 200px;
+  padding: 0 28px 0 10px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r-sm);
+  appearance: none;
+  background: var(--ui-surface-2)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237c8799' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+    no-repeat right 8px center;
+  color: var(--ui-text-strong);
+  font-family: var(--ui-sans);
+  font-size: var(--ui-fs-sm);
+  font-weight: 600;
+}
+
+.shellium-shell .sh-scriptbar-v .sh-scriptbar-category,
+.shellium-shell .sh-scriptbar-v .sh-scriptbar-category {
+  max-width: none;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.shellium-shell .sh-scriptbar-category option {
+  background: var(--ui-surface-1);
+  color: var(--ui-text-strong);
+}
+
+/* Script buttons: UI-font label with a vertical color marker in the button's color.
+   Widths are measured by the overflow logic from .sh-scriptbar-measure copies of this
+   markup, so any size change here applies there automatically. */
+.shellium-shell .sh-script {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 12px 0 9px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r-sm);
+  background: var(--ui-surface-2);
+  color: var(--ui-text-strong);
+  white-space: nowrap;
+  transition: background-color 0.12s, border-color 0.12s;
+}
+
+.shellium-shell .sh-scriptbar-v .sh-script,
+.shellium-shell .sh-scriptbar-v .sh-script {
+  width: 100%;
+}
+
+.shellium-shell .sh-script:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--script-button-color, var(--ui-accent)) 55%, var(--ui-border));
+  background: color-mix(in srgb, var(--script-button-color, var(--ui-accent)) 10%, var(--ui-surface-2));
+}
+
+.shellium-shell .sh-script:active:not(:disabled) {
+  background: color-mix(in srgb, var(--script-button-color, var(--ui-accent)) 18%, var(--ui-surface-2));
+}
+
+.shellium-shell .sh-script:focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: 1px;
+}
+
+.shellium-shell .sh-script:disabled {
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .sh-script-dot {
+  flex: none;
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--script-button-color, var(--ui-ok));
+  /* Keeps white / black markers visible on either theme. */
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ui-text-strong) 30%, transparent);
+}
+
+.shellium-shell .sh-script:disabled .sh-script-dot {
+  opacity: 0.45;
+}
+
+.shellium-shell .sh-script-label {
+  overflow: hidden;
+  font-family: var(--ui-sans);
+  font-size: var(--ui-chrome-fs);
+  font-weight: 500;
+  /* Tall enough that clipping (for the ellipsis) never cuts underscores and descenders. */
+  line-height: 18px;
+  letter-spacing: 0.005em;
+  text-overflow: ellipsis;
+}
+
+.shellium-shell .sh-scriptbar-empty {
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .sh-scriptbar-overflow {
+  position: relative;
+  flex: none;
+  margin-left: auto;
+}
+
+.shellium-shell .sh-scriptbar-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 78px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: none;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+  font-weight: 500;
+}
+
+.shellium-shell .sh-scriptbar-more:hover,
+.shellium-shell .sh-scriptbar-more[aria-expanded="true"] {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .sh-scriptbar-menu {
+  position: absolute;
+  right: 0;
+  z-index: 40;
+  max-height: var(--script-overflow-menu-max-height, 60vh);
+  overflow-y: auto;
+}
+
+.shellium-shell .sh-scriptbar-at-bottom .sh-scriptbar-menu {
+  bottom: calc(100% + 8px);
+}
+
+.shellium-shell .sh-scriptbar-at-top .sh-scriptbar-menu {
+  top: calc(100% + 8px);
+}
+
+.shellium-shell .sh-scriptbar-menu .sh-script-label {
+  font-size: var(--ui-fs-sm);
+}
+
+/* Off-screen copy of the buttons the overflow logic measures - must match .sh-script exactly. */
+.shellium-shell .sh-scriptbar-measure {
+  position: absolute;
+  top: 0;
+  left: -10000px;
+  display: flex;
+  gap: 6px;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.shellium-shell .sh-scriptbar-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.shellium-shell .sh-scriptbar-at-left .sh-scriptbar-resizer {
+  right: -3px;
+}
+
+.shellium-shell .sh-scriptbar-at-right .sh-scriptbar-resizer {
+  left: -3px;
+}
+
+.shellium-shell .sh-scriptbar-resizer:hover {
+  background: var(--ui-accent-soft);
+}
+
+/* ---------------------------------------------------------------- status bar */
+
+.shellium-shell .sh-statusbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  container-type: inline-size;
+  container-name: statusbar;
+  height: 26px;
+  padding: 0 12px;
+  border-top: 1px solid var(--ui-border);
+  background: var(--ui-surface-1);
+  font-size: var(--ui-fs-xs);
+}
+
+.shellium-shell .sh-status-item {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  color: var(--ui-text-muted);
+  white-space: nowrap;
+}
+
+.shellium-shell .sh-status-main {
+  color: var(--ui-text-strong);
+  font-weight: 500;
+}
+
+.shellium-shell .sh-status-session {
+  display: block;
+  overflow: hidden;
+  flex: 0 1 auto;
+  min-width: 40px;
+  max-width: 320px;
+  color: var(--ui-text-strong);
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+
+.shellium-shell .sh-status-endpoint {
+  font-family: var(--ui-mono);
+}
+
+.shellium-shell .sh-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ui-text-faint);
+}
+
+.shellium-shell .sh-status-connected .sh-status-dot {
+  background: var(--ui-ok);
+}
+
+.shellium-shell .sh-status-connecting .sh-status-dot {
+  background: var(--ui-warn);
+}
+
+.shellium-shell .sh-status-disconnected .sh-status-dot {
+  background: var(--ui-danger);
+}
+
+.shellium-shell .sh-status-notice {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ui-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Running SFTP transfer (SftpTransferStatus), visible outside the SFTP tab too. */
+.shellium-shell .sh-status-transfer {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 55%;
+  color: var(--ui-accent-text);
+}
+
+.shellium-shell .sh-status-transfer-conflicts {
+  color: var(--ui-warn);
+  font-weight: 500;
+}
+
+/* The transfer itself opens its session's SFTP tab. */
+.shellium-shell .sh-status-transfer-open {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+  margin: 0 -4px;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.shellium-shell .sh-status-transfer-open:hover {
+  background: var(--ui-surface-3);
+}
+
+.shellium-shell .sh-status-transfer-open:focus-visible {
+  outline: 2px solid var(--ui-accent-border);
+  outline-offset: 1px;
+}
+
+.shellium-shell .sh-status-transfer-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+
+.shellium-shell .sh-status-transfer-paused {
+  color: var(--ui-text);
+}
+
+.shellium-shell .sh-status-transfer-paused .sh-status-progress span {
+  background: var(--ui-text-faint);
+}
+
+.shellium-shell .sh-status-btn {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: none;
+  color: var(--ui-text-muted);
+  cursor: pointer;
+}
+
+.shellium-shell .sh-status-btn:hover {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .sh-status-btn-start {
+  color: var(--ui-accent-text);
+}
+
+.shellium-shell .sh-status-btn:focus-visible {
+  outline: 2px solid var(--ui-accent-border);
+  outline-offset: 1px;
+}
+
+.shellium-shell .sh-status-progress {
+  flex: none;
+  width: 64px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ui-surface-3);
+}
+
+.shellium-shell .sh-status-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ui-accent);
+  transition: width 0.2s;
+}
+
+.shellium-shell .sh-status-hint {
+  color: var(--ui-text-faint);
+}
+
+.shellium-shell .sh-status-item svg {
+  flex: none;
+  opacity: 0.75;
+}
+
+.shellium-shell .sh-status-cursor {
+  font-variant-numeric: tabular-nums;
+  min-width: 9.5em;
+}
+
+.shellium-shell .sh-status-slow {
+  color: var(--ui-warn);
+}
+
+.shellium-shell .sh-status-bad {
+  color: var(--ui-danger);
+}
+
+/* Recording: a red pill; click stops it. */
+.shellium-shell .sh-status-rec {
+  height: 18px;
+  padding: 0 8px;
+  border: 1px solid var(--ui-danger-border);
+  border-radius: 999px;
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger);
+  font: inherit;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer !important;
+}
+
+.shellium-shell .sh-status-rec svg {
+  fill: currentColor;
+  opacity: 1;
+  animation: sh-rec-blink 1.2s steps(2, jump-none) infinite;
+}
+
+@keyframes sh-rec-blink {
+  50% { opacity: 0.25; }
+}
+
+/* Narrow window: traffic / terminal type go first, then protocol / size / cursor, then the rest. */
+@container statusbar (max-width: 1250px) {
+  .shellium-shell .sh-status-p3 { display: none; }
+}
+
+@container statusbar (max-width: 1000px) {
+  .shellium-shell .sh-status-p2 { display: none; }
+}
+
+@container statusbar (max-width: 760px) {
+  .shellium-shell .sh-status-p1 { display: none; }
+}
+
+/* ==========================================================================
+   Modern layout (layoutMode "modern", the default): host sidebar | main column.
+   Main column = session tab strip, session header, then script bar + terminal
+   as cards.
+   ========================================================================== */
+
+.shellium-shell .sh-modern {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: var(--sidebar-w, 272px) minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  font-family: var(--ui-sans);
+  color: var(--ui-text);
+  background: var(--ui-bg);
+}
+
+/* ---------------------------------------------------------------- main column */
+
+.shellium-shell .sh-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.shellium-shell .sh-modern .sh-tabs-strip {
+  flex: none;
+  background: var(--ui-surface-1);
+}
+
+.shellium-shell .sh-main-body {
+  flex: 1;
+  display: grid;
+  gap: 10px;
+  min-height: 0;
+  padding: 0 16px 14px;
+}
+
+.shellium-shell .sh-main > .sh-main-body:first-child,
+.shellium-shell .sh-main > .sh-tabs + .sh-main-body {
+  padding-top: 14px;
+}
+
+.shellium-shell .sh-main > .sh-env-banner + .sh-main-body {
+  padding-top: 10px;
+}
+
+.shellium-shell .sh-body-bar-top {
+  grid-template: "bar" auto "term" minmax(0, 1fr) / minmax(0, 1fr);
+}
+
+.shellium-shell .sh-body-bar-bottom {
+  grid-template: "term" minmax(0, 1fr) "bar" auto / minmax(0, 1fr);
+}
+
+.shellium-shell .sh-body-bar-left {
+  grid-template: "bar term" minmax(0, 1fr) / auto minmax(0, 1fr);
+}
+
+.shellium-shell .sh-body-bar-right {
+  grid-template: "term bar" minmax(0, 1fr) / minmax(0, 1fr) auto;
+}
+
+.shellium-shell .sh-main-stage {
+  grid-area: term;
+  display: grid;
+  grid-template: "term" minmax(0, 1fr) / minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Script bar as a card inside the main column. */
+.shellium-shell .sh-modern .sh-scriptbar {
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r-lg);
+}
+
+.shellium-shell .sh-modern .sh-scriptbar-h {
+  height: 42px;
+}
+
+/* Terminal as a rounded card; the empty state sits in the same card. */
+.shellium-shell .sh-modern .sh-surface {
+  background: var(--sh-terminal-bg, #0b0d0e);
+}
+
+.shellium-shell .sh-modern .sh-surface {
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r-lg);
+  overflow: hidden;
+}
+
+/* -------- Legacy bridge (remove when terminal.css moves onto tokens) --------
+   terminal.css and palette.css force the terminal pane padding and background with
+   !important. Inside the modern card the pane must be flush, and the in-terminal
+   Copy/Paste/Find overlay moves to the session header, so these few overrides have
+   to match that force. Scoped to .sh-modern and nothing else. */
+.shellium-shell .sh-modern .terminal-pane {
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.shellium-shell .sh-modern {
+  --sh-term-pad-y: 12px;
+  --sh-term-pad-x: 14px;
+}
+
+.shellium-shell .sh-modern .terminal-viewport-shell {
+  padding: var(--sh-term-pad-y) var(--sh-term-pad-x) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: var(--sh-terminal-bg, #0b0d0e) !important;
+}
+
+.shellium-shell .sh-modern .terminal-viewport .xterm-viewport,
+.shellium-shell .sh-modern .terminal-viewport .xterm-screen {
+  border-radius: 0 !important;
+}
+
+.shellium-shell .sh-modern .terminal-inline-actions {
+  display: none !important;
+}
+
+/* ---------------------------------------------------------------- resize handles
+   index.css forces "cursor: default !important" on every element, which hid the
+   fact that these edges can be dragged. The handles opt back in (the !important is
+   only to beat that global rule), get a wider hit area and a visible accent line
+   on hover and while dragging. */
+.shellium-shell .sh-tabs-resizer,
+.shellium-shell .sh-scriptbar-resizer {
+  width: 9px;
+  cursor: col-resize !important;
+}
+
+.shellium-shell .sh-scriptbar-at-left .sh-scriptbar-resizer {
+  right: -5px;
+}
+
+.shellium-shell .sh-scriptbar-at-right .sh-scriptbar-resizer {
+  left: -5px;
+}
+
+.shellium-shell .sh-tabs-resizer::after,
+.shellium-shell .sh-scriptbar-resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 3px;
+  border-radius: 2px;
+  background: transparent;
+  transition: background 0.12s;
+}
+
+.shellium-shell .sh-tabs-resizer:hover,
+.shellium-shell .sh-scriptbar-resizer:hover {
+  background: none;
+}
+
+.shellium-shell .sh-tabs-resizer:hover::after,
+.shellium-shell .sh-scriptbar-resizer:hover::after {
+  background: var(--ui-accent);
+}
+
+/* While dragging: resize cursor everywhere, no accidental text selection. */
+.sh-resizing,
+.sh-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+/* The selection overlay is absolutely positioned in the viewport shell, but its
+   rectangles are measured from the terminal viewport inside the shell padding -
+   inset it by the same padding so highlights land on the text. */
+.shellium-shell .sh-modern .terminal-custom-selection {
+  inset: var(--sh-term-pad-y) var(--sh-term-pad-x);
+}
+
+/* ---------------------------------------------------------------- environments
+   Badge primitive (.sh-env) lives in tokens.css. Tabs of an environment with the
+   warning banner switched on get a stripe in its color; the active session of such an
+   environment gets a banner above the session header. --env comes from environmentStyle(). */
+.shellium-shell .sh-tab .sh-env {
+  margin-left: -2px;
+}
+
+.shellium-shell .sh-tabs-strip .sh-tab.sh-tab-warn::before {
+  position: absolute;
+  top: -1px;
+  right: 10px;
+  left: 10px;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: var(--env);
+  content: "";
+}
+
+.shellium-shell .sh-tabs-vertical .sh-tab.sh-tab-warn {
+  box-shadow: inset 3px 0 0 var(--env);
+}
+
+.shellium-shell .sh-env-banner {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 16px 0;
+  padding: 7px 12px;
+  border: 1px solid color-mix(in srgb, var(--env) 45%, transparent);
+  border-radius: var(--ui-r);
+  background: color-mix(in srgb, var(--env) 12%, transparent);
+  color: var(--env);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .sh-env-banner strong {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.shellium-shell .sh-env-banner span {
+  color: var(--ui-text);
+}
+
+/* Script button tooltip: the send string, one line per line end (ScriptButtonTooltip.tsx). */
+.shellium-shell .sh-script-tooltip {
+  position: fixed;
+  z-index: 80;
+  max-width: min(560px, calc(100vw - 16px));
+  padding: 8px 10px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-r);
+  background: var(--ui-surface-3);
+  box-shadow: var(--ui-shadow-pop);
+  pointer-events: none;
+}
+
+.shellium-shell .sh-script-tooltip-label {
+  margin-bottom: 4px;
+  color: var(--ui-text-muted);
+  font-family: var(--ui-sans);
+  font-size: var(--ui-fs-xs);
+  font-weight: 600;
+}
+
+.shellium-shell .sh-script-tooltip-body {
+  margin: 0;
+  color: var(--ui-text-strong);
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-sm);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.shellium-shell .sh-script-tooltip-token {
+  margin: 0 1px;
+  padding: 0 3px;
+  border-radius: 3px;
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-text);
+}
+
+.shellium-shell .sh-script-tooltip-more {
+  margin-top: 2px;
+  color: var(--ui-text-muted);
+  font-family: var(--ui-sans);
+  font-size: var(--ui-fs-xs);
+}
+
+/* Session tab tooltip: the full name in one slim bubble (TabTooltip.tsx). */
+.shellium-shell .sh-tab-tooltip {
+  position: fixed;
+  z-index: 80;
+  display: flex;
+  max-width: min(640px, calc(100vw - 16px));
+  padding: 3px 9px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: 999px;
+  background: var(--ui-surface-3);
+  box-shadow: var(--ui-shadow-pop);
+  font-family: var(--ui-sans);
+  font-size: var(--ui-fs-xs);
+  line-height: 1.5;
+  overflow: hidden;
+  color: var(--ui-text-strong);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Text-field right-click menu (EditContextMenu.tsx): above every dialog and the lock screen. */
+.shellium-shell .sh-edit-menu {
+  z-index: 1000;
+  min-width: 200px;
+}
+
+.shellium-shell .sh-menu-shortcut {
+  margin-left: auto;
+  padding-left: 24px;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-xs);
+}
+
+.shellium-shell .sh-context-menu button:hover:not(:disabled) .sh-menu-shortcut {
+  color: inherit;
+}
+
+.shellium-shell .sh-menu-separator {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--ui-border);
+}
+
+/* Protected sessions (tmux / screen on the server): shield on the tab; amber, not red, while a dropped
+   protected tab reconnects on its own. After the disconnected rules so it wins over them. */
+.shellium-shell .sh-tab-shield {
+  display: inline-flex;
+  flex: none;
+  color: var(--ui-ok);
+}
+
+.shellium-shell .sh-tab.sh-tab-reconnecting,
+.shellium-shell .sh-tabs-strip .sh-tab.sh-tab-reconnecting:hover,
+.shellium-shell .sh-tabs-vertical .sh-tab.sh-tab-reconnecting:hover,
+.shellium-shell .sh-tabs-strip .sh-tab.sh-tab-reconnecting.active,
+.shellium-shell .sh-tabs-vertical .sh-tab.sh-tab-reconnecting.active {
+  border-color: var(--ui-warn-border);
+  background: var(--ui-warn-soft);
+}
+
+.shellium-shell .sh-tab.sh-tab-reconnecting .sh-tab-title {
+  color: var(--ui-warn);
+  font-weight: 600;
+}
+
+.shellium-shell .sh-tab.sh-tab-reconnecting .sh-tab-dot {
+  background: var(--ui-warn);
+  box-shadow: 0 0 0 3px var(--ui-warn-soft);
+  animation: sh-protect-pulse 1.2s ease-in-out infinite;
+}
+
+.shellium-shell .sh-tab.sh-tab-reconnecting .sh-tab-shield {
+  color: var(--ui-warn);
+}
+
+@keyframes sh-protect-pulse {
+  50% { opacity: 0.35; }
+}
+
+.shellium-shell .sh-tool-protect.is-protected {
+  border-color: color-mix(in srgb, var(--ui-ok) 40%, transparent);
+  background: var(--ui-ok-soft);
+  color: var(--ui-ok);
+}
+
+.shellium-shell .sh-protect-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  margin-left: 4px;
+  padding: 0 9px;
+  border: 1px solid color-mix(in srgb, var(--ui-ok) 40%, transparent);
+  border-radius: 999px;
+  background: var(--ui-ok-soft);
+  color: var(--ui-ok);
+  font-size: var(--ui-fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.shellium-shell .sh-protect-all:hover {
+  border-color: var(--ui-ok);
+}
+
+.shellium-shell .sh-menu-popover .sh-menu-check-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  margin-left: -2px;
+}
+
+/* the strip over a protected tab's terminal (ProtectionBar.tsx) */
+.shellium-shell .pb-bar {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  z-index: 19;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(760px, calc(100% - 32px));
+  min-height: 38px;
+  padding: 6px 6px 6px 12px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-r-lg);
+  background: var(--ui-surface-2);
+  box-shadow: var(--ui-shadow-pop);
+  color: var(--ui-text);
+  font-size: var(--ui-fs-sm, 12.5px);
+  line-height: 1.4;
+  transform: translateX(-50%);
+}
+
+.shellium-shell .terminal-pane-sftp-tabs .pb-bar {
+  top: 48px;
+}
+
+.shellium-shell .pb-bar.pb-tall {
+  align-items: flex-start;
+}
+
+.shellium-shell .pb-ok { border-color: color-mix(in srgb, var(--ui-ok) 45%, transparent); }
+.shellium-shell .pb-ok .pb-icon { color: var(--ui-ok); }
+.shellium-shell .pb-warn { border-color: var(--ui-warn-border); background: color-mix(in srgb, var(--ui-warn-soft) 60%, var(--ui-surface-2)); }
+.shellium-shell .pb-warn .pb-icon { color: var(--ui-warn); }
+.shellium-shell .pb-danger { border-color: var(--ui-danger-border); background: color-mix(in srgb, var(--ui-danger-soft) 60%, var(--ui-surface-2)); }
+.shellium-shell .pb-danger .pb-icon { color: var(--ui-danger); }
+.shellium-shell .pb-info .pb-icon { color: var(--ui-accent-text); }
+
+.shellium-shell .pb-icon {
+  flex: none;
+  margin-top: 1px;
+}
+
+.shellium-shell .pb-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.shellium-shell .pb-text b {
+  color: var(--ui-text-strong);
+  font-weight: 600;
+}
+
+.shellium-shell .pb-muted {
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .pb-mono {
+  font-family: var(--ui-mono, "JetBrains Mono Variable", monospace);
+  font-size: 0.95em;
+}
+
+.shellium-shell .pb-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.shellium-shell .pb-tag {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--ui-warn-soft);
+  color: var(--ui-warn);
+  font-size: var(--ui-fs-xs);
+  font-weight: 600;
+}
+
+.shellium-shell .pb-btn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-r);
+  background: var(--ui-surface-1);
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-sm, 12.5px);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.shellium-shell .pb-btn:hover:not(:disabled) {
+  border-color: var(--ui-accent-border);
+}
+
+.shellium-shell .pb-btn:disabled {
+  opacity: 0.5;
+}
+
+.shellium-shell .pb-btn-primary {
+  border-color: var(--ui-accent);
+  background: var(--ui-accent);
+  color: #fff;
+}
+
+.shellium-shell .pb-btn-primary:hover:not(:disabled) {
+  background: var(--ui-accent-hover);
+}
+
+.shellium-shell .pb-btn-danger {
+  border-color: var(--ui-danger-solid);
+  background: var(--ui-danger-solid);
+  color: #fff;
+}
+
+.shellium-shell .pb-close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: none;
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .pb-close:hover {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .pb-spin { animation: pb-spin 0.9s linear infinite; }
+.shellium-shell .pb-spin-slow { animation: pb-spin 2.4s linear infinite; }
+
+@keyframes pb-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .shellium-shell .pb-spin, .shellium-shell .pb-spin-slow, .shellium-shell .sh-tab.sh-tab-reconnecting .sh-tab-dot { animation: none; }
+}

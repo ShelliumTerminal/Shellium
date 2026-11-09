@@ -1,0 +1,14 @@
+png/
+out/
+chrome-prof/
+icons.html
+boxes.json
+shellium-logo.svg
+shellium-logo-small.svg
+__pycache__/
+chrome-prof2/
+sheet-check.*
+node_modules/
+*.woff
+package.json
+package-lock.json

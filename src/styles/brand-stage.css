@@ -1,0 +1,162 @@
+/* ==========================================================================
+   Brand stage, the left half of the password screen (BrandStage.tsx, ss-*):
+   a short SSH handshake runs by in mono, then the session "opens" onto the
+   Shellium wordmark over a rule in the Aurora colors (about 2 s, once).
+   Always black, whatever the theme.
+
+   The rules without .ss-run are the last frame. .ss-run only adds animations
+   (fill "both" holds each start frame until its delay is over) and is removed
+   when the run ends, so the title never stays on a composited layer - a
+   layer at a fractional offset is resampled and looks soft / jagged.
+   Only paint-time effects move the title (a mask), never opacity / transform.
+   ========================================================================== */
+
+.shellium-shell .lk-stage {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  place-items: center;
+  container-type: inline-size;
+  background: radial-gradient(ellipse 60% 45% at 50% 48%, #0b0c12 0%, #040406 55%, #000 100%);
+}
+
+/* Fine grain so the gradient never bands on a large screen. */
+.shellium-shell .lk-stage::after {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  content: "";
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+/* Settings not loaded yet: show nothing rather than the last frame first. */
+.shellium-shell .ss-wait .ss-brand {
+  visibility: hidden;
+}
+
+.shellium-shell .ss-brand {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* The handshake sits above the title so the title stays centered on the stage. Centered by grid,
+   not by a transform, so the text lands on whole pixels. */
+.shellium-shell .ss-log {
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  left: 0;
+  display: grid;
+  justify-content: center;
+  margin-bottom: max(18px, 2.8cqw);
+  color: #3e434d;
+  font-family: var(--ui-mono);
+  font-size: clamp(10px, 1.25cqw, 13px);
+  line-height: 1.75;
+  white-space: pre;
+}
+
+.shellium-shell .ss-log .ss-fp {
+  color: #4a4e7a;
+}
+
+.shellium-shell .ss-log .ss-ok {
+  color: #1f7f8f;
+}
+
+.shellium-shell .ss-word {
+  display: block;
+  width: 46cqw;
+  height: auto;
+  overflow: visible;
+}
+
+.shellium-shell .ss-rule {
+  width: 46cqw;
+  height: 2px;
+  margin-top: max(14px, 2.2cqw);
+  border-radius: 2px;
+  background: linear-gradient(90deg, #22d3ee, #818cf8 50%, #f472b6);
+  box-shadow: 0 0 14px rgba(129, 140, 248, 0.45);
+}
+
+.shellium-shell .ss-tagline {
+  margin-top: max(16px, 2.4cqw);
+  color: #6f7682;
+  font-family: var(--ui-sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+}
+
+.shellium-shell .ss-foot {
+  position: absolute;
+  bottom: 28px;
+  left: 36px;
+  color: #4b515c;
+  font-family: var(--ui-sans);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+/* --- The run ------------------------------------------------------------------------------------
+   0.15 s  handshake lines, one every 190 ms, brighter while they arrive
+   1.22 s  the title opens left to right, the rule draws with it; the log steps back
+   1.52 s  tagline; its end closes the run (BrandStage drops .ss-run) */
+
+.shellium-shell .ss-run .ss-log > div {
+  animation: ss-line-in 160ms calc(150ms + var(--ss-i) * 190ms) ease-out both;
+}
+
+.shellium-shell .ss-run .ss-log {
+  animation: ss-log-back 700ms 1220ms ease-in both;
+}
+
+.shellium-shell .ss-run .ss-word {
+  -webkit-mask-image: linear-gradient(90deg, #000 44%, transparent 56%);
+  mask-image: linear-gradient(90deg, #000 44%, transparent 56%);
+  -webkit-mask-size: 260% 100%;
+  mask-size: 260% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  animation: ss-word-open 750ms 1220ms cubic-bezier(0.6, 0, 0.2, 1) both;
+}
+
+.shellium-shell .ss-run .ss-rule {
+  transform-origin: left;
+  animation: ss-rule-draw 750ms 1220ms cubic-bezier(0.6, 0, 0.2, 1) both;
+}
+
+.shellium-shell .ss-run .ss-tagline {
+  animation: ss-tagline-in 600ms 1520ms ease-out both;
+}
+
+@keyframes ss-line-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* While the handshake runs the lines are read; afterwards they step back to the colors above. */
+@keyframes ss-log-back {
+  from { color: #6b717d; }
+  to { color: #3e434d; }
+}
+
+@keyframes ss-word-open {
+  from { -webkit-mask-position: 100% 0; mask-position: 100% 0; }
+  to { -webkit-mask-position: 0 0; mask-position: 0 0; }
+}
+
+@keyframes ss-rule-draw {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes ss-tagline-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

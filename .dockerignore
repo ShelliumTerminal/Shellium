@@ -1,0 +1,6 @@
+# Only what test/linux/Dockerfile copies; the app is mounted at run time.
+*
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!test/linux/

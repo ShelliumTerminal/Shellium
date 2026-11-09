@@ -1,0 +1,2205 @@
+.shellium-shell {
+  width: 100vw;
+  height: 100vh;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #171717;
+  color: #f4f4f5;
+}
+
+.script-button-bar {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border-top: 1px solid #2f3338;
+  background: #202225;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 #202328;
+}
+
+.script-button-bar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.script-button-bar::-webkit-scrollbar-track {
+  background: #202328;
+  border-left: 1px solid #333941;
+}
+
+.script-button-bar::-webkit-scrollbar-thumb {
+  border: 2px solid #202328;
+  border-radius: 999px;
+  background: #4b5563;
+}
+
+.script-button-bar::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+.script-button-bar::-webkit-scrollbar-corner {
+  background: #202328;
+}
+
+.script-button-bar button {
+  min-width: 0;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #3f464f;
+  border-radius: 6px;
+  background: #2a2f35;
+  color: #f4f4f5;
+  padding: 0 9px;
+  cursor: default;
+  white-space: nowrap;
+}
+
+.script-button-bar button:hover:not(:disabled) {
+  border-color: #14b8a6;
+  background: #1f3b3a;
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(20, 184, 166, 0.34), 0 0 0 1px rgba(20, 184, 166, 0.12);
+}
+
+.script-button-bar button:hover:not(:disabled) .script-button-label {
+  color: #ffffff;
+}
+.script-button-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.script-button-overflow {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.script-button-overflow-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  z-index: 80;
+  width: max-content;
+  min-width: 180px;
+  max-width: min(520px, calc(100vw - 24px));
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid #3a3f45;
+  border-radius: 6px;
+  background: #202225;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.42);
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 #202328;
+}
+
+.script-button-overflow-menu button {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.script-button-measure {
+  position: absolute;
+  left: -10000px;
+  top: -10000px;
+  display: flex;
+  gap: 6px;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.script-button-measure button {
+  flex: 0 0 auto;
+}
+
+.script-button-category-select {
+  flex: 0 0 auto;
+  min-width: 120px;
+  height: 28px;
+  border: 1px solid #3f464f;
+  border-radius: 6px;
+  background: #17191c;
+  color: #f4f4f5;
+  padding: 0 8px;
+}
+
+.script-button-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 7px !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  cursor: col-resize;
+}
+
+.script-button-resizer:hover {
+  background: rgba(94, 234, 212, 0.18) !important;
+}
+
+.script-button-bar button:disabled {
+  color: #71717a;
+  cursor: not-allowed;
+}
+
+.script-button-status {
+  flex: 0 0 12px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #bbf7d0 0, #22c55e 45%, #15803d 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.script-button-empty-inline {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  color: #71717a;
+  font-size: calc(var(--sh-ui-font-size, 13px) - 1px);
+  padding: 0 4px;
+  white-space: nowrap;
+}
+
+.script-button-editor-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 44;
+  background: rgba(0, 0, 0, 0.42);
+}
+
+.script-button-editor {
+  position: fixed;
+  min-width: 640px;
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #3a3f45;
+  border-radius: 8px;
+  background: #25282c;
+  color: #f4f4f5;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+.script-button-editor-header {
+  flex: 0 0 46px;
+  cursor: default;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  border-bottom: 1px solid #333941;
+}
+
+.script-button-editor-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.script-button-editor-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.script-button-editor-header button {
+  width: auto;
+  min-width: 28px;
+  cursor: default;
+  height: 28px;
+  border: 1px solid #3f464f;
+  border-radius: 6px;
+  background: #2a2f35;
+  color: #f4f4f5;
+  padding: 0 10px;
+  transition: border-color 120ms ease, background 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+
+.script-button-editor-header button[aria-label="Close"] {
+  width: 28px;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+}
+
+.script-button-editor-body {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr) minmax(260px, 0.72fr);
+  gap: 12px;
+  overflow: auto;
+  padding: 12px;
+}
+
+@media (max-width: 860px) {
+  .script-button-editor-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.script-button-editor-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  background: linear-gradient(135deg, transparent 0 45%, #64748b 46% 55%, transparent 56% 62%, #64748b 63% 72%, transparent 73%);
+  cursor: nwse-resize;
+}
+
+.palette {
+  position: absolute;
+  top: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1080px, calc(100vw - 32px));
+  height: min(740px, calc(100vh - 72px));
+  min-width: min(560px, calc(100vw - 32px));
+  min-height: min(500px, calc(100vh - 72px));
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 72px);
+  resize: both;
+  background: #25282c;
+  color: white;
+  border: 1px solid #3a3f45;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+.palette.is-positioned {
+  transform: none;
+}
+.script-button-options select {
+  width: 160px;
+}
+
+.script-button-position-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #a1a1aa;
+  font-size: calc(var(--sh-ui-font-size, 13px) - 1px);
+}
+
+.script-category-panel,
+.script-button-list,
+.script-button-config {
+  width: 100%;
+  min-width: 0;
+}
+
+.script-category-panel,
+.script-button-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.script-category-panel {
+  border-right: 1px solid #333941;
+  padding-right: 12px;
+}
+
+.script-category-panel select,
+.script-category-panel input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #3a3f45;
+  border-radius: 6px;
+  background: #17191c;
+  color: #f4f4f5;
+  padding: 8px 10px;
+  outline: none;
+}
+
+.script-category-panel select {
+  min-height: 108px;
+}
+
+.script-category-edit,
+.script-category-new {
+  display: grid;
+  gap: 8px;
+}
+
+.script-category-edit button:disabled,
+.script-button-config-actions button:disabled {
+  color: #71717a;
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+
+.script-category-edit button,
+.script-category-new button {
+  min-height: 32px;
+  border: 1px solid #3f464f;
+  border-radius: 6px;
+  background: #2a2f35;
+  color: #f4f4f5;
+  padding: 0 10px;
+  cursor: default;
+  transition: border-color 120ms ease, background 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+
+.script-button-list {
+  overflow: auto;
+}
+
+.script-button-empty {
+  border: 1px dashed #3f464f;
+  border-radius: 6px;
+  color: #a1a1aa;
+  padding: 10px;
+  font-size: var(--sh-ui-font-size, 13px);
+}
+
+.script-button-config {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  border: 1px solid #333941;
+  border-radius: 6px;
+  padding: 10px;
+  background: #202328;
+}
+
+.script-button-config-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #a1a1aa;
+  font-size: calc(var(--sh-ui-font-size, 13px) - 1px);
+}
+
+.script-button-config-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.script-button-config-header button {
+  min-height: 32px;
+  border: 1px solid #3f464f;
+  border-radius: 6px;
+  background: #2a2f35;
+  color: #f4f4f5;
+  padding: 0 10px;
+  cursor: default;
+  transition: border-color 120ms ease, background 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+
+.script-button-config input,
+.script-button-config select,
+.script-button-config textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #3a3f45;
+  border-radius: 6px;
+  background: #17191c;
+  color: #f4f4f5;
+  padding: 8px 10px;
+  outline: none;
+}
+
+.script-button-config textarea {
+  resize: none;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow-y: auto;
+}
+.script-button-color-field {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  color: #a1a1aa;
+}
+
+.script-button-color-control {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 8px;
+}
+
+.script-button-color-control select {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  padding: 0 28px 0 10px;
+}
+
+.script-button-color-preview {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #3a3f45;
+  border-radius: 5px;
+  background: #17191c;
+}
+
+.shellium-shell[data-theme="light"] .script-button-color-preview {
+  border-color: #c9d3df;
+  background: #ffffff;
+}
+.script-button-editor-body {
+  grid-template-columns: 180px minmax(260px, 1fr) minmax(300px, 0.78fr);
+  overflow: hidden;
+}
+
+.script-category-panel,
+.script-button-list-panel,
+.script-button-detail-panel {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.script-category-panel select {
+  flex: 1 1 auto;
+  min-height: 168px;
+}
+
+.script-button-list {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.script-category-panel select,
+.script-button-list,
+.script-button-config textarea {
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 #202328;
+}
+
+.script-category-panel select::-webkit-scrollbar,
+.script-button-list::-webkit-scrollbar,
+.script-button-config textarea::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.script-category-panel select::-webkit-scrollbar-track,
+.script-button-list::-webkit-scrollbar-track,
+.script-button-config textarea::-webkit-scrollbar-track {
+  background: #202328;
+  border-left: 1px solid #333941;
+}
+
+.script-category-panel select::-webkit-scrollbar-thumb,
+.script-button-list::-webkit-scrollbar-thumb,
+.script-button-config textarea::-webkit-scrollbar-thumb {
+  border: 2px solid #202328;
+  border-radius: 999px;
+  background: #4b5563;
+}
+
+.script-category-panel select::-webkit-scrollbar-thumb:hover,
+.script-button-list::-webkit-scrollbar-thumb:hover,
+.script-button-config textarea::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+.script-button-list-toolbar {
+  flex: 0 0 auto;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #cbd5e1;
+}
+
+.script-button-list-toolbar strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--sh-ui-font-size, 13px);
+}
+
+.script-button-list-row {
+  border: 1px solid #3f464f;
+  border-radius: 6px;
+  background: #202328;
+  color: #f4f4f5;
+}
+
+.script-button-list-row {
+  flex: 0 0 auto;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  text-align: left;
+  cursor: default;
+}
+
+.script-button-editor-header button:hover:not(:disabled),
+.script-category-edit button:hover:not(:disabled),
+.script-category-new button:hover:not(:disabled),
+.script-button-config-header button:hover:not(:disabled),
+.script-button-list-row:hover,
+.script-button-list-row.selected {
+  border-color: #14b8a6;
+  background: #1f3b3a;
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(20, 184, 166, 0.34), 0 0 0 1px rgba(20, 184, 166, 0.12);
+}
+
+.script-button-list:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+
+.script-button-list-row.dragging {
+  opacity: 0.55;
+}
+
+.script-button-row-index {
+  flex: 0 0 28px;
+  color: #5eead4;
+  font-family: Consolas, monospace;
+  font-size: calc(var(--sh-ui-font-size, 13px) - 1px);
+}
+
+.script-button-row-main {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.script-button-row-title,
+.script-button-row-script {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.script-button-row-title {
+  font-weight: 600;
+}
+
+.script-button-row-script {
+  color: #a1a1aa;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: calc(var(--sh-ui-font-size, 13px) - 1px);
+}
+
+.script-button-config {
+  min-height: 0;
+}
+
+.script-button-detail {
+  flex: 0 0 auto;
+  align-content: start;
+}
+
+.script-button-detail textarea {
+  min-height: 142px;
+  resize: none;
+}
+
+@media (max-width: 860px) {
+  .script-button-editor-body {
+    grid-template-columns: 1fr;
+    overflow: auto;
+  }
+}
+
+.script-button-editor-overlay {
+  background: rgba(15, 23, 42, 0.24);
+}
+
+.shellium-shell[data-theme="light"] .script-button-editor {
+  border-color: #c7d0da;
+  background: #ffffff;
+  color: #17202a;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18);
+}
+
+.shellium-shell[data-theme="light"] .script-button-editor-header {
+  border-color: #d9e0e7;
+}
+
+.shellium-shell[data-theme="light"] .script-button-editor-header button,
+.shellium-shell[data-theme="light"] .script-button-empty-inline {
+  color: #64748b;
+}
+.shellium-shell[data-theme="light"] .script-button-bar {
+  border-color: #cfd7df;
+  background: #f8fafc;
+  scrollbar-color: #94a3b8 #edf2f7;
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar button {
+  border-color: #c7d0da;
+  background: #ffffff;
+  color: #334155;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar button:hover:not(:disabled) {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+  color: #17202a;
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar button:disabled {
+  color: #64748b;
+  opacity: 0.72;
+}
+
+.shellium-shell[data-theme="light"] .script-button-category-select {
+  border-color: #c7d0da;
+  background: #ffffff;
+  color: #17202a;
+}
+.shellium-shell[data-theme="light"] .script-button-overflow-menu {
+  border-color: #c7d0da;
+  background: #ffffff;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
+  scrollbar-color: #94a3b8 #edf2f7;
+}
+
+.shellium-shell[data-theme="light"] .script-button-status {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.85), 0 0 0 1px rgba(34, 197, 94, 0.2);
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar::-webkit-scrollbar-track {
+  background: #edf2f7;
+  border-color: #d9e0e7;
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar::-webkit-scrollbar-thumb {
+  border-color: #edf2f7;
+  background: #94a3b8;
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar::-webkit-scrollbar-corner {
+  background: #edf2f7;
+}
+
+.shellium-shell[data-theme="light"] .script-button-editor-resize {
+  background: linear-gradient(135deg, transparent 0 45%, #94a3b8 46% 55%, transparent 56% 62%, #94a3b8 63% 72%, transparent 73%);
+}
+
+.shellium-shell[data-theme="light"] .script-button-config-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.shellium-shell[data-theme="light"] .script-button-config-header button {
+  border-color: #c7d0da;
+  background: #ffffff;
+  color: #17202a;
+}
+
+.shellium-shell[data-theme="light"] .script-button-config {
+  border-color: #d9e0e7;
+  background: #f8fafc;
+}
+.shellium-shell[data-theme="light"] .script-button-editor-body,
+.shellium-shell[data-theme="light"] .script-button-list {
+  background: #ffffff;
+}
+
+.shellium-shell[data-theme="light"] .script-category-panel {
+  border-right-color: #d9e0e7;
+  background: #ffffff;
+}
+
+.shellium-shell[data-theme="light"] .script-button-empty {
+  border-color: #c7d0da;
+  background: #f8fafc;
+}
+
+.shellium-shell[data-theme="light"] .script-category-edit button,
+.shellium-shell[data-theme="light"] .script-category-new button,
+.shellium-shell[data-theme="light"] .script-button-config-header button,
+.shellium-shell[data-theme="light"] .script-button-editor-header button {
+  border-color: #c7d0da;
+  background: #ffffff;
+  color: #17202a;
+}
+
+.shellium-shell[data-theme="light"] .script-category-edit button:hover,
+.shellium-shell[data-theme="light"] .script-category-new button:hover,
+.shellium-shell[data-theme="light"] .script-button-config-header button:hover,
+.shellium-shell[data-theme="light"] .script-button-editor-header button:hover {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+}
+
+.shellium-shell[data-theme="light"] .script-category-edit button:disabled,
+.shellium-shell[data-theme="light"] .script-button-config-actions button:disabled {
+  color: #94a3b8;
+  opacity: 0.68;
+}
+
+.shellium-shell[data-theme="light"] .script-button-list-toolbar {
+  color: #334155;
+}
+.shellium-shell[data-theme="light"] .script-button-list-row {
+  border-color: #c7d0da;
+  background: #ffffff;
+  color: #17202a;
+}
+
+.shellium-shell[data-theme="light"] .script-button-list-row:hover,
+.shellium-shell[data-theme="light"] .script-button-list-row.selected {
+  border-color: #0f766e;
+  background: #e6fffb;
+}
+
+.shellium-shell[data-theme="light"] .script-button-row-index {
+  color: #0f766e;
+}
+
+.shellium-shell[data-theme="light"] .script-button-row-script {
+  color: #64748b;
+}
+
+.shellium-shell[data-theme="light"] .script-category-panel select,
+.shellium-shell[data-theme="light"] .script-button-list,
+.shellium-shell[data-theme="light"] .script-button-config textarea {
+  scrollbar-color: #94a3b8 #edf2f7;
+}
+
+.shellium-shell[data-theme="light"] .script-category-panel select::-webkit-scrollbar-track,
+.shellium-shell[data-theme="light"] .script-button-list::-webkit-scrollbar-track,
+.shellium-shell[data-theme="light"] .script-button-config textarea::-webkit-scrollbar-track {
+  background: #edf2f7;
+  border-color: #d9e0e7;
+}
+
+.shellium-shell[data-theme="light"] .script-category-panel select::-webkit-scrollbar-thumb,
+.shellium-shell[data-theme="light"] .script-button-list::-webkit-scrollbar-thumb,
+.shellium-shell[data-theme="light"] .script-button-config textarea::-webkit-scrollbar-thumb {
+  border-color: #edf2f7;
+  background: #94a3b8;
+}
+
+.shellium-shell[data-theme="light"] .script-category-panel select::-webkit-scrollbar-thumb:hover,
+.shellium-shell[data-theme="light"] .script-button-list::-webkit-scrollbar-thumb:hover,
+.shellium-shell[data-theme="light"] .script-button-config textarea::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+.shellium-shell[data-theme="light"] .script-button-category-select,
+.shellium-shell[data-theme="light"] .script-category-panel select,
+.shellium-shell[data-theme="light"] .script-category-panel input,
+.shellium-shell[data-theme="light"] .script-button-config input,
+.shellium-shell[data-theme="light"] .script-button-config select,
+.shellium-shell[data-theme="light"] .script-button-config textarea {
+  border-color: #c7d0da;
+  background: #ffffff;
+  color: #17202a;
+}
+
+.shellium-shell[data-theme="light"] .script-button-empty,
+.shellium-shell[data-theme="light"] .script-category-panel,
+.shellium-shell[data-theme="light"] .script-button-position-field,
+.shellium-shell[data-theme="light"] .script-button-config-header {
+  color: #64748b;
+}
+.shellium-shell[data-theme="light"] {
+  background: #eef2f6;
+  color: #17202a;
+}
+
+.shellium-shell[data-theme="light"] .palette {
+  border-color: #c7d0da;
+  background: #ffffff;
+  color: #17202a;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18);
+}
+
+.shellium-shell[data-theme="light"] .script-category-panel input::placeholder,
+.shellium-shell[data-theme="light"] .script-button-config input::placeholder,
+.shellium-shell[data-theme="light"] .script-button-config textarea::placeholder {
+  color: #94a3b8;
+}
+/* Shellium visual refresh */
+.shellium-shell {
+  --sh-bg: #101114;
+  --sh-surface: #191b1f;
+  --sh-surface-2: #202329;
+  --sh-surface-3: #282c33;
+  --sh-border: rgba(255, 255, 255, 0.11);
+  --sh-border-strong: rgba(255, 255, 255, 0.18);
+  --sh-text: #f5f7fa;
+  --sh-muted: #9aa3af;
+  --sh-accent: #5aa9ff;
+  --sh-accent-strong: #2f87f7;
+  --sh-accent-soft: rgba(90, 169, 255, 0.18);
+  --sh-green: #34c759;
+  --sh-yellow: #ffcc00;
+  --sh-red: #ff453a;
+  background: var(--sh-bg);
+  color: var(--sh-text);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Inter, system-ui, sans-serif;
+}
+
+.shellium-shell button,
+.shellium-shell input,
+.shellium-shell textarea,
+.shellium-shell select {
+  font-family: inherit;
+}
+
+.script-button-overflow-menu {
+  border: 1px solid var(--sh-border-strong);
+  border-radius: 8px;
+  background: rgba(33, 36, 43, 0.98);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.46), 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+}
+
+@keyframes shellium-unread-tab-pulse {
+  0%, 100% {
+    border-color: rgba(34, 211, 238, 0.78);
+    box-shadow: 0 0 0 rgba(34, 211, 238, 0), 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  }
+
+  50% {
+    border-color: rgba(125, 249, 255, 1);
+    box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.66), 0 0 18px rgba(34, 211, 238, 0.56), 0 1px 0 rgba(255, 255, 255, 0.16) inset;
+  }
+}
+
+.terminal-pane {
+  background: #08090b;
+}
+
+.script-button-bar {
+  border-color: var(--sh-border);
+  background: #171a1f;
+  scrollbar-color: #626b78 #1b1e24;
+}
+
+.script-button-bar button,
+.script-button-category-select {
+  border-color: rgba(255, 255, 255, 0.13);
+  border-radius: 7px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.035));
+  color: var(--sh-text);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+}
+
+.script-button-bar button:hover:not(:disabled),
+.script-button-editor-header button:hover:not(:disabled),
+.script-category-edit button:hover:not(:disabled),
+.script-category-new button:hover:not(:disabled),
+.script-button-config-header button:hover:not(:disabled),
+.script-button-list-row:hover,
+.script-button-list-row.selected {
+  border-color: rgba(90, 169, 255, 0.52);
+  background: rgba(90, 169, 255, 0.18);
+  color: #ffffff;
+  box-shadow: 0 0 0 1px rgba(90, 169, 255, 0.12), 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+}
+
+.script-button-editor-overlay {
+  background: rgba(8, 10, 14, 0.58);
+}
+
+.palette,
+.script-button-editor {
+  border: 1px solid var(--sh-border-strong);
+  border-radius: 8px;
+  background: #202329;
+  color: var(--sh-text);
+  box-shadow: 0 26px 72px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.07) inset;
+}
+
+.script-button-editor-header {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.015));
+}
+
+.script-button-editor-body {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: #202329;
+}
+
+.script-category-panel {
+  border-color: rgba(255, 255, 255, 0.09);
+  background: #191c22;
+}
+
+.script-button-list,
+.script-button-config {
+  background: transparent;
+}
+
+.script-category-panel select,
+.script-category-panel input,
+.script-button-config input,
+.script-button-config textarea {
+  border-color: rgba(255, 255, 255, 0.13);
+  border-radius: 7px;
+  background: rgba(5, 6, 8, 0.44);
+  color: var(--sh-text);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+}
+
+.script-category-panel select:focus,
+.script-category-panel input:focus,
+.script-button-config input:focus,
+.script-button-config textarea:focus {
+  border-color: rgba(90, 169, 255, 0.72);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(90, 169, 255, 0.16);
+}
+
+.script-button-list-row {
+  border-radius: 7px;
+}
+
+.script-button-row-index {
+  color: #8dc8ff;
+}
+
+.script-button-empty {
+  border-color: rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.script-button-config {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.script-button-list-row {
+  border-color: rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.shellium-shell[data-theme="light"] {
+  --sh-bg: #eef1f5;
+  --sh-surface: #f7f8fa;
+  --sh-surface-2: #ffffff;
+  --sh-surface-3: #e9edf3;
+  --sh-border: rgba(35, 48, 64, 0.12);
+  --sh-border-strong: rgba(35, 48, 64, 0.18);
+  --sh-text: #17202a;
+  --sh-muted: #64748b;
+  --sh-accent: #007aff;
+  --sh-accent-strong: #0066d6;
+  --sh-accent-soft: rgba(0, 122, 255, 0.12);
+  background: var(--sh-bg);
+  color: var(--sh-text);
+}
+
+.shellium-shell[data-theme="light"] .palette,
+.shellium-shell[data-theme="light"] .script-button-editor,
+.shellium-shell[data-theme="light"] .script-button-overflow-menu {
+  border-color: var(--sh-border-strong);
+  background: #ffffff;
+  color: var(--sh-text);
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18), 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+}
+
+.shellium-shell[data-theme="light"] .script-button-editor-header {
+  border-color: var(--sh-border);
+  background: linear-gradient(180deg, #ffffff, #f3f6fa);
+}
+
+.shellium-shell[data-theme="light"] .script-button-editor-body,
+.shellium-shell[data-theme="light"] .script-category-panel {
+  border-color: var(--sh-border);
+  background: #f7f8fb;
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar button,
+.shellium-shell[data-theme="light"] .script-button-category-select {
+  border-color: rgba(35, 48, 64, 0.13);
+  background: linear-gradient(180deg, #ffffff, #eef2f7);
+  color: #17202a;
+}
+
+.shellium-shell[data-theme="light"] .script-category-panel select,
+.shellium-shell[data-theme="light"] .script-category-panel input,
+.shellium-shell[data-theme="light"] .script-button-config input,
+.shellium-shell[data-theme="light"] .script-button-config textarea {
+  border-color: rgba(35, 48, 64, 0.15);
+  background: #ffffff;
+  color: #17202a;
+}
+
+.shellium-shell[data-theme="light"] .terminal-pane {
+  background: #dfe5ed;
+}
+
+/* Native select popup contrast */
+.script-button-category-select,
+.script-category-panel select {
+  color-scheme: dark;
+}
+
+.script-button-category-select option,
+.script-category-panel select option {
+  background: #202329;
+  color: #f5f7fa;
+}
+
+.shellium-shell[data-theme="light"] .script-button-category-select,
+.shellium-shell[data-theme="light"] .script-category-panel select {
+  color-scheme: light;
+}
+
+.shellium-shell[data-theme="light"] .script-button-category-select option,
+.shellium-shell[data-theme="light"] .script-category-panel select option {
+  background: #ffffff;
+  color: #17202a;
+}
+
+/* Script button and session tab typography tuning. */
+.script-button-bar button,
+.script-button-category-select {
+  font-size: var(--sh-ui-font-size, 13px);
+  font-weight: 500;
+  line-height: 1;
+  text-rendering: geometricPrecision;
+}
+
+.script-button-label {
+  line-height: 1;
+}
+/* Connect palette typography aligned with script button bar. */
+.palette,
+.palette button,
+.palette input,
+.palette textarea,
+.palette select {
+  font-size: var(--sh-ui-font-size, 13px);
+  font-weight: 500;
+  line-height: 1.2;
+  text-rendering: geometricPrecision;
+}
+
+.palette button {
+  line-height: 1;
+}
+/* Global Shellium control typography standard. */
+.shellium-shell button,
+.shellium-shell label,
+.shellium-shell input,
+.shellium-shell textarea,
+.shellium-shell select,
+.shellium-shell option,
+.shellium-shell .script-button-bar button,
+.shellium-shell .script-button-category-select,
+.shellium-shell .script-button-overflow-menu button,
+.shellium-shell .script-category-panel select,
+.shellium-shell .script-category-panel input,
+.shellium-shell .script-button-list-row,
+.shellium-shell .script-button-config input,
+.shellium-shell .script-button-config select,
+.shellium-shell .script-button-config textarea {
+  font-size: var(--sh-ui-font-size, 13px);
+  font-weight: 500;
+  line-height: 1.2;
+  text-rendering: geometricPrecision;
+}
+
+.shellium-shell input,
+.shellium-shell textarea,
+.shellium-shell select,
+.shellium-shell option,
+.shellium-shell .script-button-config textarea {
+  font-weight: 400;
+}
+
+.shellium-shell button,
+.shellium-shell .script-button-bar button {
+  line-height: 1;
+}
+/* SecureCRT-like script button strip. */
+.script-button-bar {
+  gap: 4px;
+  padding: 4px 6px;
+  border-top-color: #303846;
+  background: #151a21;
+}
+
+.script-button-category-select {
+  height: 24px;
+  min-width: 132px;
+  border-color: #3a4554;
+  border-radius: 3px;
+  background: #111820;
+  color: #f1f5f9;
+  padding: 0 6px;
+}
+
+.script-button-bar button:not(.script-button-resizer) {
+  min-height: 24px;
+  height: 24px;
+  gap: 4px;
+  border-color: #2c3542;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #1d2430, #151b23);
+  color: #e6edf5;
+  padding: 0 7px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.script-button-bar button:not(.script-button-resizer):hover:not(:disabled) {
+  border-color: #4a5b70;
+  background: linear-gradient(180deg, #253041, #1b2430);
+  color: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.script-button-bar button:disabled {
+  opacity: 0.58;
+}
+
+.script-button-status {
+  position: relative;
+  flex: 0 0 12px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--script-button-color, #22c55e);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.28), 0 0 0 1px var(--script-button-color-border, rgba(7, 95, 37, 0.72));
+}
+
+.script-button-status::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--script-button-color-highlight, rgba(220, 252, 231, 0.82));
+}
+
+.script-button-label {
+  color: inherit;
+}
+
+.script-button-more {
+  min-width: 48px;
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar {
+  border-top-color: #bcc8d6;
+  background: #d9e1ea;
+}
+
+.shellium-shell[data-theme="light"] .script-button-category-select,
+.shellium-shell[data-theme="light"] .script-button-bar button:not(.script-button-resizer) {
+  border-color: #aebaca;
+  background: linear-gradient(180deg, #f8fafc, #dbe3ee);
+  color: #17202a;
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar button:not(.script-button-resizer):hover:not(:disabled) {
+  border-color: #7d91ab;
+  background: linear-gradient(180deg, #ffffff, #d4deeb);
+  color: #0f172a;
+}
+
+/* macOS light theme finish */
+.shellium-shell[data-theme="light"] {
+  --sh-bg: #f5f5f7;
+  --sh-surface: rgba(255, 255, 255, 0.86);
+  --sh-surface-2: rgba(249, 249, 251, 0.92);
+  --sh-surface-3: #eef0f4;
+  --sh-border: rgba(60, 60, 67, 0.16);
+  --sh-border-strong: rgba(60, 60, 67, 0.22);
+  --sh-text: #1d1d1f;
+  --sh-muted: #6e6e73;
+  --sh-accent: #007aff;
+  --sh-accent-strong: #005ecb;
+  --sh-accent-soft: rgba(0, 122, 255, 0.11);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(245, 245, 247, 0.96)), #f5f5f7;
+  color: var(--sh-text);
+}
+
+.shellium-shell[data-theme="light"] .terminal-pane {
+  background: #eceff3;
+}
+
+.shellium-shell[data-theme="light"] .terminal-viewport-shell {
+  border-color: rgba(60, 60, 67, 0.18);
+  box-shadow: 0 18px 44px rgba(60, 60, 67, 0.14), 0 1px 0 rgba(255, 255, 255, 0.94) inset;
+}
+
+.shellium-shell[data-theme="light"] .script-button-editor-overlay {
+  background: rgba(40, 42, 48, 0.22);
+}
+
+.shellium-shell[data-theme="light"] .palette,
+.shellium-shell[data-theme="light"] .script-button-editor,
+.shellium-shell[data-theme="light"] .script-button-overflow-menu {
+  border-color: rgba(60, 60, 67, 0.18);
+  background: rgba(255, 255, 255, 0.94);
+  color: #1d1d1f;
+  box-shadow: 0 24px 60px rgba(60, 60, 67, 0.18), 0 1px 0 rgba(255, 255, 255, 0.92) inset;
+}
+
+.shellium-shell[data-theme="light"] .script-button-editor-header {
+  border-color: rgba(60, 60, 67, 0.14);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(246, 246, 248, 0.88));
+  color: #6e6e73;
+}
+
+.shellium-shell[data-theme="light"] .script-button-editor-body {
+  border-color: rgba(60, 60, 67, 0.12);
+  background: rgba(250, 250, 252, 0.78);
+}
+
+.shellium-shell[data-theme="light"] .script-category-panel {
+  border-color: rgba(60, 60, 67, 0.12);
+  background: rgba(242, 243, 247, 0.78);
+}
+
+.shellium-shell[data-theme="light"] .script-category-panel select,
+.shellium-shell[data-theme="light"] .script-category-panel input,
+.shellium-shell[data-theme="light"] .script-button-config input,
+.shellium-shell[data-theme="light"] .script-button-config textarea {
+  border-color: rgba(60, 60, 67, 0.18);
+  background: rgba(255, 255, 255, 0.82);
+  color: #1d1d1f;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.86) inset;
+}
+
+.shellium-shell[data-theme="light"] .script-category-panel select:focus,
+.shellium-shell[data-theme="light"] .script-category-panel input:focus,
+.shellium-shell[data-theme="light"] .script-button-config input:focus,
+.shellium-shell[data-theme="light"] .script-button-config textarea:focus {
+  border-color: rgba(0, 122, 255, 0.52);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12), 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar button,
+.shellium-shell[data-theme="light"] .script-button-category-select {
+  border-color: rgba(60, 60, 67, 0.18);
+  background: linear-gradient(180deg, #ffffff, #f0f1f4);
+  color: #1d1d1f;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.86) inset, 0 1px 1px rgba(60, 60, 67, 0.08);
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar button:hover:not(:disabled),
+.shellium-shell[data-theme="light"] .script-button-editor-header button:hover:not(:disabled),
+.shellium-shell[data-theme="light"] .script-category-edit button:hover:not(:disabled),
+.shellium-shell[data-theme="light"] .script-category-new button:hover:not(:disabled),
+.shellium-shell[data-theme="light"] .script-button-config-header button:hover:not(:disabled),
+.shellium-shell[data-theme="light"] .script-button-list-row:hover,
+.shellium-shell[data-theme="light"] .script-button-list-row.selected {
+  border-color: rgba(0, 122, 255, 0.32);
+  background: rgba(0, 122, 255, 0.1);
+  color: #1d1d1f;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.88) inset;
+}
+
+.shellium-shell[data-theme="light"] .script-button-list-row {
+  color: #3a3a3c;
+}
+
+.shellium-shell[data-theme="light"] .script-button-row-index {
+  color: #0071e3;
+}
+
+.shellium-shell[data-theme="light"] .script-button-empty,
+.shellium-shell[data-theme="light"] .script-button-config,
+.shellium-shell[data-theme="light"] .script-button-list-row {
+  border-color: rgba(60, 60, 67, 0.14);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar {
+  border-color: rgba(60, 60, 67, 0.16);
+  background: rgba(232, 234, 239, 0.88);
+  scrollbar-color: #b8bec8 #e8eaef;
+}
+
+.shellium-shell[data-theme="light"] .script-button-category-select,
+.shellium-shell[data-theme="light"] .script-button-bar button:not(.script-button-resizer) {
+  border-color: rgba(60, 60, 67, 0.18);
+  background: linear-gradient(180deg, #ffffff, #eef0f4);
+  color: #1d1d1f;
+}
+
+/* Studio light theme alignment */
+.shellium-shell[data-theme="light"] {
+  --sh-bg: #f3f4f6;
+  --sh-surface: #ffffff;
+  --sh-surface-2: #fbfbfc;
+  --sh-surface-3: #f3f4f6;
+  --sh-border: #e5e7eb;
+  --sh-border-strong: #d9dde3;
+  --sh-text: #24292f;
+  --sh-muted: #6b7280;
+  --sh-accent: #2f80ff;
+  --sh-accent-strong: #1f6fe5;
+  --sh-accent-soft: #e8f1ff;
+  background: #f3f4f6;
+  color: var(--sh-text);
+}
+
+.shellium-shell[data-theme="light"] .terminal-pane {
+  background: #f3f4f6;
+}
+
+.shellium-shell[data-theme="light"] .terminal-viewport-shell {
+  border-color: #e5e7eb;
+  background: #f3f4f6;
+  box-shadow: none;
+}
+
+.shellium-shell[data-theme="light"] .palette,
+.shellium-shell[data-theme="light"] .script-button-editor,
+.shellium-shell[data-theme="light"] .script-button-overflow-menu {
+  border-color: #dfe3e8;
+  background: #ffffff;
+  color: #24292f;
+  box-shadow: 0 16px 38px rgba(31, 41, 55, 0.12);
+}
+
+.shellium-shell[data-theme="light"] .script-button-editor-header {
+  border-color: #e5e7eb;
+  background: #fbfbfc;
+  color: #6b7280;
+}
+
+.shellium-shell[data-theme="light"] .script-button-editor-body {
+  border-color: #e5e7eb;
+  background: #f3f4f6;
+}
+
+.shellium-shell[data-theme="light"] .script-category-panel {
+  border-color: #e5e7eb;
+  background: #ffffff;
+}
+
+.shellium-shell[data-theme="light"] .script-button-list,
+.shellium-shell[data-theme="light"] .script-button-config {
+  background: #f3f4f6;
+}
+
+.shellium-shell[data-theme="light"] .script-category-panel select,
+.shellium-shell[data-theme="light"] .script-category-panel input,
+.shellium-shell[data-theme="light"] .script-button-config input,
+.shellium-shell[data-theme="light"] .script-button-config textarea {
+  border-color: #dfe3e8;
+  background: #ffffff;
+  color: #24292f;
+  box-shadow: 0 1px 2px rgba(31, 41, 55, 0.04);
+}
+
+.shellium-shell[data-theme="light"] .script-category-panel select:focus,
+.shellium-shell[data-theme="light"] .script-category-panel input:focus,
+.shellium-shell[data-theme="light"] .script-button-config input:focus,
+.shellium-shell[data-theme="light"] .script-button-config textarea:focus {
+  border-color: #2f80ff;
+  box-shadow: 0 0 0 3px rgba(47, 128, 255, 0.14);
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar {
+  border-color: #e2e5ea;
+  background: #f3f4f6;
+  scrollbar-color: #c4cad3 #f3f4f6;
+}
+
+.shellium-shell[data-theme="light"] .script-button-category-select,
+.shellium-shell[data-theme="light"] .script-button-bar button:not(.script-button-resizer) {
+  border-color: #dfe3e8;
+  background: #ffffff;
+  color: #374151;
+  box-shadow: none;
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar button:not(.script-button-resizer):hover:not(:disabled),
+.shellium-shell[data-theme="light"] .script-button-editor-header button:hover:not(:disabled),
+.shellium-shell[data-theme="light"] .script-category-edit button:hover:not(:disabled),
+.shellium-shell[data-theme="light"] .script-category-new button:hover:not(:disabled),
+.shellium-shell[data-theme="light"] .script-button-config-header button:hover:not(:disabled),
+.shellium-shell[data-theme="light"] .script-button-list-row:hover,
+.shellium-shell[data-theme="light"] .script-button-list-row.selected {
+  border-color: #c8d9f6;
+  background: #eef6ff;
+  color: #1f2937;
+  box-shadow: none;
+}
+
+.shellium-shell[data-theme="light"] .script-button-list-row {
+  color: #374151;
+}
+
+.shellium-shell[data-theme="light"] .script-button-row-index {
+  color: #8b95a1;
+}
+
+.shellium-shell[data-theme="light"] .script-button-empty,
+.shellium-shell[data-theme="light"] .script-button-config,
+.shellium-shell[data-theme="light"] .script-button-list-row {
+  border-color: #e3e7ed;
+  background: #ffffff;
+  color: #6b7280;
+  box-shadow: none;
+}
+
+/* Studio light button tuning */
+.shellium-shell[data-theme="light"] .script-button-bar {
+  min-height: 34px;
+  max-height: 34px;
+  gap: 3px;
+  padding: 4px 8px;
+  border-top: 1px solid #e5e7eb;
+  background: #f7f8fa;
+}
+
+.shellium-shell[data-theme="light"] .script-button-category-select,
+.shellium-shell[data-theme="light"] .script-button-bar button:not(.script-button-resizer) {
+  height: 26px;
+  min-height: 26px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: #4b5563;
+  padding: 0 8px;
+  box-shadow: none;
+}
+
+.shellium-shell[data-theme="light"] .script-button-category-select {
+  border-color: #e1e5eb;
+  background: #ffffff;
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar button:not(.script-button-resizer):hover:not(:disabled) {
+  border-color: #dbeafe;
+  background: #eef6ff;
+  color: #2563eb;
+  box-shadow: none;
+}
+
+.shellium-shell[data-theme="light"] .script-button-status {
+  flex-basis: 8px;
+  width: 8px;
+  height: 8px;
+  box-shadow: none;
+}
+
+.shellium-shell[data-theme="light"] .script-button-status::before {
+  content: none;
+}
+
+.shellium-shell[data-theme="light"] .script-button-editor-header button,
+.shellium-shell[data-theme="light"] .script-category-edit button,
+.shellium-shell[data-theme="light"] .script-category-new button,
+.shellium-shell[data-theme="light"] .script-button-config-header button {
+  min-height: 28px;
+  height: 28px;
+  border: 1px solid #dfe3e8;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #374151;
+  padding: 0 10px;
+  box-shadow: none;
+}
+
+.shellium-shell[data-theme="light"] .script-button-editor-header button[aria-label="Close"] {
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
+  border-color: transparent;
+  background: transparent;
+  padding: 0;
+}
+
+.shellium-shell[data-theme="light"] .script-button-editor-header button:hover:not(:disabled),
+.shellium-shell[data-theme="light"] .script-category-edit button:hover:not(:disabled),
+.shellium-shell[data-theme="light"] .script-category-new button:hover:not(:disabled),
+.shellium-shell[data-theme="light"] .script-button-config-header button:hover:not(:disabled) {
+  border-color: #c8d9f6;
+  background: #f3f8ff;
+  color: #2563eb;
+  box-shadow: none;
+}
+
+/* Unified studio controls */
+.shellium-shell {
+  --sh-control-bg: #111827;
+  --sh-control-hover-bg: #172033;
+  --sh-control-border: #263241;
+  --sh-control-hover-border: #2f80ff;
+  --sh-control-text: #cbd5e1;
+  --sh-control-hover-text: #60a5fa;
+  --sh-control-primary-bg: #2563eb;
+  --sh-control-primary-hover-bg: #1d4ed8;
+  --sh-control-primary-text: #ffffff;
+  --sh-field-bg: #0b0f16;
+  --sh-field-border: #263241;
+  --sh-field-text: #dbeafe;
+}
+
+.shellium-shell[data-theme="light"] {
+  --sh-control-bg: #ffffff;
+  --sh-control-hover-bg: #f3f8ff;
+  --sh-control-border: #dfe3e8;
+  --sh-control-hover-border: #c8d9f6;
+  --sh-control-text: #374151;
+  --sh-control-hover-text: #2563eb;
+  --sh-control-primary-bg: #2563eb;
+  --sh-control-primary-hover-bg: #1d4ed8;
+  --sh-control-primary-text: #ffffff;
+  --sh-field-bg: #ffffff;
+  --sh-field-border: #dfe3e8;
+  --sh-field-text: #24292f;
+}
+
+.shellium-shell .script-button-category-select,
+.shellium-shell .script-button-bar button:not(.script-button-resizer),
+.shellium-shell .script-button-editor-header button,
+.shellium-shell .script-category-edit button,
+.shellium-shell .script-category-new button,
+.shellium-shell .script-button-config-header button {
+  min-height: 28px;
+  height: 28px;
+  border: 1px solid var(--sh-control-border) !important;
+  border-radius: 5px;
+  background: var(--sh-control-bg) !important;
+  color: var(--sh-control-text) !important;
+  padding: 0 10px;
+  box-shadow: none !important;
+}
+
+.shellium-shell .script-button-bar button:not(.script-button-resizer) {
+  min-height: 26px;
+  height: 26px;
+  border-color: transparent !important;
+  background: transparent !important;
+  padding: 0 8px;
+}
+
+.shellium-shell .script-button-category-select:hover:not(:disabled),
+.shellium-shell .script-button-bar button:not(.script-button-resizer):hover:not(:disabled),
+.shellium-shell .script-button-editor-header button:hover:not(:disabled),
+.shellium-shell .script-category-edit button:hover:not(:disabled),
+.shellium-shell .script-category-new button:hover:not(:disabled),
+.shellium-shell .script-button-config-header button:hover:not(:disabled) {
+  border-color: var(--sh-control-hover-border) !important;
+  background: var(--sh-control-hover-bg) !important;
+  color: var(--sh-control-hover-text) !important;
+  box-shadow: none !important;
+}
+
+.shellium-shell .script-button-bar button:not(.script-button-resizer):hover:not(:disabled) .script-button-label,
+.shellium-shell[data-theme="light"] .script-button-bar button:not(.script-button-resizer):hover:not(:disabled) .script-button-label {
+  color: var(--sh-control-hover-text) !important;
+}
+
+.shellium-shell .script-category-panel select,
+.shellium-shell .script-category-panel input,
+.shellium-shell .script-button-config input,
+.shellium-shell .script-button-config textarea {
+  border-color: var(--sh-field-border) !important;
+  background: var(--sh-field-bg) !important;
+  color: var(--sh-field-text) !important;
+  box-shadow: none !important;
+}
+
+/* Studio dark theme alignment */
+.shellium-shell[data-theme="dark"] {
+  --sh-bg: #050607;
+  --sh-surface: #08090b;
+  --sh-surface-2: #0c0d10;
+  --sh-surface-3: #111318;
+  --sh-border: #1f2329;
+  --sh-border-strong: #2a3038;
+  --sh-text: #d8dee9;
+  --sh-muted: #7b8494;
+  --sh-accent: #2f80ff;
+  --sh-accent-strong: #1f6fe5;
+  --sh-accent-soft: #071a35;
+  background: #050607;
+  color: var(--sh-text);
+}
+
+.shellium-shell[data-theme="dark"] .script-button-bar {
+  border-color: #1f2329;
+  background: #090a0c;
+  box-shadow: none;
+}
+
+.shellium-shell[data-theme="dark"] .terminal-pane,
+.shellium-shell[data-theme="dark"] .terminal-viewport-shell {
+  border-color: #14171c;
+  background: #020304;
+  box-shadow: none;
+}
+
+.shellium-shell[data-theme="dark"] .palette,
+.shellium-shell[data-theme="dark"] .script-button-editor,
+.shellium-shell[data-theme="dark"] .script-button-overflow-menu {
+  border-color: #1f2329;
+  background: #08090b;
+  color: #d8dee9;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
+}
+
+.shellium-shell[data-theme="dark"] .script-button-editor-header {
+  border-color: #1f2329;
+  background: #0c0d10;
+  color: #7b8494;
+}
+
+.shellium-shell[data-theme="dark"] .script-button-editor-body {
+  border-color: #1f2329;
+  background: #050607;
+}
+
+.shellium-shell[data-theme="dark"] .script-category-panel,
+.shellium-shell[data-theme="dark"] .script-button-list,
+.shellium-shell[data-theme="dark"] .script-button-config {
+  border-color: #1f2329;
+  background: #08090b;
+}
+
+.shellium-shell[data-theme="dark"] .script-button-list-row:hover,
+.shellium-shell[data-theme="dark"] .script-button-list-row.selected {
+  background: #071a35;
+  color: #60a5fa;
+}
+
+/* Script overflow menu scrolls only when it reaches the viewport edge. */
+.shellium-shell .script-button-overflow-menu {
+  max-height: var(--script-overflow-menu-max-height, calc(100vh - 76px));
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.shellium-shell[data-theme="light"] .script-button-overflow-menu {
+  scrollbar-color: #c4cad3 #ffffff;
+}
+
+.shellium-shell[data-theme="dark"] .script-button-overflow-menu {
+  scrollbar-color: #2a3038 #0b0d10;
+}
+
+/* Compact standard form fields across dialogs. */
+.shellium-shell .script-button-color-field {
+  user-select: none;
+}
+
+.shellium-shell .script-button-color-field {
+  display: grid !important;
+  gap: 5px !important;
+  align-items: start !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--sh-muted) !important;
+  font-size: calc(var(--sh-ui-font-size, 13px) - 1px) !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+}
+
+.shellium-shell .script-button-config input,
+.shellium-shell .script-button-config select {
+  min-height: 30px !important;
+  height: 30px !important;
+  border: 1px solid var(--sh-field-border) !important;
+  border-radius: 5px !important;
+  background: var(--sh-field-bg) !important;
+  color: var(--sh-field-text) !important;
+  padding: 0 8px !important;
+  font-size: var(--sh-ui-font-size, 13px) !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  box-shadow: none !important;
+  user-select: text;
+}
+
+.shellium-shell .script-button-config textarea {
+  min-height: 72px !important;
+  height: auto !important;
+  padding: 7px 8px !important;
+  line-height: 1.35 !important;
+  resize: vertical;
+}
+
+.shellium-shell[data-theme="light"] {
+  --sh-field-text: #111827;
+  --sh-muted: #4b5563;
+}
+
+.shellium-shell[data-theme="dark"] {
+  --sh-field-text: #e5edf8;
+  --sh-muted: #a8b3c4;
+}
+
+.shellium-shell .script-button-color-field:focus-within {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--sh-text) !important;
+}
+
+/* Light theme white workspace finish: keep terminal black, make surrounding chrome clean white. */
+.shellium-shell[data-theme="light"] {
+  --sh-bg: #ffffff;
+  --sh-surface: #ffffff;
+  --sh-surface-2: #ffffff;
+  --sh-surface-3: #fafafa;
+  background: #ffffff;
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar {
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar {
+  border-color: #e5e7eb !important;
+}
+
+.shellium-shell[data-theme="light"] .terminal-pane {
+  background: #ffffff !important;
+}
+
+.shellium-shell[data-theme="light"] .terminal-viewport-shell {
+  border-color: #d9dde3 !important;
+  background: #050607 !important;
+  box-shadow: none !important;
+}
+
+.shellium-shell[data-theme="light"] .script-button-category-select,
+.shellium-shell[data-theme="light"] .script-button-bar button:not(.script-button-resizer) {
+  background: #ffffff !important;
+}
+
+/* Light theme white dialog finish: align every window with the white workspace chrome. */
+.shellium-shell[data-theme="light"] .palette,
+.shellium-shell[data-theme="light"] .script-button-editor,
+.shellium-shell[data-theme="light"] .script-button-overflow-menu {
+  border-color: #e5e7eb !important;
+  background: #ffffff !important;
+  color: var(--sh-text) !important;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.11) !important;
+}
+
+.shellium-shell[data-theme="light"] .script-button-editor-header {
+  border-color: #e5e7eb !important;
+  background: #ffffff !important;
+  color: var(--sh-muted) !important;
+  box-shadow: none !important;
+}
+
+.shellium-shell[data-theme="light"] .script-button-editor-body {
+  border-color: #eef0f3 !important;
+  background: #ffffff !important;
+  color: var(--sh-text) !important;
+}
+
+.shellium-shell[data-theme="light"] .script-category-panel,
+.shellium-shell[data-theme="light"] .script-button-list,
+.shellium-shell[data-theme="light"] .script-button-detail-panel,
+.shellium-shell[data-theme="light"] .script-button-config,
+.shellium-shell[data-theme="light"] .script-button-list-row {
+  border-color: #e5e7eb !important;
+  background: #ffffff !important;
+  color: var(--sh-text) !important;
+  box-shadow: none !important;
+}
+
+.shellium-shell[data-theme="light"] .script-category-panel select,
+.shellium-shell[data-theme="light"] .script-category-panel input,
+.shellium-shell[data-theme="light"] .script-button-config input,
+.shellium-shell[data-theme="light"] .script-button-config select,
+.shellium-shell[data-theme="light"] .script-button-config textarea {
+  border-color: #dfe3e8 !important;
+  background: #ffffff !important;
+  color: var(--sh-text) !important;
+  box-shadow: none !important;
+}
+
+.shellium-shell[data-theme="light"] .script-button-editor-overlay {
+  background: rgba(248, 250, 252, 0.64) !important;
+}
+
+/* Shellium Enterprise Prototype Adoption */
+.shellium-shell {
+  --sh-bg: #06080b;
+  --sh-chrome: #0b0f14;
+  --sh-chrome-2: #111720;
+  --sh-surface: #0d1219;
+  --sh-surface-2: #151c26;
+  --sh-surface-3: #1b2531;
+  --sh-field-bg: #080c12;
+  --sh-border: #1b2430;
+  --sh-border-strong: #273241;
+  --sh-text: #e7edf5;
+  --sh-muted: #93a1b2;
+  --sh-faint: #657386;
+  --sh-accent: #3b82f6;
+  --sh-accent-strong: #1f5fbf;
+  --sh-accent-soft: rgba(59, 130, 246, 0.14);
+  --sh-ok: #22c55e;
+  --sh-warn: #f59e0b;
+  --sh-danger: #ef4444;
+  background: var(--sh-bg) !important;
+  color: var(--sh-text) !important;
+}
+
+.shellium-shell .palette {
+  border: 1px solid #18202b !important;
+  border-radius: 8px !important;
+  background: var(--sh-surface) !important;
+  color: var(--sh-text) !important;
+  box-shadow: 0 24px 72px rgba(0,0,0,0.52) !important;
+}
+
+.shellium-shell[data-theme="light"] {
+  --sh-bg: #f4f7fb;
+  --sh-chrome: #ffffff;
+  --sh-chrome-2: #f6f8fb;
+  --sh-surface: #ffffff;
+  --sh-surface-2: #eef3f8;
+  --sh-surface-3: #e6edf5;
+  --sh-field-bg: #ffffff;
+  --sh-border: #d9e1eb;
+  --sh-border-strong: #c4cfdc;
+  --sh-text: #17202a;
+  --sh-muted: #475569;
+  --sh-faint: #64748b;
+}
+/* Shellium Sovereign Quick Adoption */
+.shellium-shell {
+  --sh-bg: #040609;
+  --sh-chrome: #090d13;
+  --sh-chrome-2: #0d131b;
+  --sh-surface: #0d131b;
+  --sh-surface-2: #121a25;
+  --sh-surface-3: #182231;
+  --sh-field-bg: #060a0f;
+  --sh-border: #192331;
+  --sh-border-strong: #233144;
+  --sh-text: #edf4fc;
+  --sh-muted: #9aa8ba;
+  --sh-faint: #667589;
+  --sh-accent: #4a8dff;
+  --sh-accent-strong: #1f63cf;
+  background: var(--sh-bg) !important;
+}
+
+.shellium-shell .palette {
+  border-color: #17202d !important;
+  background: #0d131b !important;
+}
+/* Shellium Script Buttons Concept B */
+.shellium-shell .script-button-bar {
+  border-color: #162235 !important;
+  background: rgba(7, 11, 17, 0.96) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+}
+
+.shellium-shell .script-button-category-select {
+  width: 124px !important;
+  height: 32px !important;
+  flex: 0 0 124px !important;
+  border: 1px solid #2a3c56 !important;
+  border-radius: 999px !important;
+  background: #111a27 !important;
+  color: #eef5ff !important;
+  padding: 0 28px 0 12px !important;
+  font-size: 12px !important;
+  font-weight: 850 !important;
+  letter-spacing: 0 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055) !important;
+}
+
+.shellium-shell .script-button-category-select:hover,
+.shellium-shell .script-button-category-select:focus {
+  border-color: #3d5f8d !important;
+  outline: none !important;
+}
+
+.shellium-shell .script-button-bar button:not(.script-button-resizer) {
+  height: 30px !important;
+  min-height: 30px !important;
+  flex: 0 0 auto !important;
+  border: 1px solid #253753 !important;
+  border-radius: 999px !important;
+  background: #101824 !important;
+  color: #e7f0ff !important;
+  padding: 0 12px !important;
+  gap: 7px !important;
+  font-size: 12px !important;
+  font-weight: 780 !important;
+  letter-spacing: 0 !important;
+  box-shadow: inset 3px 0 0 var(--script-button-color, #19d27b) !important;
+}
+
+.shellium-shell .script-button-bar button:not(.script-button-resizer):hover:not(:disabled) {
+  border-color: #3a5f8f !important;
+  background: #142238 !important;
+  color: #ffffff !important;
+  box-shadow: inset 3px 0 0 var(--script-button-color, #19d27b), 0 8px 18px rgba(0, 0, 0, 0.18) !important;
+}
+
+.shellium-shell .script-button-bar button:not(.script-button-resizer):disabled {
+  color: #596b84 !important;
+  background: #0c131d !important;
+  border-color: #1b293b !important;
+  opacity: 0.78 !important;
+}
+
+.shellium-shell .script-button-status {
+  width: 7px !important;
+  height: 7px !important;
+  flex: 0 0 7px !important;
+  border-radius: 999px !important;
+  background: var(--script-button-color, #19d27b) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--script-button-color, #19d27b) 16%, transparent), 0 0 12px color-mix(in srgb, var(--script-button-color, #19d27b) 30%, transparent) !important;
+}
+
+.shellium-shell .script-button-status::before {
+  display: none !important;
+}
+
+.shellium-shell .script-button-label {
+  color: inherit !important;
+  font-size: 12px !important;
+  font-weight: 780 !important;
+}
+
+.shellium-shell .script-button-empty-inline {
+  height: 30px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  color: #647997 !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+}
+
+.shellium-shell .script-button-overflow {
+  margin-left: auto !important;
+}
+
+.shellium-shell .script-button-more,
+.shellium-shell .script-button-overflow > button {
+  color: #94aad0 !important;
+  border-style: dashed !important;
+  box-shadow: none !important;
+}
+
+.shellium-shell .script-button-overflow-menu {
+  border-color: #243550 !important;
+  border-radius: 8px !important;
+  background: rgba(8, 13, 20, 0.96) !important;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.4) !important;
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar {
+  border-color: #d5dfec !important;
+  background: #f7f9fc !important;
+}
+
+.shellium-shell[data-theme="light"] .script-button-category-select,
+.shellium-shell[data-theme="light"] .script-button-bar button:not(.script-button-resizer) {
+  border-color: #c7d5e8 !important;
+  background: #ffffff !important;
+  color: #1a2b42 !important;
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar button:not(.script-button-resizer):hover:not(:disabled) {
+  border-color: #3b82f6 !important;
+  background: #edf5ff !important;
+  color: #102033 !important;
+}
+/* Shellium Script Buttons Concept A */
+.shellium-shell .script-button-bar {
+  border-color: #182438 !important;
+  background: rgba(8, 13, 20, 0.98) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+}
+
+.shellium-shell .script-button-category-select {
+  width: 132px !important;
+  height: 30px !important;
+  flex: 0 0 132px !important;
+  border: 1px solid #2a3c56 !important;
+  border-radius: 5px !important;
+  background: #111a27 !important;
+  color: #eef5ff !important;
+  padding: 0 28px 0 10px !important;
+  font-size: 12px !important;
+  font-weight: 780 !important;
+  letter-spacing: 0 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.shellium-shell .script-button-category-select:hover,
+.shellium-shell .script-button-category-select:focus {
+  border-color: #3d5f8d !important;
+  outline: none !important;
+}
+
+.shellium-shell .script-button-bar button:not(.script-button-resizer) {
+  height: 30px !important;
+  min-height: 30px !important;
+  min-width: 94px !important;
+  flex: 0 0 auto !important;
+  border: 1px solid transparent !important;
+  border-radius: 5px !important;
+  background: transparent !important;
+  color: #dbe8fb !important;
+  padding: 0 10px !important;
+  gap: 7px !important;
+  font-size: 12px !important;
+  font-weight: 760 !important;
+  letter-spacing: 0 !important;
+  box-shadow: none !important;
+}
+
+.shellium-shell .script-button-bar button:not(.script-button-resizer):hover:not(:disabled) {
+  border-color: #2c5f9a !important;
+  background: #13233a !important;
+  color: #ffffff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055) !important;
+}
+
+.shellium-shell .script-button-bar button:not(.script-button-resizer):disabled {
+  color: #596b84 !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  opacity: 0.78 !important;
+}
+
+.shellium-shell .script-button-status {
+  width: 8px !important;
+  height: 8px !important;
+  flex: 0 0 8px !important;
+  border-radius: 999px !important;
+  background: var(--script-button-color, #19d27b) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--script-button-color, #19d27b) 14%, transparent), 0 0 12px color-mix(in srgb, var(--script-button-color, #19d27b) 24%, transparent) !important;
+}
+
+.shellium-shell .script-button-status::before {
+  display: none !important;
+}
+
+.shellium-shell .script-button-label {
+  color: inherit !important;
+  font-size: 12px !important;
+  font-weight: 760 !important;
+}
+
+.shellium-shell .script-button-empty-inline {
+  height: 30px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  color: #647997 !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+}
+
+.shellium-shell .script-button-overflow {
+  margin-left: auto !important;
+}
+
+.shellium-shell .script-button-more,
+.shellium-shell .script-button-overflow > button {
+  min-width: 64px !important;
+  color: #9fb5d6 !important;
+  border-color: transparent !important;
+  border-style: solid !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.shellium-shell .script-button-more:hover,
+.shellium-shell .script-button-overflow > button:hover:not(:disabled) {
+  border-color: #2c5f9a !important;
+  background: #13233a !important;
+  color: #ffffff !important;
+}
+
+.shellium-shell .script-button-overflow-menu {
+  border-color: #243550 !important;
+  border-radius: 7px !important;
+  background: rgba(8, 13, 20, 0.98) !important;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.4) !important;
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar {
+  border-color: #d5dfec !important;
+  background: #f7f9fc !important;
+}
+
+.shellium-shell[data-theme="light"] .script-button-category-select {
+  border-color: #c7d5e8 !important;
+  background: #ffffff !important;
+  color: #1a2b42 !important;
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar button:not(.script-button-resizer) {
+  color: #29405f !important;
+}
+
+.shellium-shell[data-theme="light"] .script-button-bar button:not(.script-button-resizer):hover:not(:disabled) {
+  border-color: #3b82f6 !important;
+  background: #edf5ff !important;
+  color: #102033 !important;
+}
+/* Inactive Session Activity Signal */
+@keyframes shellium-session-activity-pulse {
+  0%, 100% {
+    box-shadow: inset 3px 0 0 #4aa3ff, 0 0 0 rgba(74, 163, 255, 0);
+  }
+  50% {
+    box-shadow: inset 3px 0 0 #4aa3ff, 0 0 18px rgba(74, 163, 255, 0.28);
+  }
+}

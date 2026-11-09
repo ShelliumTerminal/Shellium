@@ -1,0 +1,306 @@
+/* ==========================================================================
+   Application password / lock screen (lk-*), built on tokens.css.
+   Full-window and opaque: while Shellium is locked nothing of the workspace
+   (host tree, session titles) shows through. Left: the always-black brand
+   stage (brand-stage.css); right: the form panel in the app's theme. Below
+   960 px the stage becomes a band on top.
+   ========================================================================== */
+
+.shellium-shell .lk-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  grid-template-columns: minmax(0, 58fr) minmax(400px, 42fr);
+  background: var(--ui-bg);
+  color: var(--ui-text);
+  font-family: var(--ui-sans);
+  font-size: var(--ui-fs);
+}
+
+.shellium-shell .lk-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 36px 56px 28px;
+  overflow-y: auto;
+  border-left: 1px solid var(--ui-border);
+  background: var(--ui-surface-1);
+}
+
+.shellium-shell[data-theme="dark"] .lk-panel {
+  background: linear-gradient(180deg, #0d1118 0%, #0a0d13 100%);
+  box-shadow: -30px 0 60px -30px rgba(0, 0, 0, 0.8);
+}
+
+.shellium-shell .lk-panel button,
+.shellium-shell .lk-panel input {
+  font-family: inherit;
+}
+
+.shellium-shell .lk-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shellium-shell .lk-top-name {
+  color: var(--ui-text-strong);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.shellium-shell .lk-top-state {
+  padding-left: 10px;
+  border-left: 1px solid var(--ui-border-strong);
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs);
+  line-height: 16px;
+}
+
+.shellium-shell .lk-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  width: 100%;
+  max-width: 380px;
+  margin: auto;
+  padding: 32px 0;
+}
+
+.shellium-shell .lk-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shellium-shell .lk-header h1 {
+  margin: 0;
+  color: var(--ui-text-strong);
+  font-size: 26px;
+  font-weight: 680;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.shellium-shell .lk-header p {
+  margin: 0;
+  color: var(--ui-text-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.shellium-shell .lk-loading {
+  padding: 12px 0;
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .lk-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.shellium-shell .lk-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shellium-shell .lk-field > span {
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs);
+  font-weight: 600;
+}
+
+.shellium-shell .lk-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  padding: 0 6px 0 14px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: 10px;
+  background: var(--ui-surface-1);
+  color: var(--ui-text-faint);
+}
+
+.shellium-shell[data-theme="dark"] .lk-input {
+  background: #0b0f16;
+}
+
+.shellium-shell .lk-input:focus-within {
+  border-color: var(--ui-accent);
+  box-shadow: 0 0 0 3px var(--ui-accent-soft);
+}
+
+.shellium-shell .lk-input:has(input[aria-invalid="true"]) {
+  border-color: var(--ui-danger-border);
+}
+
+.shellium-shell .lk-input input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--ui-text-strong);
+  font-size: 15px;
+}
+
+.shellium-shell .lk-eye {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: none;
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .lk-eye:hover {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .lk-eye:focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: 0;
+}
+
+.shellium-shell .lk-rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .lk-rules li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.shellium-shell .lk-rules li::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ui-text-faint);
+  content: "";
+}
+
+.shellium-shell .lk-rules li.is-met {
+  color: var(--ui-ok);
+}
+
+.shellium-shell .lk-rules li.is-met::before {
+  background: var(--ui-ok);
+}
+
+.shellium-shell .lk-hint,
+.shellium-shell .lk-error {
+  padding: 8px 12px;
+  border: 1px solid;
+  border-radius: var(--ui-r);
+  font-size: var(--ui-fs-sm);
+  line-height: 1.45;
+}
+
+.shellium-shell .lk-hint {
+  border-color: var(--ui-warn-border);
+  background: var(--ui-warn-soft);
+  color: var(--ui-warn);
+}
+
+.shellium-shell .lk-error {
+  border-color: var(--ui-danger-border);
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger);
+}
+
+.shellium-shell .lk-submit {
+  justify-content: center;
+  width: 100%;
+  height: 46px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ui-accent) 88%, #fff), var(--ui-accent));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 8px 20px -10px var(--ui-accent);
+  font-size: 15px;
+  font-weight: 620;
+}
+
+.shellium-shell .lk-submit:disabled {
+  box-shadow: none;
+}
+
+.shellium-shell .lk-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .lk-footer > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shellium-shell .lk-footer > span svg {
+  color: var(--ui-ok);
+}
+
+.shellium-shell .lk-quit {
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: none;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+  font-weight: 600;
+}
+
+.shellium-shell .lk-quit:hover {
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger);
+}
+
+/* Narrow window: the brand stage becomes a band on top. */
+@media (max-width: 960px) {
+  .shellium-shell .lk-screen {
+    grid-template-columns: 1fr;
+    grid-template-rows: 200px minmax(0, 1fr);
+  }
+
+  .shellium-shell .lk-screen .ss-word,
+  .shellium-shell .lk-screen .ss-rule {
+    width: min(46cqw, 300px);
+  }
+
+  .shellium-shell .lk-screen .ss-tagline {
+    font-size: 10px;
+  }
+
+  .shellium-shell .lk-screen .ss-log,
+  .shellium-shell .lk-screen .ss-foot,
+  .shellium-shell .lk-top {
+    display: none;
+  }
+
+  .shellium-shell .lk-panel {
+    padding: 24px 32px;
+    border-top: 1px solid var(--ui-border);
+    border-left: 0;
+  }
+}

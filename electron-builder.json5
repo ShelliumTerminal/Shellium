@@ -1,0 +1,58 @@
+// @see - https://www.electron.build/configuration/configuration
+{
+  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  "appId": "com.shellium.app",
+  "asar": true,
+  "productName": "Shellium",
+  "directories": {
+    "output": "release/${version}"
+  },
+  "files": [
+    "dist",
+    "dist-electron",
+    "build/icon.ico",
+    "build/icon.png",
+    "build/icon.svg",
+    "LICENSE",
+    "node_modules/sql.js/dist/sql-asm.js",
+    "node_modules/ssh2/**/*",
+    "node_modules/asn1/**/*",
+    "node_modules/bcrypt-pbkdf/**/*",
+    "node_modules/safer-buffer/**/*",
+    "node_modules/tweetnacl/**/*"
+  ],
+  "mac": {
+    "icon": "build/icon.icns",
+    "target": [
+      "dmg"
+    ],
+    "artifactName": "Shellium-Mac-${version}-Installer.${ext}"
+  },
+  "win": {
+    "icon": "build/icon.ico",
+    "signAndEditExecutable": false,
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "artifactName": "Shellium-Windows-${version}-Setup.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "license": "LICENSE",
+    "deleteAppDataOnUninstall": false
+  },
+  "linux": {
+    "icon": "build/icon.png",
+    "target": [
+      "AppImage"
+    ],
+    "artifactName": "Shellium-Linux-${version}.${ext}"
+  }
+}

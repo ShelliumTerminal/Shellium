@@ -1,0 +1,608 @@
+/* ==========================================================================
+   Script button manager (sb-*), built on tokens.css: categories | buttons |
+   editor. Replaces the legacy script-button-editor / script-category-panel
+   rules in palette.css, which no longer match this markup. The dialog frame
+   (position/size) still comes from App.tsx (scriptButtonEditorStyle), and
+   z-index stays below the context menus (60) like the legacy dialog.
+   ========================================================================== */
+
+.shellium-shell .sb-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 44;
+  background: var(--ui-backdrop);
+  backdrop-filter: blur(3px);
+}
+
+.shellium-shell .sb-dialog {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  min-width: 640px;
+  min-height: 360px;
+  overflow: hidden;
+  border: 1px solid var(--ui-border);
+  border-radius: 14px;
+  background: var(--ui-surface-1);
+  box-shadow: var(--ui-shadow-pop);
+  color: var(--ui-text);
+  font-family: var(--ui-sans);
+  font-size: var(--ui-fs);
+}
+
+.shellium-shell .sb-dialog button,
+.shellium-shell .sb-dialog input,
+.shellium-shell .sb-dialog textarea {
+  font-family: inherit;
+}
+
+/* ---------------------------------------------------------------- header */
+
+.shellium-shell .sb-header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 14px 14px 20px;
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.shellium-shell .sb-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.shellium-shell .sb-title strong {
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-lg);
+  font-weight: 600;
+}
+
+.shellium-shell .sb-title span {
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .sb-header-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.shellium-shell .sb-icon-btn {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-r);
+  background: none;
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .sb-icon-btn:hover:not(:disabled) {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .sb-icon-btn:disabled {
+  opacity: 0.4;
+}
+
+.shellium-shell .sb-icon-btn-boxed {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--ui-border-strong);
+  background: var(--ui-surface-1);
+}
+
+.shellium-shell .sb-icon-btn-danger:hover:not(:disabled) {
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger);
+}
+
+.shellium-shell .sb-icon-btn:focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: 1px;
+}
+
+/* ---------------------------------------------------------------- layout */
+
+/*
+ * Categories | buttons | editor. The outer two are resizable (sb-resizer, widths in px from the
+ * manager, kept per viewer); the buttons list takes the rest. clamp() keeps all three usable when
+ * the dialog itself is made smaller than the stored widths allow.
+ */
+.shellium-shell .sb-body {
+  display: grid;
+  flex: 1;
+  grid-template-columns:
+    clamp(160px, var(--sb-categories-w, 200px), 32%)
+    0
+    minmax(200px, 1fr)
+    0
+    clamp(260px, var(--sb-editor-w, 340px), 52%);
+  min-height: 0;
+}
+
+/* Zero-width grid column on the pane border; the hit area and the hover line stick out of it. */
+.shellium-shell .sb-resizer {
+  position: relative;
+  z-index: 2;
+  width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: col-resize !important;
+}
+
+.shellium-shell .sb-resizer::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  width: 8px;
+  content: "";
+  cursor: col-resize !important;
+}
+
+.shellium-shell .sb-resizer:hover::after,
+.shellium-shell .sb-resizer:focus-visible::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -2px;
+  width: 3px;
+  background: var(--ui-accent);
+  content: "";
+}
+
+.shellium-shell .sb-resizer:focus-visible {
+  outline: none;
+}
+
+.shellium-shell .sb-pane-label {
+  padding: 12px 16px 6px;
+  color: var(--ui-text-faint);
+  font-size: var(--ui-fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------------- categories */
+
+.shellium-shell .sb-categories {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--ui-border);
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .sb-category-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  padding: 0 8px 8px;
+  overflow-y: auto;
+}
+
+.shellium-shell .sb-category {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 8px 0 10px;
+  border: 0;
+  border-radius: var(--ui-r);
+  background: none;
+  color: var(--ui-text);
+  font-size: var(--ui-fs);
+  font-weight: 500;
+  text-align: left;
+}
+
+.shellium-shell .sb-category:hover {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .sb-category.selected {
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-text);
+}
+
+.shellium-shell .sb-category-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .sb-count {
+  flex: none;
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--ui-surface-3);
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-xs);
+  font-weight: 500;
+  text-align: center;
+}
+
+.shellium-shell .sb-category.selected .sb-count {
+  background: var(--ui-surface-1);
+  color: var(--ui-accent-text);
+}
+
+.shellium-shell .sb-new-category {
+  display: flex;
+  flex: none;
+  gap: 6px;
+  padding: 10px 8px;
+  border-top: 1px solid var(--ui-border);
+}
+
+/* ---------------------------------------------------------------- inputs */
+
+.shellium-shell .sb-input {
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-r);
+  outline: 0;
+  background: var(--ui-surface-1);
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs);
+  font-weight: 400;
+}
+
+.shellium-shell .sb-input::placeholder {
+  color: var(--ui-text-faint);
+}
+
+.shellium-shell .sb-input:focus {
+  border-color: var(--ui-accent);
+  box-shadow: 0 0 0 3px var(--ui-accent-soft);
+}
+
+/* .sb-dialog prefix: outranks the font-family: inherit reset above. */
+.shellium-shell .sb-dialog .sb-textarea {
+  height: auto;
+  min-height: 110px;
+  padding: 8px 10px;
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-sm);
+  line-height: 1.5;
+  resize: vertical;
+}
+
+/* ---------------------------------------------------------------- buttons list */
+
+.shellium-shell .sb-buttons {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-right: 1px solid var(--ui-border);
+}
+
+.shellium-shell .sb-category-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 52px;
+  padding: 10px 12px 10px 14px;
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.shellium-shell .sb-category-title {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: var(--ui-r);
+  outline: 0;
+  background: none;
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-md);
+  font-weight: 600;
+}
+
+.shellium-shell .sb-category-title:hover {
+  border-color: var(--ui-border);
+}
+
+.shellium-shell .sb-category-title:focus {
+  border-color: var(--ui-accent);
+  background: var(--ui-surface-1);
+  box-shadow: 0 0 0 3px var(--ui-accent-soft);
+}
+
+.shellium-shell .sb-muted {
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .sb-button-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  padding: 8px;
+  overflow-y: auto;
+  outline: 0;
+}
+
+.shellium-shell .sb-row {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 6px 10px 6px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--ui-r);
+  background: none;
+  text-align: left;
+}
+
+.shellium-shell .sb-row:hover {
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .sb-row.selected {
+  border-color: color-mix(in srgb, var(--ui-accent) 40%, transparent);
+  background: var(--ui-surface-sel);
+}
+
+.shellium-shell .sb-button-list:focus-visible .sb-row.selected {
+  box-shadow: 0 0 0 2px var(--ui-accent-soft);
+}
+
+.shellium-shell .sb-row.dragging {
+  opacity: 0.45;
+}
+
+.shellium-shell .sb-grip {
+  flex: none;
+  color: var(--ui-text-faint);
+  cursor: move !important;
+}
+
+.shellium-shell .sb-row:hover .sb-grip {
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .sb-row-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.shellium-shell .sb-row-title {
+  overflow: hidden;
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs);
+  font-weight: 600;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .sb-row-script {
+  overflow: hidden;
+  color: var(--ui-text-muted);
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-xs);
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .sb-empty {
+  padding: 24px 12px;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+  text-align: center;
+}
+
+.shellium-shell .sb-alert {
+  margin-bottom: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--ui-danger-border);
+  border-radius: var(--ui-r);
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger);
+  font-size: var(--ui-fs-sm);
+}
+
+/* ---------------------------------------------------------------- editor */
+
+.shellium-shell .sb-editor {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.shellium-shell .sb-editor-scroll {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  padding: 14px 18px 16px;
+  overflow-y: auto;
+}
+
+.shellium-shell .sb-editor-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shellium-shell .sb-editor-head strong {
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-md);
+  font-weight: 600;
+}
+
+.shellium-shell .sb-editor-head span {
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-sm);
+}
+
+.shellium-shell .sb-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shellium-shell .sb-field > span {
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-sm);
+  font-weight: 500;
+}
+
+.shellium-shell .sb-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.shellium-shell .sb-swatch {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--sb-swatch);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ui-text-strong) 22%, transparent);
+}
+
+.shellium-shell .sb-swatch:hover {
+  transform: scale(1.08);
+}
+
+.shellium-shell .sb-swatch.selected {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--ui-text-strong) 22%, transparent),
+    0 0 0 2px var(--ui-surface-1),
+    0 0 0 4px var(--ui-accent);
+}
+
+.shellium-shell .sb-swatch:focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: 3px;
+}
+
+.shellium-shell .sb-tokens {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 6px 12px;
+  margin: -4px 0 0;
+}
+
+.shellium-shell .sb-tokens div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shellium-shell .sb-tokens dt {
+  padding: 1px 5px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: 4px;
+  background: var(--ui-surface-2);
+  color: var(--ui-text-strong);
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-xs);
+}
+
+.shellium-shell .sb-tokens dd {
+  margin: 0;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-xs);
+}
+
+.shellium-shell .sb-preview {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border: 1px dashed var(--ui-border-strong);
+  border-radius: var(--ui-r);
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .sb-editor-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--ui-border);
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .sb-spacer {
+  flex: 1;
+}
+
+/* ---------------------------------------------------------------- resize grip */
+
+.shellium-shell .sb-resize {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 0;
+  background:
+    linear-gradient(135deg, transparent 50%, var(--ui-border-strong) 50%, var(--ui-border-strong) 58%, transparent 58%,
+      transparent 70%, var(--ui-border-strong) 70%, var(--ui-border-strong) 78%, transparent 78%);
+  cursor: nwse-resize !important;
+}
+
+/* "Show the send string as a tooltip" switch under the token legend. */
+.shellium-shell .sb-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer !important;
+}
+
+.shellium-shell .sb-check > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--ui-text-strong);
+  font-size: var(--ui-fs-sm);
+  font-weight: 500;
+}
+
+.shellium-shell .sb-check small {
+  color: var(--ui-text-muted);
+  font-size: var(--ui-fs-xs);
+  font-weight: 400;
+}

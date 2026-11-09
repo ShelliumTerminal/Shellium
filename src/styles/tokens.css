@@ -1,0 +1,282 @@
+/* ==========================================================================
+   Shellium design tokens
+
+   One token set; a theme is only different values. New and migrated
+   components use these (--ui-*) and nothing else for color, radius and
+   type - so they are correct in both themes without theme-specific rules
+   and without !important. Legacy styles in palette.css / terminal.css are
+   being migrated onto these step by step.
+   ========================================================================== */
+
+.shellium-shell,
+.shellium-shell[data-theme="dark"] {
+  --ui-bg: #0b0e14;
+  --ui-surface-1: #10141c;
+  --ui-surface-2: #151a24;
+  --ui-surface-3: #1c2330;
+  --ui-surface-sel: #1a2540;
+  --ui-border: #222a37;
+  --ui-border-strong: #2e3848;
+
+  --ui-text: #aeb8c7;
+  --ui-text-strong: #eef2f7;
+  --ui-text-muted: #7c8799;
+  --ui-text-faint: #566173;
+
+  --ui-accent: #3b82f6;
+  --ui-accent-hover: #60a5fa;
+  --ui-accent-soft: rgba(59, 130, 246, 0.14);
+  --ui-accent-border: rgba(96, 165, 250, 0.45);
+  --ui-accent-text: #93c5fd;
+  --ui-ok: #34d399;
+  --ui-ok-soft: rgba(52, 211, 153, 0.12);
+  --ui-warn: #fbbf24;
+  --ui-warn-soft: rgba(251, 191, 36, 0.12);
+  --ui-warn-border: rgba(251, 191, 36, 0.35);
+  --ui-danger: #f87171;
+  --ui-danger-solid: #dc2626;
+  --ui-danger-soft: rgba(248, 113, 113, 0.12);
+  --ui-danger-border: rgba(248, 113, 113, 0.35);
+
+  --ui-env-red: #f87171;
+  --ui-env-orange: #fb923c;
+  --ui-env-yellow: #facc15;
+  --ui-env-green: #4ade80;
+  --ui-env-teal: #2dd4bf;
+  --ui-env-blue: #60a5fa;
+  --ui-env-purple: #a78bfa;
+  --ui-env-grey: #94a3b8;
+
+  --ui-backdrop: rgba(5, 8, 13, 0.6);
+  --ui-scroll-thumb: rgba(148, 163, 184, 0.28);
+  --ui-scroll-thumb-hover: rgba(148, 163, 184, 0.5);
+  --ui-shadow-pop: 0 24px 48px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.shellium-shell[data-theme="light"] {
+  --ui-bg: #eef1f5;
+  --ui-surface-1: #ffffff;
+  --ui-surface-2: #f7f8fa;
+  --ui-surface-3: #eef1f5;
+  --ui-surface-sel: #e8f0fe;
+  --ui-border: #e2e6ec;
+  --ui-border-strong: #cfd5de;
+
+  --ui-text: #4a5566;
+  --ui-text-strong: #111827;
+  --ui-text-muted: #6b7686;
+  --ui-text-faint: #9aa4b2;
+
+  --ui-accent: #2563eb;
+  --ui-accent-hover: #1d4ed8;
+  --ui-accent-soft: #e8f0fe;
+  --ui-accent-border: #a9c4f5;
+  --ui-accent-text: #1d4ed8;
+  --ui-ok: #059669;
+  --ui-ok-soft: #e7f7ef;
+  --ui-warn: #b45309;
+  --ui-warn-soft: #fef6e4;
+  --ui-warn-border: #f5d48a;
+  --ui-danger: #dc2626;
+  --ui-danger-solid: #dc2626;
+  --ui-danger-soft: #fdeceb;
+  --ui-danger-border: #f5b5b0;
+
+  --ui-env-red: #dc2626;
+  --ui-env-orange: #ea580c;
+  --ui-env-yellow: #a16207;
+  --ui-env-green: #059669;
+  --ui-env-teal: #0d9488;
+  --ui-env-blue: #2563eb;
+  --ui-env-purple: #7c3aed;
+  --ui-env-grey: #64748b;
+
+  --ui-backdrop: rgba(16, 24, 40, 0.45);
+  --ui-scroll-thumb: rgba(71, 85, 105, 0.3);
+  --ui-scroll-thumb-hover: rgba(71, 85, 105, 0.5);
+  --ui-shadow-pop: 0 24px 48px -12px rgba(16, 24, 40, 0.25), 0 0 0 1px rgba(16, 24, 40, 0.06);
+}
+
+.shellium-shell {
+  --ui-r-sm: 5px;
+  --ui-r: 7px;
+  --ui-r-lg: 10px;
+  --ui-fs-xs: 11px;
+  --ui-fs-sm: 12px;
+  --ui-fs: 13px;
+  --ui-fs-md: 14px;
+  --ui-fs-lg: 16px;
+  --ui-mono: "JetBrains Mono Variable", "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+}
+
+/* ---------- Shared primitives for migrated components ---------- */
+
+.sh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: var(--ui-r);
+  font-size: var(--ui-fs);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sh-btn:disabled {
+  opacity: 0.5;
+}
+
+.sh-btn-primary {
+  background: var(--ui-accent);
+  color: #fff;
+}
+
+.sh-btn-primary:hover:not(:disabled) {
+  background: var(--ui-accent-hover);
+}
+
+.sh-btn-secondary {
+  background: var(--ui-surface-2);
+  border-color: var(--ui-border-strong);
+  color: var(--ui-text-strong);
+}
+
+.sh-btn-secondary:hover:not(:disabled) {
+  background: var(--ui-surface-3);
+}
+
+.sh-btn-ghost {
+  background: none;
+  color: var(--ui-text);
+}
+
+.sh-btn-ghost:hover:not(:disabled) {
+  background: var(--ui-surface-3);
+  color: var(--ui-text-strong);
+}
+
+.sh-btn-danger {
+  background: var(--ui-danger-solid);
+  color: #fff;
+}
+
+.sh-btn:focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: 2px;
+}
+
+.sh-btn-sm {
+  height: 28px;
+  padding: 0 10px;
+  gap: 6px;
+  font-size: var(--ui-fs-sm);
+}
+
+.sh-btn-danger-ghost {
+  background: none;
+  color: var(--ui-danger);
+}
+
+.sh-btn-danger-ghost:hover:not(:disabled) {
+  background: var(--ui-danger-soft);
+}
+
+/* Environment badge: <span class="sh-env" style="--env: var(--ui-env-red)">PROD</span>
+   (see components/common/environments.tsx). */
+.shellium-shell .sh-env {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--env, var(--ui-env-grey)) 16%, transparent);
+  color: var(--env, var(--ui-env-grey));
+  font-family: var(--ui-sans);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Toggle switch: <input type="checkbox" role="switch" class="sh-switch">. */
+.shellium-shell .sh-switch {
+  position: relative;
+  flex: none;
+  width: 34px;
+  height: 20px;
+  margin: 0;
+  border: 0;
+  border-radius: 999px;
+  outline: 0;
+  appearance: none;
+  background: var(--ui-border-strong);
+  transition: background-color 0.15s;
+}
+
+.shellium-shell .sh-switch::after {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  content: "";
+  transition: transform 0.15s;
+}
+
+.shellium-shell .sh-switch:checked {
+  background: var(--ui-accent);
+}
+
+.shellium-shell .sh-switch:checked::after {
+  transform: translateX(14px);
+}
+
+.shellium-shell .sh-switch:focus-visible {
+  box-shadow: 0 0 0 3px var(--ui-accent-soft);
+}
+
+/* ---------- Scrollbars ----------
+   One themed scrollbar for the whole app: rounded thumb from the tokens, transparent
+   track, no arrow buttons. Chromium ignores ::-webkit-scrollbar styling on any element
+   whose scrollbar-width/-color is not "auto", so those are reset first (this also
+   retires the per-component colors in the legacy stylesheets). */
+.shellium-shell,
+.shellium-shell * {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
+
+.shellium-shell ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  background: transparent;
+}
+
+.shellium-shell ::-webkit-scrollbar-track,
+.shellium-shell ::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.shellium-shell ::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.shellium-shell ::-webkit-scrollbar-thumb {
+  min-height: 36px;
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: var(--ui-scroll-thumb) content-box;
+}
+
+.shellium-shell ::-webkit-scrollbar-thumb:hover {
+  background: var(--ui-scroll-thumb-hover) content-box;
+}
