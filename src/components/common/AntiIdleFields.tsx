@@ -28,7 +28,7 @@ type AntiIdleFieldsProps = {
   disabled?: boolean;
 };
 
-/** SecureCRT-style "Anti-idle" box: protocol NO-OP (SSH keep-alive) and an optional anti-idle string. */
+/** "Anti-idle" box: protocol NO-OP (SSH keep-alive) and an optional anti-idle string. */
 export function AntiIdleFields({ value, onChange, disabled = false }: AntiIdleFieldsProps) {
   const seconds = (raw: string) => (raw === "" ? Number.NaN : Number(raw));
 

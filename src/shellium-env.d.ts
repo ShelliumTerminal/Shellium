@@ -273,8 +273,6 @@ export type TransferMappingTarget = "name" | "host" | "port" | "username" | "des
 
 /** An XML file (or a CSV with unrecognized columns) before the mapping step. */
 export type TransferMappingInfo = {
-  /** "SecureCRT", "mRemoteNG" or null. */
-  format: string | null;
   recordCount: number;
   /** The file has a folder structure of its own (XML). */
   folderFromTree: boolean;

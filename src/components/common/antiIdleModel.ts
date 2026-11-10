@@ -1,8 +1,8 @@
 /**
- * Anti-idle settings (SecureCRT-style), used by the renderer and the main process.
+ * Anti-idle settings, used by the renderer and the main process.
  *
  * - "NO-OP" is the SSH keep-alive (ssh2 `keepaliveInterval`): a protocol message every N seconds that
- *   never reaches the shell. Unlike SecureCRT's NO-OP it expects an answer, so a dead link is noticed
+ *   never reaches the shell. It expects an answer, so a dead link is noticed
  *   after `keepaliveCountMax` unanswered ones and the tab turns red (no automatic reconnect).
  * - "String" is text written to the shell after N seconds without traffic in either direction, for
  *   firewalls / bastions that cut idle sessions even while keep-alives flow. It reaches whatever

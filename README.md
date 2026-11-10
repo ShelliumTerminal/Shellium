@@ -22,7 +22,7 @@ Linux (Electron).
   dropped connection, chmod, edit in a local editor, drag and drop.
 - **Script buttons**: send strings or multi-line commands with one click, in categories.
 - **Import / export**: encrypted `.shellium` files, CSV host lists, and XML exports of other tools
-  (SecureCRT, mRemoteNG, ...) with a field-mapping step.
+  with a field-mapping step.
 - Terminal color schemes, X11 forwarding, anti-idle, session recording, find in terminal,
   multi-line paste review, light and dark themes.
 

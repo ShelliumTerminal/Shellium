@@ -13,7 +13,7 @@ import type { TerminalScheme } from "../components/common/terminalSchemeModel";
 export type ThemeMode = "dark" | "light";
 export type ScriptButtonBarPosition = "bottom" | "top" | "left" | "right";
 export type TerminalTabPosition = "top" | "left" | "right";
-/** "inverse": selected cells swap to inverted colors (SecureCRT-style); "highlight": a tinted layer. */
+/** "inverse": selected cells swap to inverted colors; "highlight": a tinted layer. */
 export type TerminalSelectionStyle = "inverse" | "highlight";
 
 export type AppOptions = {

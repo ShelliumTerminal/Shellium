@@ -618,7 +618,7 @@ function ImportWizard({ onClose, onDataChanged }: { onClose(): void; onDataChang
   const stepIndex = mappingInfo
     ? { choose: 0, password: 0, map: 1, content: 2, preview: 3, done: 4 }[step]
     : { choose: 0, password: 0, map: 0, content: 1, preview: 2, done: 3 }[step];
-  const sourceLabel = summary ? (mappingInfo?.format ? `${mappingInfo.format} ${KIND_LABEL[summary.kind]}` : KIND_LABEL[summary.kind]) : "";
+  const sourceLabel = summary ? KIND_LABEL[summary.kind] : "";
   const hostCount = summary?.connections ? countSelectedHosts(summary.connections.folders, folders) : 0;
   const nothingSelected = !(connections && folders.size > 0) && categories.size === 0 && !(environments && (summary?.environments.length ?? 0) > 0) && !settings && !knownHosts;
   const hostConflicts = preview?.mode === "merge" ? preview.hosts.conflicts.length : 0;
@@ -643,7 +643,7 @@ function ImportWizard({ onClose, onDataChanged }: { onClose(): void; onDataChang
       <div className="tw-choose">
         <p className="md-text">
           Import a <strong>Shellium file</strong> (.shellium), an <strong>RShell export</strong> (.rshell) or older backup (.rshellbak), a <strong>CSV</strong> host list
-          with the columns name, host, port, username, folder, environment, tags, description, or another tool&apos;s <strong>XML</strong> export (SecureCRT, mRemoteNG...).
+          with the columns name, host, port, username, folder, environment, tags, description, or another tool&apos;s <strong>XML</strong> export.
           You choose what to take and see conflicts before anything changes.
         </p>
         <button type="button" className="sh-btn sh-btn-primary" disabled={busy} onClick={chooseFile}>
@@ -685,10 +685,10 @@ function ImportWizard({ onClose, onDataChanged }: { onClose(): void; onDataChang
     body = (
       <>
         <p className="tw-file">
-          <strong>{fileName}</strong> · {mappingInfo.format ? `${mappingInfo.format} export recognized` : "Fields of the file"} · {plural(mappingInfo.recordCount, "entry")} with a host
+          <strong>{fileName}</strong> · Fields of the file · {plural(mappingInfo.recordCount, "entry")} with a host
         </p>
         <p className="md-text">
-          Choose which field of the file goes where. {mappingInfo.format ? "The fields are filled in for this format; check them." : "Likely fields are filled in; check them."}
+          Choose which field of the file goes where. Likely fields are filled in; check them.
         </p>
         <div className="tw-map" role="group" aria-label="Field mapping">
           {MAP_ROWS.map((row) => (

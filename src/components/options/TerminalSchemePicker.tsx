@@ -23,7 +23,7 @@ const baseColors: { key: "background" | "foreground" | "cursor" | "selection"; l
 
 const ansiLabels = ["Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan", "White"];
 
-/** Options > Terminal: the scheme gallery (Termius-style cards) and the editor for custom schemes. */
+/** Options > Terminal: the scheme gallery (cards) and the editor for custom schemes. */
 export function TerminalSchemePicker({ selectedId, custom, editingId, onSelect, onCustomChange, onEdit }: TerminalSchemePickerProps) {
   const selected = findTerminalScheme(selectedId, custom) ?? builtInTerminalSchemes[0];
   const editing = editingId ? custom.find((item) => item.id === editingId) ?? null : null;

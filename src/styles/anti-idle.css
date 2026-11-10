@@ -13,7 +13,7 @@
   background: var(--ui-surface-2);
 }
 
-/* Both rows share columns (check | text | "every" | seconds | "seconds"), like SecureCRT's box. */
+/* Both rows share columns (check | text | "every" | seconds | "seconds"). */
 .shellium-shell .ai-row {
   display: grid;
   grid-template-columns: 158px minmax(60px, 1fr) max-content 72px max-content;

@@ -101,7 +101,7 @@ export default function KnownHostsPanel() {
         <div className="op-row-control">
           <button className="sh-btn sh-btn-secondary sh-btn-sm" type="button" onClick={handleImport} disabled={isBusy}>
             <FileInput size={14} />
-            Import from OpenSSH...
+            Import known_hosts file...
           </button>
         </div>
       </div>
@@ -122,7 +122,7 @@ export default function KnownHostsPanel() {
       <div className="op-kh-list" role="list">
         {items !== null && visible.length === 0 && (
           <div className="op-kh-empty">
-            {items.length === 0 ? "No trusted host keys yet. Keys are added when you accept a server at its first connection, or imported from OpenSSH." : "No keys match the filter."}
+            {items.length === 0 ? "No trusted host keys yet. Keys are added when you accept a server at its first connection, or imported from a known_hosts file." : "No keys match the filter."}
           </div>
         )}
         {visible.map((item) => (
@@ -132,7 +132,7 @@ export default function KnownHostsPanel() {
                 <strong>{item.hostname}</strong>
                 {item.port !== 22 && <span className="op-kh-port">:{item.port}</span>}
                 <span className="op-kh-type">{item.keyType}</span>
-                {item.source === "openssh-import" && <span className="op-kh-source">OpenSSH import</span>}
+                {item.source === "openssh-import" && <span className="op-kh-source">known_hosts import</span>}
                 {item.source === "backup" && <span className="op-kh-source">From backup</span>}
               </div>
               <div className="op-kh-fingerprint">

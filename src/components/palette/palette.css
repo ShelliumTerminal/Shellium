@@ -1159,7 +1159,7 @@
 .shellium-shell .script-button-bar button {
   line-height: 1;
 }
-/* SecureCRT-like script button strip. */
+/* Script button strip. */
 .script-button-bar {
   gap: 4px;
   padding: 4px 6px;

@@ -35,7 +35,7 @@ export function registerKnownHostsHandlers() {
     assertUnlocked();
     const defaultPath = path.join(os.homedir(), ".ssh", "known_hosts");
     const result = await dialog.showOpenDialog({
-      title: "Import OpenSSH known_hosts",
+      title: "Import known_hosts file",
       defaultPath: fs.existsSync(defaultPath) ? defaultPath : os.homedir(),
       properties: ["openFile", "showHiddenFiles"],
     });

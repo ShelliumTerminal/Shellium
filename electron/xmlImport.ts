@@ -1,14 +1,14 @@
 /**
- * Host lists from other tools' XML exports (SecureCRT, mRemoteNG, or any XML with host entries).
+ * Host lists from other tools' XML exports (any XML with host entries).
  *
  * There is no per-tool code: a small, strict XML reader turns the file into elements, every
  * element that carries a host-like value becomes a record with all its fields, and the user maps
- * fields to Shellium's (name, host, port, username, ...) in the import wizard. Known layouts only
- * pre-fill that mapping.
+ * fields to Shellium's (name, host, port, username, ...) in the import wizard, which pre-fills the
+ * mapping from common field names.
  *
  * Fields are collected in the three shapes tools use:
- *   attributes                     <Node Hostname="db01" Port="22"/>             (mRemoteNG)
- *   child elements with name=""    <string name="Hostname">db01</string>        (SecureCRT)
+ *   attributes                     <Node Hostname="db01" Port="22"/>
+ *   child elements with name=""    <string name="Hostname">db01</string>
  *   plain child elements           <Host>db01</Host>
  * Folders come from the named elements around a record (<key name="Prod">, <Node Name="Prod">).
  *
@@ -28,8 +28,6 @@ export type XmlRecord = {
 };
 
 export type XmlSource = {
-  /** "SecureCRT", "mRemoteNG" or null for an unknown layout. */
-  format: string | null;
   records: XmlRecord[];
 };
 
@@ -62,7 +60,7 @@ export const normalizeKey = (key: string) => key.toLowerCase().replace(/[^a-z0-9
 export function readXmlSource(raw: Buffer): XmlSource {
   const root = parseXml(decodeText(raw));
   if (root.children.length === 0 && root.text.trim().length > 64) {
-    throw new Error("The file's content is encrypted. Export it again without encryption (in mRemoteNG: turn off \"Encrypt complete connection file\").");
+    throw new Error("The file's content is encrypted. Export it again with encryption turned off.");
   }
 
   const records: XmlRecord[] = [];
@@ -76,13 +74,13 @@ export function readXmlSource(raw: Buffer): XmlSource {
     const name = ownName(element);
     element.children.forEach((child) => walk(child, hostKey || !name ? path : [...path, name]));
   };
-  // The document element is the file itself (<VanDyke>, <Connections>), never a folder.
+  // The document element is the file itself (e.g. <Connections>), never a folder.
   root.children.forEach((child) => walk(child, []));
 
   if (records.length === 0) {
     throw new Error("No host entries were found in this XML file (no element has a Hostname, Host or Address value).");
   }
-  return { format: detectFormat(root), records };
+  return { records };
 }
 
 /** Field catalogue for the mapping step: how many records fill each field, and a few examples. */
@@ -115,12 +113,6 @@ export function suggestMapping(fieldKeys: string[]): Partial<Record<MappingTarge
   return mapping;
 }
 
-function detectFormat(root: XmlElement): string | null {
-  if (root.name === "VanDyke") return "SecureCRT";
-  if (root.name === "Connections" && root.attrs.some(([key, value]) => key === "ConfVersion" || /mremoteng/i.test(value))) return "mRemoteNG";
-  return null;
-}
-
 function ownName(element: XmlElement): string {
   const attr = element.attrs.find(([key]) => NAME_ATTRS.includes(key.toLowerCase()));
   return attr ? attr[1].trim() : "";
@@ -140,7 +132,7 @@ function fieldsOf(element: XmlElement): Record<string, string> {
     if (child.children.length === 0) {
       put(childName ?? child.name, child.text);
     } else if (childName && child.children.every((item) => item.children.length === 0 && !item.attrs.some(([key]) => key === "name"))) {
-      // A list such as SecureCRT's <array name="Description"><string>...</string></array>.
+      // A list such as <array name="Description"><string>...</string></array>.
       put(childName, child.children.map((item) => item.text.trim()).filter(Boolean).join("\n"));
     }
   });

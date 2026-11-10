@@ -461,7 +461,7 @@ export default function OptionsView({
                 <label className="op-row">
                   <span className="op-row-text">
                     <strong>Selection</strong>
-                    <span>How selected text looks: inverted colors like SecureCRT, or a colored highlight.</span>
+                    <span>How selected text looks: inverted colors, or a colored highlight.</span>
                   </span>
                   <span className="op-row-control">
                     <select

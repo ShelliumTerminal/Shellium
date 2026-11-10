@@ -262,7 +262,7 @@
   background: color-mix(in srgb, var(--sh-term-selection, #5aa9ff) 62%, transparent);
 }
 
-/* Options > Terminal > Selection "Inverse colors" (default, SecureCRT-style): white cells blended
+/* Options > Terminal > Selection "Inverse colors" (default): white cells blended
    with "difference" invert what is under them - background turns light, text dark. The blend is
    on the container (not the spans): a positioned, z-indexed overlay is its own stacking context,
    and spans blending inside it would only see its transparent backdrop. */

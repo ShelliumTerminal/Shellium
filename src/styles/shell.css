@@ -376,7 +376,7 @@
   color: var(--ui-text-strong);
 }
 
-/* Unread output in a background session (SecureCRT-style): the whole tab is tinted and
+/* Unread output in a background session: the whole tab is tinted and
    its title highlighted until the user switches to it (App clears hasUnreadActivity). */
 .shellium-shell .sh-tab.has-activity,
 .shellium-shell .sh-tabs-strip .sh-tab.has-activity:hover,

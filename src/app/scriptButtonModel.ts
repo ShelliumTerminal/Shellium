@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 
-/** Script buttons: the library model, colors and the SecureCRT-style send string format. */
+/** Script buttons: the library model, colors and the send string format. */
 
 export type ScriptButtonColor = "black" | "blue" | "cyan" | "green" | "grey" | "magenta" | "orange" | "purple" | "red" | "white" | "yellow";
 

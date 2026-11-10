@@ -554,7 +554,7 @@ function parseCsvImport(raw: Buffer): ImportData | { mappable: Mappable } {
     if (headerCells.filter(Boolean).length === 0 || records.length === 0) {
       throw new Error("The CSV has no header row or no rows.");
     }
-    return { mappable: { format: null, records, folderFromTree: false } };
+    return { mappable: { records, folderFromTree: false } };
   }
 
   const issues: ImportIssue[] = [];
@@ -647,7 +647,6 @@ function parseCsvImport(raw: Buffer): ImportData | { mappable: Mappable } {
 function describeMappable(source: Mappable) {
   const fields = describeFields(source);
   return {
-    format: source.format,
     recordCount: source.records.length,
     folderFromTree: source.folderFromTree,
     hasFolders: source.records.some((record) => record.path.length > 0),

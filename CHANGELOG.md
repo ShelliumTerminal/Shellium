@@ -50,7 +50,7 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 - SFTP: the drives and folders sidebar of the local pane can be resized by dragging its border
   (double-click resets it); the width is remembered.
 - SSH: with "Allow legacy SSH algorithms" on, a server that only offers the
-  `diffie-hellman-group-exchange-sha1` key exchange (SecureCRT: "diffie-hellman-group") could not be
+  `diffie-hellman-group-exchange-sha1` key exchange could not be
   reached ("no matching key exchange algorithm"); it is now part of the legacy set.
 - macOS: the connect dialog shortcut did nothing (Option+B types a character there). On a Mac it is
   now ⌘B; Windows and Linux keep Alt+B. The script button shortcuts (Option+1 … 9) work on a Mac too.
@@ -85,7 +85,7 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
   Production the red-tinted "Shellium Production" scheme.
 
 ### Changed
-- Terminal: selected text shows in inverted colors (light background, dark text) like SecureCRT,
+- Terminal: selected text shows in inverted colors (light background, dark text),
   instead of a translucent tint. Options › Terminal › Selection switches back to "Highlight".
 - Tools › "Manage Buttons..." is now "Script Buttons...", the same name as its window. Dragging a
   button in the list shows a move cursor instead of a hand.
@@ -116,7 +116,7 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 - A black strip below the last terminal row (visible with lighter backgrounds).
 
 ### Removed
-- Script button manager: "Import from SecureCRT..." (button bar `.ini` import).
+- Script button manager: the button bar `.ini` import.
 - Session header: the "Open SFTP" button; SFTP stays in the app bar.
 
 ## [2.0.0] - 2026-10-06
@@ -143,7 +143,7 @@ hosts with File › Export in the old version and File › Import in Shellium.
   cancel, resume after a dropped connection, chmod, edit in a local editor, drag and drop, transfers in
   the status bar.
 - Export / import wizard: encrypted `.shellium` files (optionally with passwords), CSV host lists,
-  and other tools' XML exports (SecureCRT, mRemoteNG, any XML) with a field-mapping step; conflicts are
+  and other tools' XML exports with a field-mapping step; conflicts are
   reviewed before import and an import can be undone.
 - Trusted host keys in Options › Security: list, remove, import an OpenSSH `known_hosts`.
 - Anti-idle per host: protocol NO-OP interval, keep-alive string, unanswered NO-OPs before closing.
