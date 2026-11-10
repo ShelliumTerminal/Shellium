@@ -54,6 +54,15 @@ Your data lives in the app's data folder (`%APPDATA%\shellium` on Windows), not 
 To try changes without touching it, start Electron with its own profile:
 `electron . --user-data-dir=<an empty folder>`.
 
+## How it is built
+
+Shellium is developed with the help of AI coding tools (Claude Code). The maintainer directs the
+work, reviews the changes and tests them in isolated profiles against throwaway SSH servers before
+they are committed. Commits written with AI assistance say so in a `Co-Authored-By` line.
+
+As with any open source project, review the code yourself if you rely on it; see the disclaimer
+above and [LICENSE](LICENSE).
+
 ## Contributing
 
 Issues and pull requests are welcome, but there is no promise that they will be answered, reviewed
