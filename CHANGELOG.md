@@ -128,13 +128,12 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 
 ## [2.0.0] - 2026-10-06
 
-
-First release as **Shellium** (formerly RShell). Its identity and data folder are new: move your
+First release as **Shellium**. Its identity and data folder are new: move your
 hosts with File › Export in the old version and File › Import in Shellium.
 
 ### Changed
 - New name, icon and app identity: Shellium (`com.shellium.app`), data in `%APPDATA%/shellium`.
-  Windows treats it as a new app; RShell / ShellV exports (`.rshell`, `.shellv`, `.rshellbak`) import.
+  Windows treats it as a new app; exports of the earlier versions (`.rshell`, `.shellv`, `.rshellbak`) import.
 - New application shell and design system: one app bar, Home tab with search, environment filters,
   favorites and recent connections, quick connect (Alt+B), tabs on top, left or right, light and dark
   themes, bundled Inter and JetBrains Mono.
@@ -189,4 +188,4 @@ hosts with File › Export in the old version and File › Import in Shellium.
 
 ## [1.0.0] - 2026-08-25
 
-First release (as RShell).
+First release.
