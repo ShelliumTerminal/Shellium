@@ -8,8 +8,8 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 ## [Unreleased]
 
 ### Removed
-- Import no longer reads files of the app's earlier versions (`.rshell`, `.shellv`, `.rshellbak`),
-  and data encrypted by them is no longer opened. Shellium's own `.shellium` exports, CSV and XML
+- Import no longer reads export and backup files of the app's earlier versions, and data encrypted
+  by them is no longer opened. Shellium's own `.shellium` exports, CSV and XML
   import as before.
 
 ## [2.2.0] - 2026-11-11

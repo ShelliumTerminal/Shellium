@@ -31,7 +31,7 @@ target, then `Runtime.evaluate` over its WebSocket to read `document.body.innerT
 
 Run 2026-10-02 against macOS 26.5.2 (Sequoia era build), isolated profile, no prior Shellium data:
 
-1. **First setup** - PASS. `data/connections.sqlite` written with the `rshell-sec:v1:` prefix
+1. **First setup** - PASS. `data/connections.sqlite` written with the encryption prefix of that version
    (AES-256-GCM), 0600 permissions, no plaintext host/credential strings in it (grepped for the
    seeded sample hosts' usernames - zero hits). `settings.json` has `security.enabled: true`,
    `keyBinding: "local-user"`, no secrets in the clear.
