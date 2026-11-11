@@ -272,11 +272,20 @@ export function useSessionProtection({ sessionId, protection, protectOnConnect, 
       }
     }
     setBar({ kind: "busy", text: "Ending the protected session…" });
+    const stopping = protectionRef.current;
     try {
       await window.shellium!.terminal.protectStop(sessionId);
     } catch (error) {
       showNotice("warn", error instanceof Error ? error.message : "Could not end the protected session", 10000);
+      return;
     }
+    // the bar clears when the main process reports protection off; never leave it spinning
+    window.setTimeout(() => {
+      if (protectionRef.current === stopping && stopping) {
+        const endIt = stopping.tool === "tmux" ? `tmux -L ${stopping.name} kill-server` : `screen -S ${stopping.name} -X quit`;
+        showNotice("warn", `The protected session did not end. It may run as another user; as that user, end it with: ${endIt}`, 15000);
+      }
+    }, 8000);
   }, [sessionId, showNotice]);
 
   const dismiss = useCallback(() => {

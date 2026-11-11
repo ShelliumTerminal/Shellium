@@ -44,6 +44,13 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
   are dimmed.
 
 ### Fixed
+- Protected sessions on servers where `/etc/tmux.conf` cannot be read (e.g. root only) or with old
+  tmux (1.8 / 2.7): the new session no longer opens stuck in tmux's error view where typing did
+  nothing.
+- Protected sessions started after `su - oracle` (or sudo): Shellium notices the session runs as
+  another user and says so. It keeps running when the connection drops; after reconnecting Shellium
+  opens a plain shell and shows the command to go back into it. Ending protection works through the
+  terminal, and if the session still does not end, a message shows the command to end it as that user.
 - Quitting Shellium with an open session (seen with a protected one) could show "A JavaScript error
   occurred in the main process - Object has been destroyed": the connections closing after the window
   reported to the window that was already gone.

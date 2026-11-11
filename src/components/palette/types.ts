@@ -59,4 +59,5 @@ export type Session = {
   reconnecting?: boolean;
 };
 
-export type SessionProtection = { tool: "tmux" | "screen"; name: string };
+/** `asUser`: started after su / sudo as this user (electron/sessionProtection.ts). */
+export type SessionProtection = { tool: "tmux" | "screen"; name: string; asUser?: string };

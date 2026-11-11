@@ -16,8 +16,8 @@ import type { HostKeyCheck, HostKeyInfo } from "./knownHosts";
 import { normalizeConnectionKeepalive } from "../src/components/common/antiIdleModel";
 import type { ConnectionKeepalive } from "../src/components/common/antiIdleModel";
 import {
-  PROBE_COMMAND, PROTECT_OFF_MARKER, execCommand, isValidProtection, parseProbe, parseState, protectionName, runExec,
-  stateCommand, stopCommand, typedAttachCommand, typedStartCommand,
+  PROBE_COMMAND, PROTECT_OFF_MARKER, USER_MARKER, attachHint, execCommand, isValidProtection, parseProbe, parseState, protectionName, runExec,
+  STOP_KEY_GAP_MS, stateCommand, stopCommand, stopKeys, typedAttachCommand, typedStartCommand,
 } from "./sessionProtection";
 import type { ProtectionOpen, ProtectionProbe, SessionProtection } from "./sessionProtection";
 
@@ -232,6 +232,8 @@ type TerminalSession = {
   /** The terminal is the tmux client of an exec channel (no shell under it): stopping protection opens a shell. */
   protectedExec?: boolean;
   stoppingProtection?: boolean;
+  /** `id -un` of the SSH login, asked once when a typed protected session reports its user. */
+  loginUser?: string;
 };
 
 /** Connection details for the status bar; read by the window once a second (terminal:info). */
@@ -772,6 +774,11 @@ export function registerTerminalHandlers() {
                   terminalSession.protection = undefined;
                   sendProtection(request.sessionId, null);
                 }
+                const userMatch = USER_MARKER.exec(text);
+                if (userMatch) {
+                  text = text.replace(USER_MARKER, "");
+                  void noteProtectionUser(request.sessionId, terminalSession, userMatch[1]);
+                }
                 terminalSession.onScriptOutput?.(text);
                 if (text) {
                   sendData(request.sessionId, text);
@@ -841,6 +848,14 @@ export function registerTerminalHandlers() {
         const openProtected = async (enableX11: boolean) => {
           const wanted = request.protection!;
           let open: ProtectionOpen;
+          if (wanted.mode === "attach" && wanted.asUser) {
+            // started after su: an exec channel runs as the login user and cannot attach to it
+            const hint = attachHint(wanted);
+            sendData(request.sessionId, `\r\n\x1b[33mThe protected session runs as ${wanted.asUser} and is still on the server. To go back into it: ${hint}\x1b[0m\r\n`);
+            sendProtection(request.sessionId, null, `Reconnected to a plain shell. The protected session runs as ${wanted.asUser}; to go back into it: ${hint}`);
+            openShell(enableX11);
+            return;
+          }
           if (wanted.mode === "attach") {
             open = wanted;
           } else {
@@ -1090,6 +1105,10 @@ export function registerTerminalHandlers() {
     if (!session.protection) {
       return { alive: false, running: null };
     }
+    if (session.protection.asUser) {
+      // another user's tmux server: not visible from the login user's exec channel
+      return { alive: true, running: "unknown" };
+    }
     return parseState(session.protection, await runExec(session.client, stateCommand(session.protection)));
   });
 
@@ -1101,6 +1120,18 @@ export function registerTerminalHandlers() {
     }
     // exec mode: the channel closes when tmux goes; wireStream's onEnd opens a plain shell instead of ending the tab
     session.stoppingProtection = session.protectedExec === true;
+    if (protection.asUser && !session.protectedExec) {
+      for (const [index, keys] of stopKeys(protection).entries()) {
+        if (index > 0) {
+          await new Promise((resolve) => setTimeout(resolve, STOP_KEY_GAP_MS));
+        }
+        if (sessions.get(sessionId as string) !== session || !session.protection) {
+          return;
+        }
+        writeToSession(sessionId as string, keys);
+      }
+      return;
+    }
     await runExec(session.client, stopCommand(protection));
   });
   ipcMain.handle("terminal:protectionName", (_event, sessionId: unknown) => (typeof sessionId === "string" ? protectionName(sessionId) : null));
@@ -1824,6 +1855,29 @@ function sendExit(sessionId: string, reason: string, lost = false) {
 
   session.exitSent = true;
   safeSend(session.webContents, "terminal:exit", { sessionId, reason, lost, protection: session.protection ?? null });
+}
+
+/** The typed start command reported its user: another one than the login user means it ran after su. */
+async function noteProtectionUser(sessionId: string, session: TerminalSession, user: string) {
+  try {
+    session.loginUser ??= (await runExec(session.client, "id -un")).trim();
+  } catch {
+    return;
+  }
+  const protection = session.protection;
+  if (!protection || session.protectedExec || sessions.get(sessionId) !== session) {
+    return;
+  }
+  if (user === session.loginUser) {
+    if (protection.asUser) {
+      session.protection = { tool: protection.tool, name: protection.name };
+      sendProtection(sessionId, session.protection);
+    }
+    return;
+  }
+  session.protection = { ...protection, asUser: user };
+  sendProtection(sessionId, session.protection,
+    `Protected as ${user} (switched with su). It keeps running if the connection drops, but Shellium cannot go back into it by itself: after reconnecting, ${attachHint(session.protection)}.`);
 }
 
 function sendProtection(sessionId: string, protection: SessionProtection | null, notice?: string) {

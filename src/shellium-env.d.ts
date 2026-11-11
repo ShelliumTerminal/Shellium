@@ -2,7 +2,7 @@ import type { Folder, Host } from "./components/palette/types";
 import type { ConnectionKeepalive } from "./components/common/antiIdleModel";
 
 type ProtectionTool = "tmux" | "screen";
-type SessionProtection = { tool: ProtectionTool; name: string };
+type SessionProtection = { tool: ProtectionTool; name: string; asUser?: string };
 
 type TerminalConnectRequest = {
   sessionId: string;
