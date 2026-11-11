@@ -29,21 +29,14 @@ const { ipcMain, safeStorage } = require("electron") as typeof import("electron"
 
 const encryptedPrefix = "shellium-sec:v1:";
 const verifierPlainText = "shellium-security-verifier";
-/**
- * Written by the app's former names - ShellV ("shellv-sec:v1:") and RShell ("rshell-sec:v1:"):
- * still read, never written. They are shorter than the current prefix, so every reader strips the
- * prefix that actually matched (see `encryptedPrefixOf`).
- */
-const legacyEncryptedPrefixes = ["shellv-sec:v1:", "rshell-sec:v1:"];
-const legacyVerifierPlainTexts = ["shellv-security-verifier", "rshell-security-verifier"];
 
 function isKnownVerifier(value: string) {
-  return value === verifierPlainText || legacyVerifierPlainTexts.includes(value);
+  return value === verifierPlainText;
 }
 
-/** The prefix `value` starts with (current or legacy), or null when it is not encrypted. */
+/** The prefix `value` starts with, or null when it is not encrypted. */
 function encryptedPrefixOf(value: string) {
-  return [encryptedPrefix, ...legacyEncryptedPrefixes].find((prefix) => value.startsWith(prefix)) ?? null;
+  return value.startsWith(encryptedPrefix) ? encryptedPrefix : null;
 }
 const keyLength = 32;
 let activeKey: Buffer | null = null;

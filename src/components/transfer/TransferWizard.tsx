@@ -441,7 +441,7 @@ function ExportWizard({ onClose }: { onClose(): void }) {
 
 type ImportStep = "choose" | "password" | "map" | "content" | "preview" | "done";
 
-const KIND_LABEL = { shellium: "Shellium file", legacy: "RShell backup (.rshellbak)", csv: "CSV", xml: "XML" } as const;
+const KIND_LABEL = { shellium: "Shellium file", csv: "CSV", xml: "XML" } as const;
 
 /** Rows of the mapping step, in the order shown. */
 const MAP_ROWS: { target: Exclude<TransferMappingTarget, "folder">; label: string; hint: string }[] = [
@@ -642,7 +642,7 @@ function ImportWizard({ onClose, onDataChanged }: { onClose(): void; onDataChang
     body = (
       <div className="tw-choose">
         <p className="md-text">
-          Import a <strong>Shellium file</strong> (.shellium), an <strong>RShell export</strong> (.rshell) or older backup (.rshellbak), a <strong>CSV</strong> host list
+          Import a <strong>Shellium file</strong> (.shellium), a <strong>CSV</strong> host list
           with the columns name, host, port, username, folder, environment, tags, description, or another tool&apos;s <strong>XML</strong> export.
           You choose what to take and see conflicts before anything changes.
         </p>

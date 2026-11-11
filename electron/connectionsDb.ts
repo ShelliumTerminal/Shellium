@@ -1,11 +1,9 @@
-import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { getConnectionDatabasePath, getLegacyConnectionDatabasePath, getSettingsPath, writePrivateFile } from "./storageConfig";
 import { decryptDatabaseData, decryptSensitiveValue, encryptDatabaseData, encryptSensitiveValue } from "./security";
-import { ensureKnownHostsTable, mergeKnownHosts, normalizeKnownHostEntries, readLegacyKnownHostsFile } from "./knownHosts";
-import type { KnownHostEntry } from "./knownHosts";
+import { ensureKnownHostsTable, mergeKnownHosts, readLegacyKnownHostsFile } from "./knownHosts";
 import { normalizeAntiIdle, normalizeHostAntiIdle } from "../src/components/common/antiIdleModel";
 import type { AntiIdleOptions } from "../src/components/common/antiIdleModel";
 
@@ -84,40 +82,6 @@ type ConnectionsExportFile = {
   version: 1;
   exportedAt: string;
   folders: Folder[];
-};
-
-/**
- * Settings carried by a legacy RShell backup: the Options (appOptions) only. Per-device UI state such as
- * the connect dialog's size, position and expanded folders (settings.palette) stays on the device.
- */
-export type PortableSettingsFile = {
-  appOptions?: unknown;
-};
-
-export type LegacyBackupFile = {
-  version: 1;
-  kind: "rshell-backup";
-  exportedAt: string;
-  connections: {
-    folders: Folder[];
-  };
-  scriptButtons: ScriptButtonLibrary;
-  settings: PortableSettingsFile;
-  /** Trusted SSH host keys; absent in backups made before they were included. */
-  knownHosts?: Record<string, KnownHostEntry>;
-};
-
-/** Legacy .rshellbak (a readable JSON wrapper); only read now, to import old backups. See transfer.ts. */
-type EncryptedLegacyBackupFile = {
-  version: 2;
-  kind: "rshell-encrypted-backup";
-  exportedAt: string;
-  algorithm: "aes-256-gcm";
-  kdf: "scrypt";
-  salt: string;
-  iv: string;
-  tag: string;
-  payload: string;
 };
 
 const require = createRequire(import.meta.url);
@@ -386,9 +350,8 @@ function removeLegacyPlainDatabase(dbPath: string) {
   if (path.resolve(legacyPath) === path.resolve(dbPath) || !fs.existsSync(legacyPath) || !fs.existsSync(dbPath)) {
     return;
   }
-  // "shellium-sec:v1:", or "shellv-sec:v1:" / "rshell-sec:v1:" from the former names: all mean encrypted.
   const head = fs.readFileSync(dbPath).subarray(0, 16).toString("utf8");
-  if (!["shellium-sec:v1:", "shellv-sec:v1:", "rshell-sec:v1:"].some((prefix) => head.startsWith(prefix))) {
+  if (!head.startsWith("shellium-sec:v1:")) {
     return;
   }
   fs.rmSync(legacyPath, { force: true });
@@ -801,85 +764,6 @@ function stringifyX11Options(options: HostX11Options | undefined) {
   return normalized ? JSON.stringify(normalized) : null;
 }
 
-export function decryptBackupFile(value: unknown, passphrase: string): LegacyBackupFile {
-  if (typeof value !== "object" || value === null) {
-    throw new Error("Invalid Shellium backup file.");
-  }
-
-  const encryptedBackup = value as Partial<EncryptedLegacyBackupFile>;
-
-  if (encryptedBackup.kind !== "rshell-encrypted-backup" || encryptedBackup.version !== 2) {
-    throw new Error("Invalid Shellium encrypted backup file.");
-  }
-
-  if (encryptedBackup.algorithm !== "aes-256-gcm" || encryptedBackup.kdf !== "scrypt") {
-    throw new Error("Unsupported Shellium backup encryption format.");
-  }
-
-  if (!encryptedBackup.salt || !encryptedBackup.iv || !encryptedBackup.tag || !encryptedBackup.payload) {
-    throw new Error("Shellium backup file is incomplete.");
-  }
-
-  try {
-    const key = deriveBackupKey(passphrase, Buffer.from(encryptedBackup.salt, "base64"));
-    const decipher = crypto.createDecipheriv("aes-256-gcm", key, Buffer.from(encryptedBackup.iv, "base64"));
-    decipher.setAuthTag(Buffer.from(encryptedBackup.tag, "base64"));
-    const decrypted = Buffer.concat([
-      decipher.update(Buffer.from(encryptedBackup.payload, "base64")),
-      decipher.final(),
-    ]).toString("utf8");
-
-    return parseDecryptedBackup(JSON.parse(decrypted) as unknown);
-  } catch {
-    throw new Error("Shellium backup password is incorrect or the backup file is damaged.");
-  }
-}
-
-function parseDecryptedBackup(value: unknown): LegacyBackupFile {
-  if (typeof value !== "object" || value === null) {
-    throw new Error("Invalid Shellium backup payload.");
-  }
-
-  const backup = value as Partial<LegacyBackupFile>;
-
-  if (backup.kind !== "rshell-backup" || backup.version !== 1) {
-    throw new Error("Invalid Shellium backup payload.");
-  }
-
-  return {
-    version: 1,
-    kind: "rshell-backup",
-    exportedAt: typeof backup.exportedAt === "string" ? backup.exportedAt : new Date().toISOString(),
-    connections: {
-      folders: parseImportedFolders(backup.connections),
-    },
-    scriptButtons: normalizeScriptButtonLibrary(backup.scriptButtons),
-    settings: normalizePortableSettings(backup.settings),
-    knownHosts: normalizeKnownHostEntries(backup.knownHosts),
-  };
-}
-
-function deriveBackupKey(passphrase: string, salt: Buffer) {
-  return crypto.scryptSync(passphrase, salt, 32);
-}
-export function readPortableSettings(): PortableSettingsFile {
-  const settings = readSettingsObject();
-  return normalizePortableSettings({
-    appOptions: settings.appOptions,
-  });
-}
-
-export function writePortableSettings(settings: PortableSettingsFile) {
-  const currentSettings = readSettingsObject();
-  const nextSettings: Record<string, unknown> = {
-    ...currentSettings,
-    version: 1,
-    appOptions: settings.appOptions,
-  };
-
-  writePrivateFile(getSettingsPath(), JSON.stringify(nextSettings, null, 2));
-}
-
 export function readSettingsObject(): Record<string, unknown> {
   const settingsPath = getSettingsPath();
 
@@ -893,14 +777,6 @@ export function readSettingsObject(): Record<string, unknown> {
   } catch {
     return { version: 1 };
   }
-}
-
-function normalizePortableSettings(value: unknown): PortableSettingsFile {
-  const settings = typeof value === "object" && value !== null ? value as PortableSettingsFile : {};
-  // Older backups also carried "palette"; it is ignored so the local layout is kept.
-  return {
-    appOptions: settings.appOptions,
-  };
 }
 
 export function parseImportedFolders(value: unknown): Folder[] {

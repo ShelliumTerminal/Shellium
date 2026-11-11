@@ -5,7 +5,6 @@ import path from "node:path";
 import { promisify } from "node:util";
 import zlib from "node:zlib";
 import {
-  decryptBackupFile,
   normalizeScriptButtonLibrary,
   parseImportedFolders,
   readFolders,
@@ -57,8 +56,7 @@ const BOM_PATTERN = new RegExp(`^${BOM}`);
 const scryptAsync = promisify(crypto.scrypt) as (password: string, salt: Buffer, keylen: number, options: crypto.ScryptOptions) => Promise<Buffer>;
 
 type TransferPayload = {
-  /** "shellv-transfer" / "rshell-transfer" in files made under the former names; still imported. */
-  format: "shellium-transfer" | "shellv-transfer" | "rshell-transfer";
+  format: "shellium-transfer";
   version: 1;
   exportedAt: string;
   connections?: { folders: Folder[]; includesPasswords: boolean };
@@ -81,7 +79,7 @@ type ExportSelection = {
   knownHosts: boolean;
 };
 
-type ImportKind = "shellium" | "legacy" | "csv" | "xml";
+type ImportKind = "shellium" | "csv" | "xml";
 
 /** A row / entry left out of the import: CSV rows by line, XML entries by folder and name. */
 type ImportIssue = { line?: number; where?: string; message: string };
@@ -254,7 +252,7 @@ export function registerTransferHandlers() {
     const result = await dialog.showOpenDialog({
       title: "Import into Shellium",
       filters: [
-        { name: "Shellium export, ShellV / RShell export or backup, CSV, XML", extensions: ["shellium", "shellv", "rshell", "rshellbak", "csv", "xml"] },
+        { name: "Shellium export, CSV, XML", extensions: ["shellium", "csv", "xml"] },
         { name: "All files", extensions: ["*"] },
       ],
       properties: ["openFile"],
@@ -308,8 +306,6 @@ export function registerTransferHandlers() {
     }
     if (session.kind === "shellium") {
       session.data = importDataFromPayload(await openPayload(session.raw, passphrase));
-    } else if (session.kind === "legacy") {
-      session.data = importDataFromLegacy(session.raw, passphrase);
     }
     return summarize(requireData(session));
   });
@@ -405,9 +401,6 @@ function detectKind(raw: Buffer, filePath: string): ImportKind {
     return "shellium";
   }
   const text = raw.subarray(0, 4096).toString("utf8").replace(BOM_PATTERN, "").trimStart();
-  if (text.startsWith("{") && text.includes("rshell-encrypted-backup")) {
-    return "legacy";
-  }
   const utf16 = (raw[0] === 0xff && raw[1] === 0xfe) || (raw[0] === 0xfe && raw[1] === 0xff);
   if (path.extname(filePath).toLowerCase() === ".xml" || text.startsWith("<") || utf16) {
     return "xml";
@@ -481,7 +474,7 @@ function pickFolders(folders: Folder[], ids: Set<string>): Folder[] {
 
 function importDataFromPayload(value: unknown): ImportData {
   const payload = typeof value === "object" && value !== null ? value as Partial<TransferPayload> : {};
-  if (!["shellium-transfer", "shellv-transfer", "rshell-transfer"].includes(payload.format ?? "") || payload.version !== 1) {
+  if (payload.format !== "shellium-transfer" || payload.version !== 1) {
     throw new Error("This Shellium export was made by a newer Shellium version.");
   }
   const folders = payload.connections ? parseImportedFolders(payload.connections.folders) : null;
@@ -494,30 +487,6 @@ function importDataFromPayload(value: unknown): ImportData {
     environments: Array.isArray(payload.environments) ? normalizeEnvironments(payload.environments) : [],
     settings: isRecord(payload.settings) ? payload.settings : null,
     knownHosts: payload.knownHosts ? normalizeKnownHostEntries(payload.knownHosts) : null,
-    issues: [],
-    hostFields: ALL_HOST_FIELDS,
-  };
-}
-
-function importDataFromLegacy(raw: Buffer, passphrase: string): ImportData {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw.toString("utf8").replace(BOM_PATTERN, ""));
-  } catch {
-    throw new Error("The backup file is damaged.");
-  }
-  const backup = decryptBackupFile(parsed, passphrase);
-  const appOptions = isRecord(backup.settings.appOptions) ? backup.settings.appOptions : null;
-  const { environments, ...settings } = appOptions ?? {};
-  return {
-    kind: "legacy",
-    exportedAt: backup.exportedAt,
-    folders: backup.connections.folders,
-    includesPasswords: allHosts(backup.connections.folders).some((h) => !!h.password),
-    scriptButtons: backup.scriptButtons,
-    environments: Array.isArray(environments) ? normalizeEnvironments(environments) : [],
-    settings: appOptions ? settings : null,
-    knownHosts: backup.knownHosts ?? null,
     issues: [],
     hostFields: ALL_HOST_FIELDS,
   };

@@ -254,7 +254,7 @@ export type TransferExportResult = {
   knownHostCount?: number;
 };
 
-export type TransferImportKind = "shellium" | "legacy" | "csv" | "xml";
+export type TransferImportKind = "shellium" | "csv" | "xml";
 
 export type TransferImportSummary = {
   kind: TransferImportKind;
