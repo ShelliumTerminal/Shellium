@@ -32,8 +32,6 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
   Only commands started after Protect are protected; it refuses to type into sqlplus / vim unless told
   the terminal is at a prompt. Shellium's tmux has its own socket and settings (no status bar, no prefix
   key, scrollback in the terminal) and never touches the user's own tmux.
-
-### Changed
 - New password screen: the Shellium title on black on the left (when it opens, a few lines of an SSH
   handshake run by and the session "opens" onto the name over a rule in the Shellium colors), the
   password form on the right in the app's theme. Nothing waits for the animation - you can type at once. Options › General › "Animate the password screen"
@@ -59,8 +57,8 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 - SSH: with "Allow legacy SSH algorithms" on, a server that only offers the
   `diffie-hellman-group-exchange-sha1` key exchange could not be
   reached ("no matching key exchange algorithm"); it is now part of the legacy set.
-- macOS: the connect dialog shortcut did nothing (Option+B types a character there). On a Mac it is
-  now ⌘B; Windows and Linux keep Alt+B. The script button shortcuts (Option+1 … 9) work on a Mac too.
+- macOS: the connect dialog shortcut did nothing (Option+B types a character there); on a Mac it is
+  ⌘S (see Changed). The script button shortcuts (Option+1 … 9) work on a Mac too.
 
 ## [2.1.0] - 2026-10-15
 
