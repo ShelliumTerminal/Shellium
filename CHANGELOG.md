@@ -133,7 +133,7 @@ hosts with File › Export in the old version and File › Import in Shellium.
 
 ### Changed
 - New name, icon and app identity: Shellium (`com.shellium.app`), data in `%APPDATA%/shellium`.
-  Windows treats it as a new app; exports of the earlier versions (`.rshell`, `.shellv`, `.rshellbak`) import.
+  Windows treats it as a new app.
 - New application shell and design system: one app bar, Home tab with search, environment filters,
   favorites and recent connections, quick connect (Alt+B), tabs on top, left or right, light and dark
   themes, bundled Inter and JetBrains Mono.
