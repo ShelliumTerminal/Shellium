@@ -7,6 +7,8 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-11-11
+
 ### Added
 - Shellium is open source under the MIT License. Help › About and the Windows installer show the
   license: Shellium is provided "as is", without warranty of any kind.
