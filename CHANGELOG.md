@@ -24,6 +24,10 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
   box drawing after them stay aligned.
 
 ### Fixed
+- Selecting text while output keeps coming: the selection stayed in place on the screen and the new
+  lines ran through it (once the scrollback was full). It now moves with its text and goes away when
+  that text leaves the scrollback. While the mouse button is held to select, the view stands still;
+  the output that arrived meanwhile appears when the button is released.
 - Clicking outside the terminal turned its cursor into two thin vertical lines ("| |"). The cursor
   is now hidden while the terminal is not focused and comes back when you click into it.
 

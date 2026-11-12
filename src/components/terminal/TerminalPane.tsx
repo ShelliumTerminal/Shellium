@@ -7,7 +7,7 @@ import { FitAddon } from "@xterm/addon-fit";
 import { Unicode11Addon } from "@xterm/addon-unicode11";
 import { WebglAddon } from "@xterm/addon-webgl";
 import { Terminal } from "@xterm/xterm";
-import type { ILink } from "@xterm/xterm";
+import type { ILink, IMarker } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
 
 import type { Session } from "../palette/types";
@@ -963,9 +963,30 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       writeTerminalInput(data);
     });
 
+    // While text is being selected with the mouse the view stands still (like SecureCRT): output that
+    // arrives meanwhile is held and written when the button is released. Very large amounts are
+    // written anyway so memory stays bounded.
+    let heldOutput: string[] = [];
+    let heldOutputLength = 0;
+    const flushHeldOutput = () => {
+      if (heldOutput.length === 0) {
+        return;
+      }
+      const data = heldOutput.join("");
+      heldOutput = [];
+      heldOutputLength = 0;
+      terminal.write(data);
+    };
+
     const disposeData = window.shellium?.terminal.onData((payload) => {
       if (payload.sessionId === session.id) {
-        terminal.write(payload.data);
+        if (isCustomSelectingRef.current && heldOutputLength + payload.data.length <= 8 * 1024 * 1024) {
+          heldOutput.push(payload.data);
+          heldOutputLength += payload.data.length;
+        } else {
+          flushHeldOutput();
+          terminal.write(payload.data);
+        }
         onActivity(session.id);
       }
     });
@@ -1187,11 +1208,61 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
     const selectionDisposable = terminal.onSelectionChange(handleSelectionChange);
     const scrollDisposable = terminal.onScroll(syncCustomSelectionRects);
 
+    // The selection holds buffer row numbers. Once the scrollback is full, every new line drops the
+    // oldest one and the same row number points at newer text, so the selection stayed on the screen
+    // while the output ran through it. Markers move with their line: the rows are read back from them
+    // after each write, and when the selected text leaves the scrollback the selection goes too.
+    let selectionMarkers: { anchor: IMarker; focus: IMarker } | null = null;
+    const disposeSelectionMarkers = () => {
+      selectionMarkers?.anchor.dispose();
+      selectionMarkers?.focus.dispose();
+      selectionMarkers = null;
+    };
+    const pinCustomSelection = () => {
+      disposeSelectionMarkers();
+      const selection = customSelectionRef.current;
+      if (!selection) {
+        return;
+      }
+      const buffer = terminal.buffer.active;
+      const cursorLine = buffer.baseY + buffer.cursorY;
+      const anchor = terminal.registerMarker(selection.anchor.row - cursorLine);
+      const focus = terminal.registerMarker(selection.focus.row - cursorLine);
+      if (anchor && focus) {
+        selectionMarkers = { anchor, focus };
+      } else {
+        anchor?.dispose();
+        focus?.dispose();
+      }
+    };
+
     const clearCustomSelection = () => {
+      disposeSelectionMarkers();
       customSelectionRef.current = null;
       isCustomSelectingRef.current = false;
+      flushHeldOutput();
       setCustomSelectionRects([]);
     };
+
+    const followCustomSelection = () => {
+      const selection = customSelectionRef.current;
+      if (!selection || !selectionMarkers) {
+        return;
+      }
+      const { anchor, focus } = selectionMarkers;
+      if (anchor.isDisposed || focus.isDisposed || anchor.line < 0 || focus.line < 0) {
+        clearCustomSelection();
+        return;
+      }
+      if (anchor.line !== selection.anchor.row || focus.line !== selection.focus.row) {
+        customSelectionRef.current = {
+          anchor: { ...selection.anchor, row: anchor.line },
+          focus: { ...selection.focus, row: focus.line },
+        };
+        syncCustomSelectionRects();
+      }
+    };
+    const writeParsedDisposable = terminal.onWriteParsed(followCustomSelection);
 
     const isFindPanelEventTarget = (target: EventTarget | null) => target instanceof Node && Boolean(findPanelRef.current?.contains(target));
     const isPasteDialogEventTarget = (target: EventTarget | null) => target instanceof Node && Boolean(pasteDialogRef.current?.contains(target));
@@ -1251,6 +1322,7 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
         anchor: { row, column: startColumn },
         focus: { row, column: endColumn },
       };
+      pinCustomSelection();
       syncCustomSelectionRects();
       scheduleSelectionCopy();
     };
@@ -1339,13 +1411,20 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
 
       isCustomSelectingRef.current = true;
       customSelectionRef.current = { anchor: point, focus: point };
+      pinCustomSelection();
       syncCustomSelectionRects();
     };
 
     const handlePointerMove = (event: PointerEvent) => {
       const currentSelection = customSelectionRef.current;
 
-      if (event.buttons !== 1 || !isCustomSelectingRef.current || !currentSelection) {
+      if (!isCustomSelectingRef.current || !currentSelection) {
+        return;
+      }
+
+      // The button was released where no pointerup reached us (outside the window): end the drag.
+      if (event.buttons !== 1) {
+        handleMouseUp();
         return;
       }
 
@@ -1360,6 +1439,7 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       }
 
       customSelectionRef.current = { ...currentSelection, focus };
+      pinCustomSelection();
       syncCustomSelectionRects();
     };
 
@@ -1367,6 +1447,7 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       if (isCustomSelectingRef.current) {
         isCustomSelectingRef.current = false;
         scheduleSelectionCopy();
+        flushHeldOutput();
       }
     };
 
@@ -1410,6 +1491,8 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
     document.addEventListener("pointermove", handlePointerMove, true);
     document.addEventListener("mouseup", handleMouseUp, true);
     document.addEventListener("pointerup", handleMouseUp, true);
+    // Switching away mid-drag must not leave the output held.
+    window.addEventListener("blur", handleMouseUp);
     // Pastes the browser delivers itself (Win+V clipboard history, IME / accessibility tools) take
     // the same path instead of xterm's, which would send several lines straight away.
     const handlePasteEvent = (event: ClipboardEvent) => {
@@ -1534,6 +1617,9 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       setTerminalView(session.id, null);
       selectionDisposable.dispose();
       scrollDisposable.dispose();
+      writeParsedDisposable.dispose();
+      disposeSelectionMarkers();
+      window.removeEventListener("blur", handleMouseUp);
       disposeData?.();
       disposeExit?.();
       syncTerminalSizeRef.current = null;
