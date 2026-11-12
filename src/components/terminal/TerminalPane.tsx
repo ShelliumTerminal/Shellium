@@ -704,6 +704,8 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
     const initialAppearance = terminalAppearanceRef.current;
     const terminal = new Terminal({
       cursorBlink: true,
+      // xterm's default hollow box lost its top and bottom edges on some screens ("| |")
+      cursorInactiveStyle: "none",
       convertEol: true,
       fontFamily: terminalFontStack(initialAppearance.fontFamily),
       fontSize: initialAppearance.fontSize,

@@ -7,6 +7,10 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 
 ## [Unreleased]
 
+### Fixed
+- Clicking outside the terminal turned its cursor into two thin vertical lines ("| |"). The cursor
+  is now hidden while the terminal is not focused and comes back when you click into it.
+
 ### Removed
 - Import no longer reads export and backup files of the app's earlier versions, and data encrypted
   by them is no longer opened. Shellium's own `.shellium` exports, CSV and XML
