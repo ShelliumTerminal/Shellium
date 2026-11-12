@@ -1369,6 +1369,12 @@
   color: var(--ui-warn);
 }
 
+.shellium-shell .sh-tab-bell {
+  display: inline-flex;
+  flex: none;
+  color: var(--ui-warn);
+}
+
 @keyframes sh-protect-pulse {
   50% { opacity: 0.35; }
 }

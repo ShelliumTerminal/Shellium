@@ -323,8 +323,8 @@ function App() {
     }
 
     setSessions((current) => current.map((session) =>
-      session.id === activeSessionId && session.hasUnreadActivity
-        ? { ...session, hasUnreadActivity: false }
+      session.id === activeSessionId && (session.hasUnreadActivity || session.hasBell)
+        ? { ...session, hasUnreadActivity: false, hasBell: false }
         : session,
     ));
   }, [activeSessionId]);
@@ -606,6 +606,18 @@ function App() {
 
       return changed ? nextSessions : current;
     });
+  }, []);
+
+  /** Bell (BEL, e.g. `make; echo -e '\a'`): a background tab shows a bell, a background window flashes. */
+  const markSessionBell = useCallback((sessionId: string) => {
+    window.shellium?.app.requestAttention();
+    if (sessionId === activeSessionIdRef.current) {
+      return;
+    }
+
+    setSessions((current) => current.some((session) => session.id === sessionId && !session.hasBell)
+      ? current.map((session) => session.id === sessionId ? { ...session, hasBell: true } : session)
+      : current);
   }, []);
 
   const handleProtectionChange = useCallback((sessionId: string, protection: SessionProtection | null) => {
@@ -1356,6 +1368,7 @@ function App() {
                       reconnectToken={session.reconnectToken}
                       onStatusChange={updateSessionStatus}
                       onActivity={markSessionActivity}
+                      onBell={markSessionBell}
                       onNotice={handleTerminalNotice}
                       onSftpTransferActivityChange={handleSftpTransferActivityChange}
                       onTranscriptRecordingActivityChange={handleTranscriptRecordingActivityChange}

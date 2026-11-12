@@ -4,7 +4,10 @@ import type { TerminalScheme } from "../common/terminalSchemeModel";
 import { ChevronDown, ChevronUp, ClipboardPaste, FolderOpen, Search, SquareTerminal, X } from "lucide-react";
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { FitAddon } from "@xterm/addon-fit";
+import { Unicode11Addon } from "@xterm/addon-unicode11";
+import { WebglAddon } from "@xterm/addon-webgl";
 import { Terminal } from "@xterm/xterm";
+import type { ILink } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
 
 import type { Session } from "../palette/types";
@@ -19,6 +22,8 @@ import { setTerminalView } from "../../app/terminalViewStore";
 import { useEscapeLayer } from "../../app/escapeLayers";
 import ProtectionBar from "./ProtectionBar";
 import { useSessionProtection } from "./useSessionProtection";
+import { findTerminalLinks } from "./terminalLinks";
+import type { TerminalLink } from "./terminalLinks";
 import type { SessionProtection } from "../palette/types";
 
 export type TerminalFontStyle = "regular" | "italic" | "bold" | "boldItalic";
@@ -73,6 +78,8 @@ type TerminalPaneProps = {
   reconnectToken?: number;
   onStatusChange(sessionId: string, status: Session["status"]): void;
   onActivity(sessionId: string): void;
+  /** The terminal rang its bell (BEL). */
+  onBell(sessionId: string): void;
   onNotice(sessionId: string, message: string): void;
   onSftpTransferActivityChange(sessionId: string, activity: SftpTransferActivity): void;
   onTranscriptRecordingActivityChange(sessionId: string, activity: TerminalTranscriptRecordingActivity): void;
@@ -171,7 +178,7 @@ function countContentLines(text: string) {
 const BRACKETED_PASTE_START = "\x1b[200~";
 const BRACKETED_PASTE_END = "\x1b[201~";
 
-const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function TerminalPane({ session, isActive, uiScale, terminalAppearance, terminalScheme, scrollback, selectionStyle, recordingDirectory, focusVersion, isInteractionBlocked, reconnectToken = 0, onStatusChange, onActivity, onNotice, onSftpTransferActivityChange, onTranscriptRecordingActivityChange, onCloseSession, onProtectionChange, onReconnectingChange, pasteDialogBounds: storedPasteDialogBounds, onPasteDialogBoundsChange }, ref) {
+const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function TerminalPane({ session, isActive, uiScale, terminalAppearance, terminalScheme, scrollback, selectionStyle, recordingDirectory, focusVersion, isInteractionBlocked, reconnectToken = 0, onStatusChange, onActivity, onBell, onNotice, onSftpTransferActivityChange, onTranscriptRecordingActivityChange, onCloseSession, onProtectionChange, onReconnectingChange, pasteDialogBounds: storedPasteDialogBounds, onPasteDialogBoundsChange }, ref) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const reconnectRef = useRef<(() => void) | null>(null);
@@ -226,6 +233,9 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
   const [pendingSftpCloseConfirm, setPendingSftpCloseConfirm] = useState(false);
   const [sftpCloseConfirmFrame, setSftpCloseConfirmFrame] = useState<SftpCloseConfirmFrame>(() => createDefaultSftpCloseConfirmFrame());
   const [sftpActivity, setSftpActivity] = useState<SftpActivity>({ active: false });
+  const [sftpReveal, setSftpReveal] = useState<{ path: string; seq: number } | null>(null);
+  const onBellRef = useRef(onBell);
+  onBellRef.current = onBell;
   const sftpForwardedActivityRef = useRef<SftpActivity>({ active: false });
   const pendingPasteRef = useRef<string | null>(pendingPaste);
   const antiIdleDefaults = useAntiIdleDefaults();
@@ -526,6 +536,21 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
     setActiveTerminalView("sftp");
   };
 
+  // Ctrl+click on a link in the output (terminalLinks.ts): web addresses go to the browser, paths to SFTP.
+  const openTerminalLinkRef = useRef<(link: TerminalLink) => void>(() => undefined);
+  openTerminalLinkRef.current = (link) => {
+    if (link.kind === "url") {
+      window.shellium?.app.openExternal(link.text).catch((error: unknown) => {
+        onNotice(session.id, `Could not open ${link.text}: ${error instanceof Error ? error.message : String(error)}`);
+      });
+      return;
+    }
+
+    setIsSftpOpen(true);
+    setActiveTerminalView("sftp");
+    setSftpReveal((current) => ({ path: link.text, seq: (current?.seq ?? 0) + 1 }));
+  };
+
   const requestCloseSftpPanel = () => {
     if (sftpActivity.active || sftpActivity.unsavedEdits) {
       setSftpCloseConfirmFrame(createDefaultSftpCloseConfirmFrame());
@@ -707,6 +732,8 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       // xterm's default hollow box lost its top and bottom edges on some screens ("| |")
       cursorInactiveStyle: "none",
       convertEol: true,
+      // terminal.unicode (Unicode 11 widths) is a proposed API in xterm 6
+      allowProposedApi: true,
       fontFamily: terminalFontStack(initialAppearance.fontFamily),
       fontSize: initialAppearance.fontSize,
       fontWeight: getTerminalFontWeight(initialAppearance.fontStyle),
@@ -721,6 +748,31 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
     terminal.open(container);
     terminalRef.current = terminal;
     fitAddonRef.current = fitAddon;
+
+    // Unicode 11 character widths: emoji and other wide characters take the two cells the server
+    // expects, so columns and box drawing after them stay aligned.
+    terminal.loadAddon(new Unicode11Addon());
+    terminal.unicode.activeVersion = "11";
+
+    // Drawn on the GPU (WebGL): far less CPU for fast output (tail -f, long query results). Without
+    // WebGL2, or when the context is lost (driver reset, too many tabs), xterm's DOM renderer takes over.
+    let webglAddon: WebglAddon | null = null;
+    try {
+      const addon = new WebglAddon();
+      addon.onContextLoss(() => {
+        addon.dispose();
+        webglAddon = null;
+      });
+      terminal.loadAddon(addon);
+      webglAddon = addon;
+    } catch {
+      webglAddon = null;
+    }
+    // Glyphs are cached in a texture: redraw them once the bundled fonts have loaded.
+    const handleFontsLoaded = () => webglAddon?.clearTextureAtlas();
+    document.fonts?.addEventListener("loadingdone", handleFontsLoaded);
+
+    const bellDisposable = terminal.onBell(() => onBellRef.current(session.id));
 
     const writeClipboardText = (text: string) => {
       window.shellium?.clipboard.writeText(text).catch(() => undefined);
@@ -980,6 +1032,111 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       return { row, column };
     };
 
+    // Links (terminalLinks.ts) are found in the logical line: rows the terminal wrapped are joined, so a
+    // long path or address that runs over two rows is still one link. cells[i] is the cell of text[i].
+    const getLogicalLine = (row: number) => {
+      const buffer = terminal.buffer.active;
+      let first = row;
+      while (first > 0 && buffer.getLine(first)?.isWrapped && row - first < 64) {
+        first -= 1;
+      }
+
+      let text = "";
+      const cells: Array<{ row: number; x: number }> = [];
+      for (let lineRow = first; lineRow < buffer.length && lineRow - first < 128; lineRow += 1) {
+        const line = buffer.getLine(lineRow);
+        if (!line || (lineRow > first && !line.isWrapped)) {
+          break;
+        }
+        for (let x = 0; x < line.length; x += 1) {
+          const cell = line.getCell(x);
+          if (!cell || cell.getWidth() === 0) {
+            continue;
+          }
+          const chars = cell.getChars() || " ";
+          for (let index = 0; index < chars.length; index += 1) {
+            cells.push({ row: lineRow, x });
+          }
+          text += chars;
+        }
+      }
+
+      return { text, cells };
+    };
+
+    const getLinksOnRow = (row: number) => {
+      const { text, cells } = getLogicalLine(row);
+      return findTerminalLinks(text).flatMap((link) => {
+        const start = cells[link.start];
+        const end = cells[link.end - 1];
+        return start && end && start.row <= row && end.row >= row ? [{ link, start, end }] : [];
+      });
+    };
+
+    const getLinkAtCell = (row: number, x: number) => getLinksOnRow(row).find(({ start, end }) =>
+      (row > start.row || x >= start.x) && (row < end.row || x <= end.x))?.link ?? null;
+
+    // Links open with Ctrl+click (Cmd+click on a Mac) only: a plain click still selects text. While the
+    // key is held over a link it is underlined and the pointer becomes a hand.
+    const isMac = window.shellium?.app.platform === "darwin";
+    const isLinkModifier = (event: { ctrlKey: boolean; metaKey: boolean }) => (isMac ? event.metaKey : event.ctrlKey);
+    const linkModifierName = isMac ? "Cmd" : "Ctrl";
+    let hoveredLink: { ilink: ILink; link: TerminalLink } | null = null;
+    let isLinkModifierHeld = false;
+    const syncLinkHover = () => {
+      const armed = Boolean(hoveredLink) && isLinkModifierHeld;
+      container.classList.toggle("terminal-link-armed", armed);
+      if (hoveredLink?.ilink.decorations) {
+        hoveredLink.ilink.decorations.underline = armed;
+        hoveredLink.ilink.decorations.pointerCursor = armed;
+      }
+      container.title = hoveredLink
+        ? `${linkModifierName}+click: ${hoveredLink.link.kind === "url" ? "open in the browser" : "show in SFTP"}`
+        : "";
+    };
+    const handleLinkModifierKey = (event: KeyboardEvent) => {
+      if (isLinkModifier(event) !== isLinkModifierHeld) {
+        isLinkModifierHeld = isLinkModifier(event);
+        syncLinkHover();
+      }
+    };
+    const handleLinkWindowBlur = () => {
+      isLinkModifierHeld = false;
+      syncLinkHover();
+    };
+
+    const linkProviderDisposable = terminal.registerLinkProvider({
+      provideLinks(bufferLineNumber, callback) {
+        const row = bufferLineNumber - 1;
+        const links = getLinksOnRow(row).map(({ link, start, end }): ILink => {
+          const ilink: ILink = {
+            text: link.text,
+            range: { start: { x: start.x + 1, y: start.row + 1 }, end: { x: end.x + 1, y: end.row + 1 } },
+            decorations: { underline: isLinkModifierHeld, pointerCursor: isLinkModifierHeld },
+            // Opened from handlePointerDown: the custom selection takes every left click first.
+            activate: () => undefined,
+            hover: (event) => {
+              hoveredLink = { ilink, link };
+              isLinkModifierHeld = isLinkModifier(event);
+              // xterm swaps in its own (tracked) decorations right after this callback returns.
+              queueMicrotask(syncLinkHover);
+            },
+            leave: () => {
+              if (hoveredLink?.ilink === ilink) {
+                hoveredLink = null;
+                syncLinkHover();
+              }
+            },
+          };
+          return ilink;
+        });
+        callback(links.length > 0 ? links : undefined);
+      },
+    });
+    window.addEventListener("keydown", handleLinkModifierKey, true);
+    window.addEventListener("keyup", handleLinkModifierKey, true);
+    window.addEventListener("blur", handleLinkWindowBlur);
+
     const buildSelectionRects = () => {
       const range = getOrderedSelection();
       const screen = container.querySelector<HTMLElement>(".xterm-screen");
@@ -1139,6 +1296,18 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
     const handlePointerDown = (event: PointerEvent) => {
       if (event.button !== 0 || !isTerminalPointerEvent(event)) {
         return;
+      }
+
+      if (isLinkModifier(event)) {
+        const cell = getTerminalCellFromPointer(event);
+        const link = cell ? getLinkAtCell(terminal.buffer.active.viewportY + cell.row, cell.column) : null;
+        if (link) {
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+          openTerminalLinkRef.current(link);
+          return;
+        }
       }
 
       const point = getSelectablePointFromPointer(event);
@@ -1378,6 +1547,12 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       document.removeEventListener("contextmenu", handleContextMenu, true);
       document.removeEventListener("auxclick", handleAuxClick, true);
       container.removeEventListener("paste", handlePasteEvent, true);
+      window.removeEventListener("keydown", handleLinkModifierKey, true);
+      window.removeEventListener("keyup", handleLinkModifierKey, true);
+      window.removeEventListener("blur", handleLinkWindowBlur);
+      document.fonts?.removeEventListener("loadingdone", handleFontsLoaded);
+      linkProviderDisposable.dispose();
+      bellDisposable.dispose();
       markTranscriptRecordingStopped();
       window.shellium?.terminal.disconnect(session.id);
       terminal.dispose();
@@ -1506,7 +1681,7 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
         )}
       </div>
       {isSftpOpen && (
-        <SftpBrowser session={session} hidden={activeTerminalView !== "sftp"} onActivityChange={handleSftpActivityChange} />
+        <SftpBrowser session={session} hidden={activeTerminalView !== "sftp"} onActivityChange={handleSftpActivityChange} reveal={sftpReveal} />
       )}
       {pendingSftpCloseConfirm && (
         <section className="md-overlay md-overlay-sftp" aria-label="SFTP close confirmation">

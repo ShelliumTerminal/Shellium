@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
-import { ChevronDown, Home, Plus, Settings, ShieldCheck, X } from "lucide-react";
+import { Bell, ChevronDown, Home, Plus, Settings, ShieldCheck, X } from "lucide-react";
 import { EnvironmentBadge, environmentStyle, useEnvironments } from "../common/environments";
 import type { Session } from "../palette/types";
 import { normalizeTerminalTabSize } from "../../app/appOptions";
@@ -182,6 +182,11 @@ export default function SessionTabs({
             {session.protection && (
               <span className="sh-tab-shield" title={session.reconnecting ? "Protected - reconnecting" : `Protected (${session.protection.tool} on the server)`}>
                 <ShieldCheck size={13} aria-label="Protected" />
+              </span>
+            )}
+            {session.hasBell && session.id !== activeSessionId && (
+              <span className="sh-tab-bell" title="The terminal rang its bell">
+                <Bell size={12} aria-label="Bell" />
               </span>
             )}
             <button

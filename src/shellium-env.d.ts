@@ -348,6 +348,8 @@ declare global {
         onShortcut(callback: (shortcut: "connect") => void): () => void;
         onCloseRequest(callback: () => void): () => void;
         confirmClose(): Promise<void>;
+        openExternal(url: string): Promise<void>;
+        requestAttention(): void;
       };
       security: {
         status(): Promise<SecurityStatus>;

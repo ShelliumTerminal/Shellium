@@ -7,6 +7,22 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 
 ## [Unreleased]
 
+### Added
+- Links in the terminal: **Ctrl+click** (⌘+click on a Mac) on a web address opens it in the browser;
+  on an absolute path (e.g. `/u01/app/oracle/diag/.../alert_ORCL.log`) it opens the session's SFTP
+  view there: a folder is shown, a file is selected in its folder. Holding the key over a link
+  underlines it; a plain click still selects text. Addresses and paths that wrap onto the next row
+  count as one link.
+- Terminal bell: a tab in the background that rings its bell (e.g. `long_job; echo -e '\a'`) shows a
+  bell until it is opened, and when Shellium itself is in the background its taskbar button flashes
+  (the Dock icon bounces on a Mac).
+
+### Changed
+- The terminal is drawn on the GPU (WebGL): fast output such as `tail -f` or long query results
+  uses much less CPU. Without WebGL it falls back to the previous renderer on its own.
+- Emoji and other wide characters take the width the server expects (Unicode 11), so columns and
+  box drawing after them stay aligned.
+
 ### Fixed
 - Clicking outside the terminal turned its cursor into two thin vertical lines ("| |"). The cursor
   is now hidden while the terminal is not focused and comes back when you click into it.

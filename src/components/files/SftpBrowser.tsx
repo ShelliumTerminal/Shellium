@@ -11,6 +11,7 @@ import TransferQueue from "./TransferQueue";
 import { isSftpNotConnected, withSftpConnection } from "./sftpConnection";
 import { ChmodDialog, ConflictDialog, DeleteDialog } from "./SftpDialogs";
 import { errorText, localParent, remoteParent } from "./fileModel";
+import { splitRemotePath } from "../terminal/terminalLinks";
 import type { PaneEntry, PaneSide } from "./fileModel";
 
 /** `active`: a transfer is running or queued. `unsavedEdits`: edited copies not uploaded yet (lost on close). */
@@ -68,13 +69,15 @@ type SftpBrowserProps = {
   session: Session;
   hidden: boolean;
   onActivityChange(activity: SftpActivity): void;
+  /** A path Ctrl+clicked in the terminal: a folder opens, a file is selected in its folder (seq: each click). */
+  reveal?: { path: string; seq: number } | null;
 };
 
 /**
  * Local and remote file panes with a transfer queue. Transfers, conflict checks, recursive delete,
  * chmod and editing run in the main process (electron/sftpJobs.ts); this only drives them.
  */
-export default function SftpBrowser({ session, hidden, onActivityChange }: SftpBrowserProps) {
+export default function SftpBrowser({ session, hidden, onActivityChange, reveal }: SftpBrowserProps) {
   const [remote, setRemote] = useState<PaneState>(emptyPane);
   const [local, setLocal] = useState<PaneState>(emptyPane);
   const [jobs, setJobs] = useState<SftpJob[]>([]);
@@ -94,9 +97,10 @@ export default function SftpBrowser({ session, hidden, onActivityChange }: SftpB
   const dismissedRef = useRef(new Set<string>());
   const api = window.shellium?.sftp;
 
-  const loadRemote = useCallback(async (remotePath?: string, retried = false): Promise<void> => {
+  /** Lists a remote folder; resolves to its entries, or null when it failed (the pane shows why). */
+  const loadRemote = useCallback(async (remotePath?: string, retried = false): Promise<PaneEntry[] | null> => {
     if (!api) {
-      return;
+      return null;
     }
     try {
       if (!connectedRef.current) {
@@ -117,6 +121,7 @@ export default function SftpBrowser({ session, hidden, onActivityChange }: SftpB
           ? new Set([...current.selection].filter((path) => result.entries.some((entry) => entry.path === path)))
           : new Set(),
       }));
+      return result.entries;
     } catch (error) {
       // The channel may be gone (the server dropped it): connect again, once right away.
       connectedRef.current = false;
@@ -124,8 +129,36 @@ export default function SftpBrowser({ session, hidden, onActivityChange }: SftpB
         return loadRemote(remotePath, true);
       }
       setRemote((current) => ({ ...current, status: "error", message: errorText(error) }));
+      return null;
     }
   }, [api, session.host, session.id]);
+
+  const revealRemote = useCallback(async (remotePath: string) => {
+    const target = splitRemotePath(remotePath);
+    const entries = await loadRemote(target.folder);
+    const entry = entries?.find((candidate) => candidate.name === target.name);
+
+    if (!entry) {
+      return;
+    }
+
+    // A link to a folder may be a symlink: open it when it lists, otherwise select it like a file.
+    if (entry.type === "directory" || (entry.type === "symlink" && await api?.list(session.id, target.path).then(() => true, () => false))) {
+      await loadRemote(target.path);
+      return;
+    }
+
+    setRemote((current) => current.cwd ? { ...current, selection: new Set([entry.path]) } : current);
+  }, [api, loadRemote, session.id]);
+
+  const revealRef = useRef(reveal);
+  revealRef.current = reveal;
+  useEffect(() => {
+    const request = revealRef.current;
+    if (request) {
+      revealRemote(request.path).catch(() => undefined);
+    }
+  }, [reveal?.seq, revealRemote]);
 
   const loadLocal = useCallback(async (localPath?: string) => {
     const files = window.shellium?.localFiles;
@@ -152,7 +185,10 @@ export default function SftpBrowser({ session, hidden, onActivityChange }: SftpB
 
   useEffect(() => {
     loadLocal().catch(() => undefined);
-    loadRemote().catch(() => undefined);
+    // Opened from a link in the terminal: the reveal effect lists that folder instead of the home folder.
+    if (!revealRef.current) {
+      loadRemote().catch(() => undefined);
+    }
     api?.listJobs(session.id).then(setJobs).catch(() => undefined);
     api?.editList(session.id).then(setEdits).catch(() => undefined);
     // Mount only: the panel opens with home folders.

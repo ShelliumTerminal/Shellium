@@ -24,6 +24,14 @@ contextBridge.exposeInMainWorld('shellium', {
     confirmClose() {
       return ipcRenderer.invoke('app:confirm-close')
     },
+    /** http / https only (checked again in the main process). */
+    openExternal(url: string) {
+      return ipcRenderer.invoke('app:openExternal', url)
+    },
+    /** Flashes the taskbar button when the window is in the background. */
+    requestAttention() {
+      ipcRenderer.send('app:requestAttention')
+    },
   },
   clipboard: {
     readText() {

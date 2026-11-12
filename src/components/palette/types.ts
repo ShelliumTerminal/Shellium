@@ -51,6 +51,8 @@ export type Session = {
   status: "connecting" | "connected" | "disconnected";
   reconnectToken?: number;
   hasUnreadActivity?: boolean;
+  /** The terminal rang its bell while the tab was in the background (shown until the tab is opened). */
+  hasBell?: boolean;
   /** The shell runs in this tmux / screen session on the server (protected session). */
   protection?: SessionProtection;
   /** Start protected (Protect new sessions was on when the tab opened). */

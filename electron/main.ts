@@ -12,7 +12,7 @@ import { clearTransferSessions, registerTransferHandlers } from './transfer'
 import { registerSftpJobHandlers } from './sftpJobs'
 
 const require = createRequire(import.meta.url)
-const { app, BrowserWindow, Menu, clipboard, ipcMain } = require('electron') as typeof import('electron')
+const { app, BrowserWindow, Menu, clipboard, ipcMain, shell } = require('electron') as typeof import('electron')
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 process.env.APP_ROOT = path.join(__dirname, '..')
@@ -60,6 +60,40 @@ function registerClipboardHandlers() {
   })
 }
 
+/** Only web addresses leave the app: a link in terminal output can never start a program or open a file. */
+function isWebUrl(value: unknown): value is string {
+  if (typeof value !== 'string' || value.length > 4096) {
+    return false
+  }
+  try {
+    const url = new URL(value)
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+function registerLinkAndAttentionHandlers() {
+  ipcMain.handle('app:openExternal', async (_event, url: unknown) => {
+    if (!isWebUrl(url)) {
+      throw new Error('Only http and https links can be opened.')
+    }
+    await shell.openExternal(url)
+  })
+  // A bell in the terminal while Shellium is in the background: the taskbar button flashes until
+  // the window is focused again (macOS: the Dock icon bounces once).
+  ipcMain.on('app:requestAttention', () => {
+    if (!win || win.isDestroyed() || win.isFocused()) {
+      return
+    }
+    if (process.platform === 'darwin') {
+      app.dock?.bounce('informational')
+    } else {
+      win.flashFrame(true)
+    }
+  })
+}
+
 function createWindow() {
   Menu.setApplicationMenu(null)
 
@@ -75,6 +109,15 @@ function createWindow() {
 
   win.setMenuBarVisibility(false)
   win.maximize()
+
+  win.on('focus', () => win?.flashFrame(false))
+  // No second windows from page content: web links go to the default browser, anything else is dropped.
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (isWebUrl(url)) {
+      void shell.openExternal(url)
+    }
+    return { action: 'deny' }
+  })
 
   win.on('close', (event) => {
     if (isAppCloseConfirmed) {
@@ -126,6 +169,7 @@ app.whenReady().then(() => {
   }
   registerAppCloseHandlers()
   registerClipboardHandlers()
+  registerLinkAndAttentionHandlers()
   registerAppSettingsHandlers(() => {
     resetConnectionDatabase()
     resetSecuritySession()

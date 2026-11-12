@@ -60,6 +60,11 @@
 .terminal-viewport .xterm * {
   cursor: default !important;
 }
+
+/* Ctrl (Cmd) held over a link in the output: it opens on click. */
+.terminal-viewport.terminal-link-armed .xterm * {
+  cursor: pointer !important;
+}
 .shellium-shell[data-theme="light"] .terminal-pane {
   background: #e8edf3;
 }
