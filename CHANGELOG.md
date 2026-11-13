@@ -7,6 +7,8 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-11-13
+
 ### Added
 - Links in the terminal: **Ctrl+click** (⌘+click on a Mac) on a web address opens it in the browser;
   on an absolute path (e.g. `/u01/app/oracle/diag/.../alert_ORCL.log`) it opens the session's SFTP
