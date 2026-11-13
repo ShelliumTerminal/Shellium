@@ -33,6 +33,7 @@ import {
 } from "../../app/appOptions";
 import type { AppOptions } from "../../app/appOptions";
 import { normalizeWordDelimiters } from "../terminal/terminalSelection";
+import { HighlightRulesEditor } from "./HighlightRulesEditor";
 import type { SecurityState } from "../../app/useSecurity";
 
 type OptionsCategory = "general" | "appearance" | "terminal" | "environments" | "x11" | "scriptButtons" | "security";
@@ -54,7 +55,7 @@ const optionsCategories: Array<{ value: OptionsCategory; label: string; descript
 const resettableOptions: Record<OptionsCategory, Array<keyof AppOptions>> = {
   general: ["openDuplicateSessions", "sftpAutoResume", "startupAnimation"],
   appearance: ["theme", "uiScale", "uiFontSize"],
-  terminal: ["terminalAppearance", "terminalSchemeId", "terminalScrollback", "terminalSelectionStyle", "terminalWordDelimiters", "terminalTabPosition", "terminalTabSize", "antiIdle", "keepaliveCountMax"],
+  terminal: ["terminalAppearance", "terminalSchemeId", "terminalScrollback", "terminalScrollOnOutput", "terminalSelectionStyle", "terminalWordDelimiters", "terminalHighlights", "terminalTabPosition", "terminalTabSize", "antiIdle", "keepaliveCountMax"],
   environments: [],
   x11: ["x11ServerMode", "x11ExecutablePath"],
   scriptButtons: ["scriptButtonBarPosition", "scriptButtonBarSize"],
@@ -461,6 +462,29 @@ export default function OptionsView({
                 </label>
                 <label className="op-row">
                   <span className="op-row-text">
+                    <strong>Scroll to bottom on output</strong>
+                    <span>
+                      New output brings the view back to the last line when it is scrolled up less than one screen.
+                      Scrolled further up, it stays where it is so you can read; a key press always goes back down.
+                    </span>
+                  </span>
+                  <span className="op-row-control">
+                    <input
+                      className="sh-switch"
+                      type="checkbox"
+                      role="switch"
+                      checked={draft.terminalScrollOnOutput}
+                      onChange={(event) =>
+                        setDraft((current) => ({
+                          ...current,
+                          terminalScrollOnOutput: event.target.checked,
+                        }))
+                      }
+                    />
+                  </span>
+                </label>
+                <label className="op-row">
+                  <span className="op-row-text">
                     <strong>Selection</strong>
                     <span>How selected text looks: inverted colors, or a colored highlight.</span>
                   </span>
@@ -503,6 +527,20 @@ export default function OptionsView({
                     />
                   </span>
                 </label>
+                <div className="op-row op-row-stack">
+                  <div className="op-row-text">
+                    <strong>Highlight rules</strong>
+                    <span>
+                      Matches in new output are drawn in the rule's color, in every session. Patterns are regular
+                      expressions; where two rules match the same text, the upper one wins. Full-screen programs
+                      (vi, top) are not colored.
+                    </span>
+                  </div>
+                  <HighlightRulesEditor
+                    value={draft.terminalHighlights}
+                    onChange={(terminalHighlights) => setDraft((current) => ({ ...current, terminalHighlights }))}
+                  />
+                </div>
                 <label className="op-row">
                   <span className="op-row-text">
                     <strong>Tab position</strong>

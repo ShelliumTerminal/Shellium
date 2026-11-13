@@ -32,6 +32,10 @@ contextBridge.exposeInMainWorld('shellium', {
     requestAttention() {
       ipcRenderer.send('app:requestAttention')
     },
+    /** Brings the window to the front (a click on a Notify When Done notification). */
+    focusWindow() {
+      ipcRenderer.send('app:focusWindow')
+    },
   },
   clipboard: {
     readText() {

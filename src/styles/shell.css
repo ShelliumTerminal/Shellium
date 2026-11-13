@@ -1375,6 +1375,18 @@
   color: var(--ui-warn);
 }
 
+.shellium-shell .sh-tab-notify {
+  display: inline-flex;
+  flex: none;
+  color: var(--ui-accent);
+}
+
+.shellium-shell .sh-tab-done {
+  display: inline-flex;
+  flex: none;
+  color: var(--ui-success, #3fb950);
+}
+
 @keyframes sh-protect-pulse {
   50% { opacity: 0.35; }
 }

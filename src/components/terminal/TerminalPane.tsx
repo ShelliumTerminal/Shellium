@@ -7,7 +7,7 @@ import { FitAddon } from "@xterm/addon-fit";
 import { Unicode11Addon } from "@xterm/addon-unicode11";
 import { WebglAddon } from "@xterm/addon-webgl";
 import { Terminal } from "@xterm/xterm";
-import type { ILink, IMarker } from "@xterm/xterm";
+import type { IDecoration, ILink, IMarker } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
 
 import type { Session } from "../palette/types";
@@ -26,6 +26,8 @@ import { findTerminalLinks } from "./terminalLinks";
 import type { TerminalLink } from "./terminalLinks";
 import { comparePoints, extendSpan, findLineSpan, findWordSpan, getBlockBounds, getBlockText } from "./terminalSelection";
 import type { SelectionRows, SelectionSpan } from "./terminalSelection";
+import { compileHighlightRules, findHighlights, highlightColorHex } from "./terminalHighlights";
+import type { HighlightOptions } from "./terminalHighlights";
 import type { SessionProtection } from "../palette/types";
 
 export type TerminalFontStyle = "regular" | "italic" | "bold" | "boldItalic";
@@ -52,6 +54,9 @@ export type TerminalTranscriptRecordingActivity = {
 };
 
 export type TerminalPaneHandle = {
+  /** A script button starts / finished sending its lines (for Notify When Done). */
+  beginScript(): void;
+  endScript(): void;
   copySelection(): void;
   pasteFromClipboard(): void;
   openFind(): void;
@@ -76,6 +81,12 @@ type TerminalPaneProps = {
   selectionStyle: TerminalSelectionStyle;
   /** Characters besides white space that end a word for the double click (Options > Terminal). */
   wordDelimiters: string;
+  /** Output brings the view down when it is scrolled back less than one screen (SecureCRT). */
+  scrollOnOutput: boolean;
+  /** Highlight rules for new output (Options > Terminal), the same for every session. */
+  highlights: HighlightOptions;
+  /** The command running now (or the next one) finished: its prompt is back (Notify When Done). */
+  onCommandDone(sessionId: string, info: { command: string; durationMs: number }): void;
   recordingDirectory: string;
   focusVersion: number;
   isInteractionBlocked: boolean;
@@ -184,7 +195,7 @@ function countContentLines(text: string) {
 const BRACKETED_PASTE_START = "\x1b[200~";
 const BRACKETED_PASTE_END = "\x1b[201~";
 
-const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function TerminalPane({ session, isActive, uiScale, terminalAppearance, terminalScheme, scrollback, selectionStyle, wordDelimiters, recordingDirectory, focusVersion, isInteractionBlocked, reconnectToken = 0, onStatusChange, onActivity, onBell, onNotice, onSftpTransferActivityChange, onTranscriptRecordingActivityChange, onCloseSession, onProtectionChange, onReconnectingChange, pasteDialogBounds: storedPasteDialogBounds, onPasteDialogBoundsChange }, ref) {
+const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function TerminalPane({ session, isActive, uiScale, terminalAppearance, terminalScheme, scrollback, selectionStyle, wordDelimiters, scrollOnOutput, highlights, onCommandDone, recordingDirectory, focusVersion, isInteractionBlocked, reconnectToken = 0, onStatusChange, onActivity, onBell, onNotice, onSftpTransferActivityChange, onTranscriptRecordingActivityChange, onCloseSession, onProtectionChange, onReconnectingChange, pasteDialogBounds: storedPasteDialogBounds, onPasteDialogBoundsChange }, ref) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const reconnectRef = useRef<(() => void) | null>(null);
@@ -219,6 +230,16 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
   const customClickTrackerRef = useRef({ lastAt: 0, x: 0, y: 0, count: 0 });
   const wordDelimitersRef = useRef(wordDelimiters);
   wordDelimitersRef.current = wordDelimiters;
+  const scrollOnOutputRef = useRef(scrollOnOutput);
+  scrollOnOutputRef.current = scrollOnOutput;
+  const highlightsRef = useRef(highlights);
+  highlightsRef.current = highlights;
+  const rescanHighlightsRef = useRef<(() => void) | null>(null);
+  const notifyWhenDoneRef = useRef(Boolean(session.notifyWhenDone));
+  notifyWhenDoneRef.current = Boolean(session.notifyWhenDone);
+  const onCommandDoneRef = useRef(onCommandDone);
+  onCommandDoneRef.current = onCommandDone;
+  const commandWatchRef = useRef<{ noteInput(text: string): void; beginScript(): void; endScript(): void } | null>(null);
   const findPanelRef = useRef<HTMLFormElement | null>(null);
   const findInputRef = useRef<HTMLInputElement | null>(null);
   const findMatchIndexRef = useRef(-1);
@@ -264,6 +285,12 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
   }, [storedPasteDialogBounds]);
 
   useImperativeHandle(ref, () => ({
+    beginScript() {
+      commandWatchRef.current?.beginScript();
+    },
+    endScript() {
+      commandWatchRef.current?.endScript();
+    },
     protect() {
       void protectionApiRef.current.protect();
     },
@@ -513,6 +540,7 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
     }
 
     terminalRef.current?.scrollToBottom();
+    commandWatchRef.current?.noteInput(text);
     window.shellium?.terminal.write(session.id, text);
   };
 
@@ -923,6 +951,7 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
         return;
       }
 
+      noteCommandInput(normalized);
       window.shellium?.terminal.write(session.id, normalized);
     };
 
@@ -943,6 +972,7 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
         return;
       }
 
+      noteCommandInput(text);
       window.shellium?.terminal.write(session.id, text);
     };
 
@@ -1327,6 +1357,247 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
     };
     const writeParsedDisposable = terminal.onWriteParsed(followCustomSelection);
 
+    // SecureCRT's "Scroll to bottom on output": new output brings the view back down when the user
+    // scrolled back less than one screen; further up it stays, so older output can be read. How far
+    // back is measured when the user scrolls (wheel, scrollbar, Shift+PageUp) - after output it would
+    // only grow, because a scrolled-back view stays put while new lines are added below it.
+    let userScrollBack = 0;
+    let scrollMeasureFrame: number | null = null;
+    const measureUserScrollBack = () => {
+      if (scrollMeasureFrame !== null) {
+        return;
+      }
+      scrollMeasureFrame = window.requestAnimationFrame(() => {
+        scrollMeasureFrame = null;
+        const buffer = terminal.buffer.active;
+        userScrollBack = buffer.baseY - buffer.viewportY;
+      });
+    };
+    const measureOnPointer = (event: PointerEvent) => {
+      if (event.type === "pointerup" || event.buttons !== 0) {
+        measureUserScrollBack();
+      }
+    };
+    const scrollToBottomOnOutput = () => {
+      const buffer = terminal.buffer.active;
+      if (!scrollOnOutputRef.current || isCustomSelectingRef.current || buffer.viewportY >= buffer.baseY) {
+        return;
+      }
+      // one page (Shift+PageUp = rows - 1 lines) or more stays up
+      if (userScrollBack > 0 && userScrollBack < terminal.rows - 1) {
+        userScrollBack = 0;
+        terminal.scrollToBottom();
+      }
+    };
+    const scrollOnOutputDisposable = terminal.onWriteParsed(scrollToBottomOnOutput);
+
+    // Highlight rules: matches in new output get a colored foreground (xterm decorations, drawn by the
+    // WebGL renderer). Once a frame, the rows from where the last pass stopped down to the cursor are
+    // scanned - the cursor's row again each time, since it is still being written. A line the
+    // terminal wrapped is matched as one line. Full-screen programs (vim, top) are left alone.
+    type HighlightEntry = { marker: IMarker; decoration: IDecoration | undefined };
+    let highlightEntries: HighlightEntry[] = [];
+    let highlightRules = compileHighlightRules(highlightsRef.current);
+    let highlightScanFrom = 0;
+    let highlightFrame: number | null = null;
+    const maxHighlightEntries = 5000;
+    const maxHighlightScanRows = 2000;
+
+    const disposeHighlightEntry = (entry: HighlightEntry) => {
+      entry.decoration?.dispose();
+      entry.marker.dispose();
+    };
+
+    const runHighlightScan = () => {
+      highlightFrame = null;
+      const buffer = terminal.buffer.active;
+      const cursorRow = buffer.baseY + buffer.cursorY;
+      if (buffer.type === "alternate" || highlightRules.length === 0) {
+        highlightScanFrom = cursorRow;
+        return;
+      }
+
+      let from = Math.max(highlightScanFrom, cursorRow - maxHighlightScanRows, 0);
+      while (from > 0 && buffer.getLine(from)?.isWrapped) {
+        from -= 1;
+      }
+      const to = Math.min(cursorRow, buffer.length - 1);
+
+      highlightEntries = highlightEntries.filter((entry) => {
+        const line = entry.marker.line;
+        if (entry.marker.isDisposed || line < 0 || (line >= from && line <= to)) {
+          disposeHighlightEntry(entry);
+          return false;
+        }
+        return true;
+      });
+
+      const ansi = terminalSchemeRef.current.ansi;
+      let row = from;
+      while (row <= to) {
+        let next = row + 1;
+        while (next < buffer.length && buffer.getLine(next)?.isWrapped) {
+          next += 1;
+        }
+        const { text, cells } = getLogicalLine(row);
+        for (const match of text.trim() ? findHighlights(text, highlightRules) : []) {
+          const color = highlightColorHex(match.color, ansi);
+          // one decoration per row the match covers
+          let index = match.start;
+          while (index < match.end && cells[index]) {
+            const segmentRow = cells[index].row;
+            const firstX = cells[index].x;
+            let lastX = firstX;
+            while (index < match.end && cells[index] && cells[index].row === segmentRow) {
+              lastX = cells[index].x;
+              index += 1;
+            }
+            const marker = terminal.registerMarker(segmentRow - cursorRow);
+            if (marker) {
+              const decoration = terminal.registerDecoration({ marker, x: firstX, width: lastX - firstX + 1, foregroundColor: color });
+              highlightEntries.push({ marker, decoration });
+            }
+          }
+        }
+        row = next;
+      }
+
+      if (highlightEntries.length > maxHighlightEntries) {
+        highlightEntries.splice(0, highlightEntries.length - maxHighlightEntries).forEach(disposeHighlightEntry);
+      }
+      highlightScanFrom = cursorRow;
+    };
+
+    const scheduleHighlightScan = () => {
+      if (highlightFrame === null) {
+        highlightFrame = window.requestAnimationFrame(runHighlightScan);
+      }
+    };
+
+    // The rules or the color scheme changed: repaint the lines on screen and those just above.
+    rescanHighlightsRef.current = () => {
+      highlightEntries.forEach(disposeHighlightEntry);
+      highlightEntries = [];
+      highlightRules = compileHighlightRules(highlightsRef.current);
+      const buffer = terminal.buffer.active;
+      highlightScanFrom = Math.max(0, Math.min(buffer.viewportY, buffer.baseY) - terminal.rows);
+      scheduleHighlightScan();
+    };
+    const highlightDisposable = terminal.onWriteParsed(scheduleHighlightScan);
+
+    // "Notify When Done" (tab menu): no setup on the server, like iTerm2's "alert on next mark".
+    // When the user starts typing, the text before the cursor is the prompt ("[oracle@db01 ~]$ ",
+    // "SQL> "); Enter starts the command; when that prompt is back on a later row the command has
+    // finished - after five seconds or five hours. Keys typed while a program runs (answers to its
+    // questions) belong to it, unless they are typed at a prompt (sqlplus started from bash).
+    type RunningCommand = { prompt: string; command: string; marker: IMarker; startedAt: number };
+    let runningCommand: RunningCommand | null = null;
+    let commandPrompt: string | null = null;
+    let commandFirstRow = 0;
+    let awaitingFirstKey = true;
+    let scriptPrompt: string | null = null;
+    let scriptStartedAt = 0;
+
+    const cursorRowNow = () => terminal.buffer.active.baseY + terminal.buffer.active.cursorY;
+    const textBeforeCursor = () => {
+      const buffer = terminal.buffer.active;
+      return buffer.getLine(cursorRowNow())?.translateToString(false, 0, buffer.cursorX) ?? "";
+    };
+    const looksLikePrompt = (text: string) => text.trim().length > 0 && text.trim().length <= 120 && /[$#>%\]]$/.test(text.trimEnd());
+
+    const startCommand = (prompt: string, firstRow: number, startedAt: number) => {
+      if (terminal.buffer.active.type === "alternate" || !prompt.trim() || (runningCommand && !looksLikePrompt(prompt))) {
+        return;
+      }
+      const line = getLogicalLine(firstRow).text.trimEnd();
+      const command = (line.startsWith(prompt) ? line.slice(prompt.length) : line).trim();
+      const marker = terminal.registerMarker(0);
+      runningCommand?.marker.dispose();
+      runningCommand = marker ? { prompt, command, marker, startedAt } : null;
+    };
+
+    const noteCommandInput = (text: string) => {
+      if (scriptPrompt !== null) {
+        return;
+      }
+      if (awaitingFirstKey) {
+        commandPrompt = textBeforeCursor();
+        commandFirstRow = cursorRowNow();
+        awaitingFirstKey = false;
+      }
+      if (text.includes("\x03")) {
+        // Ctrl+C: the typed line is dropped and a new prompt follows
+        awaitingFirstKey = true;
+        commandPrompt = null;
+        return;
+      }
+      if (/[\r\n]/.test(text)) {
+        if (commandPrompt !== null) {
+          startCommand(commandPrompt, commandFirstRow, Date.now());
+        }
+        awaitingFirstKey = true;
+        commandPrompt = null;
+      }
+    };
+
+    const promptsMatch = (current: string, prompt: string) => {
+      const left = current.trimEnd();
+      const right = prompt.trimEnd();
+      if (!left || !right) {
+        return false;
+      }
+      if (left === right) {
+        return true;
+      }
+      // the same prompt in another directory: "[oracle@db01 ~]$" / "[oracle@db01 dbs]$"
+      let common = 0;
+      while (common < left.length && common < right.length && left[common] === right[common]) {
+        common += 1;
+      }
+      return left[left.length - 1] === right[right.length - 1] && looksLikePrompt(left) && common >= Math.min(8, right.length - 1);
+    };
+
+    const checkCommandDone = () => {
+      if (!runningCommand || scriptPrompt !== null || terminal.buffer.active.type === "alternate") {
+        return;
+      }
+      // a marker that left the scrollback (hours of output) lies above the cursor in any case
+      const commandRow = runningCommand.marker.isDisposed ? -1 : runningCommand.marker.line;
+      if (cursorRowNow() <= commandRow || !promptsMatch(textBeforeCursor(), runningCommand.prompt)) {
+        return;
+      }
+      const done = runningCommand;
+      runningCommand = null;
+      done.marker.dispose();
+      if (notifyWhenDoneRef.current) {
+        onCommandDoneRef.current(session.id, { command: done.command, durationMs: Date.now() - done.startedAt });
+      }
+    };
+    const commandDoneDisposable = terminal.onWriteParsed(checkCommandDone);
+
+    commandWatchRef.current = {
+      noteInput: noteCommandInput,
+      // a script button sends its lines one by one (main process): the last one is the command to wait for
+      beginScript: () => {
+        scriptPrompt = textBeforeCursor();
+        scriptStartedAt = Date.now();
+      },
+      endScript: () => {
+        const prompt = scriptPrompt;
+        scriptPrompt = null;
+        awaitingFirstKey = true;
+        commandPrompt = null;
+        if (prompt !== null) {
+          startCommand(prompt, cursorRowNow(), scriptStartedAt);
+          checkCommandDone();
+        }
+      },
+    };
+    container.addEventListener("wheel", measureUserScrollBack, { capture: true, passive: true });
+    container.addEventListener("keydown", measureUserScrollBack, true);
+    document.addEventListener("pointermove", measureOnPointer, true);
+    document.addEventListener("pointerup", measureOnPointer, true);
+
     const isFindPanelEventTarget = (target: EventTarget | null) => target instanceof Node && Boolean(findPanelRef.current?.contains(target));
     const isPasteDialogEventTarget = (target: EventTarget | null) => target instanceof Node && Boolean(pasteDialogRef.current?.contains(target));
     const isTerminalEventTarget = (target: EventTarget | null) => target instanceof Node && container.contains(target) && !isPasteDialogEventTarget(target) && !isFindPanelEventTarget(target);
@@ -1672,6 +1943,23 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       selectionDisposable.dispose();
       scrollDisposable.dispose();
       writeParsedDisposable.dispose();
+      scrollOnOutputDisposable.dispose();
+      highlightDisposable.dispose();
+      commandDoneDisposable.dispose();
+      runningCommand?.marker.dispose();
+      commandWatchRef.current = null;
+      if (highlightFrame !== null) {
+        window.cancelAnimationFrame(highlightFrame);
+      }
+      highlightEntries.forEach(disposeHighlightEntry);
+      rescanHighlightsRef.current = null;
+      if (scrollMeasureFrame !== null) {
+        window.cancelAnimationFrame(scrollMeasureFrame);
+      }
+      container.removeEventListener("wheel", measureUserScrollBack, true);
+      container.removeEventListener("keydown", measureUserScrollBack, true);
+      document.removeEventListener("pointermove", measureOnPointer, true);
+      document.removeEventListener("pointerup", measureOnPointer, true);
       disposeSelectionMarkers();
       window.removeEventListener("blur", handleMouseUp);
       disposeData?.();
@@ -1735,6 +2023,9 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       terminalRef.current.options.theme = xtermTheme(terminalScheme);
     }
   }, [terminalScheme]);
+  useEffect(() => {
+    rescanHighlightsRef.current?.();
+  }, [highlights, terminalScheme]);
   useEffect(() => {
     if (!isActive) {
       return;

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, ReactNode } from "react";
 import { ShieldAlert } from "lucide-react";
+import { formatDuration } from "./app/formatDuration";
 
 import ConnectionPalette from "./components/palette/ConnectionPalette";
 import { EnvironmentsContext, environmentStyle } from "./components/common/environments";
@@ -100,6 +101,8 @@ function App() {
   );
   const [optionsDraft, setOptionsDraft] = useState<AppOptions>(defaultOptions);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const sessionsRef = useRef(sessions);
+  sessionsRef.current = sessions;
   const liveHostIds = sessions.filter((session) => session.status === "connected").map((session) => session.host.id);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [vaultHosts, setVaultHosts] = useState<VaultHostSearchResult[]>([]);
@@ -323,8 +326,8 @@ function App() {
     }
 
     setSessions((current) => current.map((session) =>
-      session.id === activeSessionId && (session.hasUnreadActivity || session.hasBell)
-        ? { ...session, hasUnreadActivity: false, hasBell: false }
+      session.id === activeSessionId && (session.hasUnreadActivity || session.hasBell || session.isDone)
+        ? { ...session, hasUnreadActivity: false, hasBell: false, isDone: false }
         : session,
     ));
   }, [activeSessionId]);
@@ -619,6 +622,42 @@ function App() {
       ? current.map((session) => session.id === sessionId ? { ...session, hasBell: true } : session)
       : current);
   }, []);
+
+  /**
+   * Notify When Done: the watched command's prompt is back. Unless the user is looking at that tab,
+   * a Windows notification (click: back to the tab) and a check mark on the tab. One-shot.
+   */
+  const handleCommandDone = useCallback((sessionId: string, info: { command: string; durationMs: number }) => {
+    const session = sessionsRef.current.find((item) => item.id === sessionId);
+    if (!session) {
+      return;
+    }
+    const isWatched = document.hasFocus() && sessionId === activeSessionIdRef.current;
+    setSessions((current) => current.map((item) =>
+      item.id === sessionId ? { ...item, notifyWhenDone: false, isDone: !isWatched } : item));
+    if (isWatched) {
+      return;
+    }
+    window.shellium?.app.requestAttention();
+    try {
+      const notification = new Notification(`${getSessionTitle(session)}: done`, {
+        body: `${info.command || "The command"} finished after ${formatDuration(info.durationMs)}.`,
+        tag: `shellium-done-${sessionId}`,
+      });
+      notification.onclick = () => {
+        window.shellium?.app.focusWindow();
+        setActiveSessionId(sessionId);
+      };
+    } catch {
+      // notifications blocked by the system: the flashing taskbar button and the tab mark remain
+    }
+  }, []);
+
+  const handleToggleNotifyWhenDone = (sessionId: string) => {
+    setTabContextMenu(null);
+    setSessions((current) => current.map((item) =>
+      item.id === sessionId ? { ...item, notifyWhenDone: !item.notifyWhenDone, isDone: false } : item));
+  };
 
   const handleProtectionChange = useCallback((sessionId: string, protection: SessionProtection | null) => {
     setSessions((current) => current.map((session) =>
@@ -1052,7 +1091,9 @@ function App() {
     const sessionId = activeSession.id;
 
     // line by line in the main process, each line after the server answered (sendScript)
-    void window.shellium?.terminal.sendScript(sessionId, sendParts).catch(() => undefined);
+    const pane = terminalPaneRefs.current.get(sessionId);
+    pane?.beginScript();
+    void window.shellium?.terminal.sendScript(sessionId, sendParts).catch(() => undefined).finally(() => pane?.endScript());
     setTerminalFocusVersion((current) => current + 1);
   };
 
@@ -1281,6 +1322,7 @@ function App() {
           onDuplicate={() => handleDuplicateSession(tabContextMenu.sessionId)}
           onReconnect={() => handleReconnectSession(tabContextMenu.sessionId)}
           onToggleProtection={() => handleToggleProtection(tabContextMenu.sessionId)}
+          onToggleNotifyWhenDone={() => handleToggleNotifyWhenDone(tabContextMenu.sessionId)}
           onDisconnect={() => handleDisconnectSession(tabContextMenu.sessionId)}
           onClose={() => handleCloseSession(tabContextMenu.sessionId)}
           onCloseOthers={() => handleCloseOtherSessions(tabContextMenu.sessionId)}
@@ -1363,6 +1405,9 @@ function App() {
                       scrollback={options.terminalScrollback}
                       selectionStyle={options.terminalSelectionStyle}
                       wordDelimiters={options.terminalWordDelimiters}
+                      scrollOnOutput={options.terminalScrollOnOutput}
+                      highlights={options.terminalHighlights}
+                      onCommandDone={handleCommandDone}
                       recordingDirectory={options.terminalRecordingDirectory}
                       focusVersion={terminalFocusVersion}
                       isInteractionBlocked={isTerminalInteractionBlocked}

@@ -53,6 +53,10 @@ export type Session = {
   hasUnreadActivity?: boolean;
   /** The terminal rang its bell while the tab was in the background (shown until the tab is opened). */
   hasBell?: boolean;
+  /** Notify When Done (tab menu): a notification when the running (or next) command finishes. */
+  notifyWhenDone?: boolean;
+  /** The watched command finished while the tab was in the background (shown until it is opened). */
+  isDone?: boolean;
   /** The shell runs in this tmux / screen session on the server (protected session). */
   protection?: SessionProtection;
   /** Start protected (Protect new sessions was on when the tab opened). */

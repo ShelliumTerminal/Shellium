@@ -21,6 +21,10 @@ process.env.APP_ROOT = path.join(__dirname, '..')
 // The folder is set explicitly rather than derived from package.json; a --user-data-dir on the
 // command line (isolated test profiles) always wins.
 app.setName('Shellium')
+// Windows shows notifications (Notify When Done) under this id: the installer's shortcut carries it.
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.shellium.app')
+}
 if (!app.commandLine.hasSwitch('user-data-dir')) {
   app.setPath('userData', path.join(app.getPath('appData'), 'shellium'))
 }
@@ -82,6 +86,16 @@ function registerLinkAndAttentionHandlers() {
   })
   // A bell in the terminal while Shellium is in the background: the taskbar button flashes until
   // the window is focused again (macOS: the Dock icon bounces once).
+  ipcMain.on('app:focusWindow', () => {
+    if (!win || win.isDestroyed()) {
+      return
+    }
+    if (win.isMinimized()) {
+      win.restore()
+    }
+    win.show()
+    win.focus()
+  })
   ipcMain.on('app:requestAttention', () => {
     if (!win || win.isDestroyed() || win.isFocused()) {
       return

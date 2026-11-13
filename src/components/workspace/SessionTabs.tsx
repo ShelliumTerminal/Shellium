@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
-import { Bell, ChevronDown, Home, Plus, Settings, ShieldCheck, X } from "lucide-react";
+import { Bell, BellRing, CircleCheck, ChevronDown, Home, Plus, Settings, ShieldCheck, X } from "lucide-react";
 import { EnvironmentBadge, environmentStyle, useEnvironments } from "../common/environments";
 import type { Session } from "../palette/types";
 import { normalizeTerminalTabSize } from "../../app/appOptions";
@@ -182,6 +182,16 @@ export default function SessionTabs({
             {session.protection && (
               <span className="sh-tab-shield" title={session.reconnecting ? "Protected - reconnecting" : `Protected (${session.protection.tool} on the server)`}>
                 <ShieldCheck size={13} aria-label="Protected" />
+              </span>
+            )}
+            {session.notifyWhenDone && (
+              <span className="sh-tab-notify" title="Notify When Done: waiting for the command to finish">
+                <BellRing size={12} aria-label="Notify when done" />
+              </span>
+            )}
+            {session.isDone && session.id !== activeSessionId && (
+              <span className="sh-tab-done" title="The command finished">
+                <CircleCheck size={12} aria-label="Done" />
               </span>
             )}
             {session.hasBell && session.id !== activeSessionId && (

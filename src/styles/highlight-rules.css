@@ -1,0 +1,91 @@
+/* Options > Terminal > Highlight rules (HighlightRulesEditor.tsx) */
+
+.shellium-shell .hl-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shellium-shell .hl-master {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ui-text-strong);
+  font-size: var(--ui-chrome-fs);
+}
+
+.shellium-shell .hl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shellium-shell .hl-list.is-off {
+  opacity: 0.5;
+}
+
+.shellium-shell .hl-rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shellium-shell .hl-check {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  accent-color: var(--ui-accent);
+}
+
+.shellium-shell .hl-swatch {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.shellium-shell .hl-rule .hl-color {
+  flex: none;
+  min-width: 0;
+  width: 104px;
+}
+
+.shellium-shell .hl-rule .hl-pattern {
+  flex: 1;
+  min-width: 0;
+}
+
+.shellium-shell .hl-pattern.is-invalid {
+  border-color: var(--ui-danger);
+}
+
+.shellium-shell .hl-case {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-chrome-fs);
+  white-space: nowrap;
+}
+
+.shellium-shell .hl-empty {
+  margin: 0;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-chrome-fs);
+}
+
+.shellium-shell .hl-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.shellium-shell .hl-preview {
+  padding: 10px 12px;
+  border-radius: var(--ui-r);
+  background: #0b0d12;
+  color: #c9d1d9;
+  font-family: "JetBrains Mono Variable", Consolas, monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+}

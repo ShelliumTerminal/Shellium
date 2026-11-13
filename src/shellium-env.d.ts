@@ -350,6 +350,7 @@ declare global {
         confirmClose(): Promise<void>;
         openExternal(url: string): Promise<void>;
         requestAttention(): void;
+        focusWindow(): void;
       };
       security: {
         status(): Promise<SecurityStatus>;

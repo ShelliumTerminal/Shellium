@@ -8,6 +8,8 @@ import type { DialogFrame } from "./dialogFrame";
 import { builtInTerminalSchemes, defaultTerminalSchemeId, findTerminalScheme, isSchemeId, normalizeCustomSchemes } from "../components/common/terminalSchemeModel";
 import type { TerminalScheme } from "../components/common/terminalSchemeModel";
 import { defaultWordDelimiters, normalizeWordDelimiters } from "../components/terminal/terminalSelection";
+import { defaultHighlightOptions, normalizeHighlightOptions } from "../components/terminal/terminalHighlights";
+import type { HighlightOptions } from "../components/terminal/terminalHighlights";
 
 /** The Options (settings.json "appOptions"): types, defaults and validation of stored values. */
 
@@ -33,6 +35,10 @@ export type AppOptions = {
   terminalSelectionStyle: TerminalSelectionStyle;
   /** Characters besides white space that end a word for the double click. */
   terminalWordDelimiters: string;
+  /** New output brings the view back down when it is scrolled back less than one screen (SecureCRT). */
+  terminalScrollOnOutput: boolean;
+  /** Colors for matches in terminal output (ORA- errors, warnings...), the same for every session. */
+  terminalHighlights: HighlightOptions;
   terminalTabPosition: TerminalTabPosition;
   terminalTabSize: number;
   scriptButtonBarPosition: ScriptButtonBarPosition;
@@ -117,6 +123,8 @@ export const defaultOptions: AppOptions = {
   terminalScrollback: 10000,
   terminalSelectionStyle: "inverse",
   terminalWordDelimiters: defaultWordDelimiters,
+  terminalScrollOnOutput: true,
+  terminalHighlights: defaultHighlightOptions,
   terminalTabPosition: "top",
   terminalTabSize: 248,
   scriptButtonBarPosition: "bottom",
@@ -267,6 +275,8 @@ export function normalizeAppOptions(value: unknown): AppOptions {
     terminalScrollback: normalizeTerminalScrollback(parsedOptions.terminalScrollback),
     terminalSelectionStyle: parsedOptions.terminalSelectionStyle === "highlight" ? "highlight" : "inverse",
     terminalWordDelimiters: normalizeWordDelimiters(parsedOptions.terminalWordDelimiters),
+    terminalHighlights: normalizeHighlightOptions(parsedOptions.terminalHighlights),
+    terminalScrollOnOutput: typeof parsedOptions.terminalScrollOnOutput === "boolean" ? parsedOptions.terminalScrollOnOutput : defaultOptions.terminalScrollOnOutput,
     terminalTabPosition: normalizeTerminalTabPosition(parsedOptions.terminalTabPosition),
     terminalTabSize: normalizeTerminalTabSize(parsedOptions.terminalTabSize),
     scriptButtonBarPosition: normalizeScriptButtonBarPosition(parsedOptions.scriptButtonBarPosition),

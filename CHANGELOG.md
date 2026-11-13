@@ -7,6 +7,24 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 
 ## [Unreleased]
 
+### Added
+- Options > Terminal > Scroll to bottom on output (on by default), as in SecureCRT: when you have
+  scrolled up less than one screen, new output (`tail -f`, a running script) brings the view back
+  to the last line. Scrolled up a page or more, the view stays where it is so you can read, and a
+  key press goes back down. Before, any scroll up left the view behind while the output ran on.
+- Highlight rules (Options > Terminal): matches in new output are drawn in color, in every session.
+  Comes with an Oracle set - ORA-, TNS-, RMAN-, SP2- errors and words like error / failed in red,
+  warnings and timeouts in yellow, "completed successfully" in green, and status words in capitals
+  (OPEN, ONLINE, VALID green; OFFLINE, INVALID red). Rules are regular expressions you can add,
+  change, switch off or reset to the Oracle set; file names such as error.log stay plain, and
+  full-screen programs (vi, top) are not colored.
+- Notify When Done (tab right-click menu): a Windows notification when the command running in the
+  tab - or the next one - finishes, however long it takes. Shellium notes the prompt when you start
+  typing and waits for it to come back; nothing to set up on the server. Works at the shell and in
+  sqlplus / RMAN, also for commands sent by script buttons. The tab shows a ringing bell while it
+  waits and a check mark when done; a click on the notification opens the tab. One-shot: switch it
+  on again for the next job.
+
 ## [2.4.0] - 2026-11-14
 
 ### Added
