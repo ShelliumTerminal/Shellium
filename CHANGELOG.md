@@ -7,6 +7,8 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 
 ## [Unreleased]
 
+## [2.3.1] - 2026-11-13
+
 ### Fixed
 - Copying a long line that the terminal wrapped onto several rows (an ssh key, a long command)
   put a line break at the end of every row, so pasting it ran several broken commands. The rows of
