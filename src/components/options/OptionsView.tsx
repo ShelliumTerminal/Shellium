@@ -32,6 +32,7 @@ import {
   uiScaleOptions,
 } from "../../app/appOptions";
 import type { AppOptions } from "../../app/appOptions";
+import { normalizeWordDelimiters } from "../terminal/terminalSelection";
 import type { SecurityState } from "../../app/useSecurity";
 
 type OptionsCategory = "general" | "appearance" | "terminal" | "environments" | "x11" | "scriptButtons" | "security";
@@ -53,7 +54,7 @@ const optionsCategories: Array<{ value: OptionsCategory; label: string; descript
 const resettableOptions: Record<OptionsCategory, Array<keyof AppOptions>> = {
   general: ["openDuplicateSessions", "sftpAutoResume", "startupAnimation"],
   appearance: ["theme", "uiScale", "uiFontSize"],
-  terminal: ["terminalAppearance", "terminalSchemeId", "terminalScrollback", "terminalSelectionStyle", "terminalTabPosition", "terminalTabSize", "antiIdle", "keepaliveCountMax"],
+  terminal: ["terminalAppearance", "terminalSchemeId", "terminalScrollback", "terminalSelectionStyle", "terminalWordDelimiters", "terminalTabPosition", "terminalTabSize", "antiIdle", "keepaliveCountMax"],
   environments: [],
   x11: ["x11ServerMode", "x11ExecutablePath"],
   scriptButtons: ["scriptButtonBarPosition", "scriptButtonBarSize"],
@@ -477,6 +478,29 @@ export default function OptionsView({
                       <option value="inverse">Inverse colors</option>
                       <option value="highlight">Highlight</option>
                     </select>
+                  </span>
+                </label>
+                <label className="op-row">
+                  <span className="op-row-text">
+                    <strong>Word delimiters</strong>
+                    <span>
+                      Characters that end a word when you double-click, besides spaces. Triple-click selects the line,
+                      Shift+click extends the selection, Alt+drag selects a block (columns).
+                    </span>
+                  </span>
+                  <span className="op-row-control">
+                    <input
+                      className="op-input op-input-mono"
+                      value={draft.terminalWordDelimiters}
+                      spellCheck={false}
+                      aria-label="Word delimiters"
+                      onChange={(event) =>
+                        setDraft((current) => ({
+                          ...current,
+                          terminalWordDelimiters: normalizeWordDelimiters(event.target.value),
+                        }))
+                      }
+                    />
                   </span>
                 </label>
                 <label className="op-row">

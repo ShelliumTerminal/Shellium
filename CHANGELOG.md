@@ -7,6 +7,19 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 
 ## [Unreleased]
 
+### Added
+- Block (column) selection: Alt+drag selects a rectangle - the same columns of every row - and
+  copies one line per row, e.g. a single column of a query result.
+- Shift+click extends the current selection to where you click.
+- Options > Terminal > Word delimiters: the characters that end a word for the double click
+  (default `` "'`()[]{}<>,;:|= ``). Paths, user@host and names with - _ . $ stay one word, while
+  "ORA-01843:" gives ORA-01843 and ORACLE_SID=ORCL gives ORCL.
+
+### Changed
+- Mouse selection works like SecureCRT: double-click and drag grows the selection word by word,
+  triple-click and drag line by line, and a word the terminal wrapped onto the next row is
+  selected whole. Clicks count as double / triple within 500 ms and 4 px, the Windows default.
+
 ## [2.3.1] - 2026-11-13
 
 ### Fixed

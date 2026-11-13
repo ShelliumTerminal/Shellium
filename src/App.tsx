@@ -1362,6 +1362,7 @@ function App() {
                       terminalScheme={schemeForHost(session.host)}
                       scrollback={options.terminalScrollback}
                       selectionStyle={options.terminalSelectionStyle}
+                      wordDelimiters={options.terminalWordDelimiters}
                       recordingDirectory={options.terminalRecordingDirectory}
                       focusVersion={terminalFocusVersion}
                       isInteractionBlocked={isTerminalInteractionBlocked}

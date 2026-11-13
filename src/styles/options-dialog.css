@@ -241,6 +241,12 @@
   font-weight: 400;
 }
 
+/* characters typed as they are, e.g. the word delimiters */
+.shellium-shell .op-input-mono {
+  font-family: "JetBrains Mono Variable", Consolas, monospace;
+  letter-spacing: 0.06em;
+}
+
 .shellium-shell .op-select option {
   background: var(--ui-surface-1);
   color: var(--ui-text-strong);

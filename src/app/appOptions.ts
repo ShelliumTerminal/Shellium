@@ -7,6 +7,7 @@ import type { AntiIdleOptions } from "../components/common/antiIdleModel";
 import type { DialogFrame } from "./dialogFrame";
 import { builtInTerminalSchemes, defaultTerminalSchemeId, findTerminalScheme, isSchemeId, normalizeCustomSchemes } from "../components/common/terminalSchemeModel";
 import type { TerminalScheme } from "../components/common/terminalSchemeModel";
+import { defaultWordDelimiters, normalizeWordDelimiters } from "../components/terminal/terminalSelection";
 
 /** The Options (settings.json "appOptions"): types, defaults and validation of stored values. */
 
@@ -30,6 +31,8 @@ export type AppOptions = {
   customTerminalSchemes: TerminalScheme[];
   terminalScrollback: number;
   terminalSelectionStyle: TerminalSelectionStyle;
+  /** Characters besides white space that end a word for the double click. */
+  terminalWordDelimiters: string;
   terminalTabPosition: TerminalTabPosition;
   terminalTabSize: number;
   scriptButtonBarPosition: ScriptButtonBarPosition;
@@ -113,6 +116,7 @@ export const defaultOptions: AppOptions = {
   customTerminalSchemes: [],
   terminalScrollback: 10000,
   terminalSelectionStyle: "inverse",
+  terminalWordDelimiters: defaultWordDelimiters,
   terminalTabPosition: "top",
   terminalTabSize: 248,
   scriptButtonBarPosition: "bottom",
@@ -262,6 +266,7 @@ export function normalizeAppOptions(value: unknown): AppOptions {
     ...normalizeTerminalSchemeOptions(value),
     terminalScrollback: normalizeTerminalScrollback(parsedOptions.terminalScrollback),
     terminalSelectionStyle: parsedOptions.terminalSelectionStyle === "highlight" ? "highlight" : "inverse",
+    terminalWordDelimiters: normalizeWordDelimiters(parsedOptions.terminalWordDelimiters),
     terminalTabPosition: normalizeTerminalTabPosition(parsedOptions.terminalTabPosition),
     terminalTabSize: normalizeTerminalTabSize(parsedOptions.terminalTabSize),
     scriptButtonBarPosition: normalizeScriptButtonBarPosition(parsedOptions.scriptButtonBarPosition),

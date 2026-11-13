@@ -24,6 +24,8 @@ import ProtectionBar from "./ProtectionBar";
 import { useSessionProtection } from "./useSessionProtection";
 import { findTerminalLinks } from "./terminalLinks";
 import type { TerminalLink } from "./terminalLinks";
+import { comparePoints, extendSpan, findLineSpan, findWordSpan, getBlockBounds, getBlockText } from "./terminalSelection";
+import type { SelectionRows, SelectionSpan } from "./terminalSelection";
 import type { SessionProtection } from "../palette/types";
 
 export type TerminalFontStyle = "regular" | "italic" | "bold" | "boldItalic";
@@ -72,6 +74,8 @@ type TerminalPaneProps = {
   terminalScheme: TerminalScheme;
   scrollback: number;
   selectionStyle: TerminalSelectionStyle;
+  /** Characters besides white space that end a word for the double click (Options > Terminal). */
+  wordDelimiters: string;
   recordingDirectory: string;
   focusVersion: number;
   isInteractionBlocked: boolean;
@@ -111,6 +115,8 @@ type TerminalSelectionRect = {
 type TerminalSelectionRange = {
   anchor: TerminalSelectionPoint;
   focus: TerminalSelectionPoint;
+  /** Alt+drag: a rectangle - the same columns of every row - instead of running text. */
+  block?: boolean;
 };
 
 export type PasteDialogBounds = {
@@ -178,7 +184,7 @@ function countContentLines(text: string) {
 const BRACKETED_PASTE_START = "\x1b[200~";
 const BRACKETED_PASTE_END = "\x1b[201~";
 
-const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function TerminalPane({ session, isActive, uiScale, terminalAppearance, terminalScheme, scrollback, selectionStyle, recordingDirectory, focusVersion, isInteractionBlocked, reconnectToken = 0, onStatusChange, onActivity, onBell, onNotice, onSftpTransferActivityChange, onTranscriptRecordingActivityChange, onCloseSession, onProtectionChange, onReconnectingChange, pasteDialogBounds: storedPasteDialogBounds, onPasteDialogBoundsChange }, ref) {
+const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function TerminalPane({ session, isActive, uiScale, terminalAppearance, terminalScheme, scrollback, selectionStyle, wordDelimiters, recordingDirectory, focusVersion, isInteractionBlocked, reconnectToken = 0, onStatusChange, onActivity, onBell, onNotice, onSftpTransferActivityChange, onTranscriptRecordingActivityChange, onCloseSession, onProtectionChange, onReconnectingChange, pasteDialogBounds: storedPasteDialogBounds, onPasteDialogBoundsChange }, ref) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const reconnectRef = useRef<(() => void) | null>(null);
@@ -210,8 +216,9 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
   const storedPasteDialogBoundsRef = useRef(storedPasteDialogBounds);
   const customSelectionRef = useRef<TerminalSelectionRange | null>(null);
   const isCustomSelectingRef = useRef(false);
-  const suppressNextDoubleClickUntilRef = useRef(0);
-  const customClickTrackerRef = useRef({ lastAt: 0, row: -1, count: 0 });
+  const customClickTrackerRef = useRef({ lastAt: 0, x: 0, y: 0, count: 0 });
+  const wordDelimitersRef = useRef(wordDelimiters);
+  wordDelimitersRef.current = wordDelimiters;
   const findPanelRef = useRef<HTMLFormElement | null>(null);
   const findInputRef = useRef<HTMLInputElement | null>(null);
   const findMatchIndexRef = useRef(-1);
@@ -807,6 +814,17 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
 
     const getLineText = (lineIndex: number) => terminal.buffer.active.getLine(lineIndex)?.translateToString(true) ?? "";
     const getLineTextLength = (lineIndex: number) => getLineText(lineIndex).length;
+    const selectionRows: SelectionRows = {
+      get length() {
+        return terminal.buffer.active.length;
+      },
+      text: (row) => terminal.buffer.active.getLine(row)?.translateToString(false) ?? "",
+      contentLength: getLineTextLength,
+      isWrapped: (row) => Boolean(terminal.buffer.active.getLine(row)?.isWrapped),
+    };
+    /** An Alt+click that has not moved yet selects nothing. */
+    const isEmptyBlock = (selection: TerminalSelectionRange) =>
+      Boolean(selection.block) && comparePoints(selection.anchor, selection.focus) === 0;
 
     const getOrderedSelection = () => {
       const selection = customSelectionRef.current;
@@ -821,6 +839,11 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
     };
 
     const getCustomSelectionText = () => {
+      const selection = customSelectionRef.current;
+      if (selection?.block) {
+        return isEmptyBlock(selection) ? "" : normalizeSelectionText(getBlockText(selectionRows, selection.anchor, selection.focus));
+      }
+
       const range = getOrderedSelection();
 
       if (!range) {
@@ -1196,6 +1219,29 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       const topOffset = screenRect.top - containerRect.top;
       const leftOffset = screenRect.left - containerRect.left;
 
+      const selection = customSelectionRef.current;
+      if (selection?.block) {
+        if (isEmptyBlock(selection)) {
+          return [];
+        }
+        // the rectangle covers its columns also past the end of short rows, as it will be copied
+        const { top, bottom, left, right } = getBlockBounds(selection.anchor, selection.focus);
+        const clippedRight = Math.min(right, terminal.cols);
+        for (let row = top; row <= bottom; row += 1) {
+          const screenRow = row - terminal.buffer.active.viewportY;
+          if (screenRow < 0 || screenRow >= terminal.rows || clippedRight <= left) {
+            continue;
+          }
+          rects.push({
+            top: topOffset + screenRow * cellHeight,
+            left: leftOffset + left * cellWidth,
+            width: (clippedRight - left) * cellWidth,
+            height: cellHeight,
+          });
+        }
+        return rects;
+      }
+
       for (let row = range.start.row; row <= range.end.row; row += 1) {
         const lineLength = getLineTextLength(row);
         const startColumn = row === range.start.row ? range.start.column : 0;
@@ -1307,79 +1353,40 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       return event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
     };
 
-    const getWordSelectionRange = (point: TerminalSelectionPoint) => {
-      const lineText = getLineText(point.row);
+    // SecureCRT-style mouse selection. Clicks are counted here (not by the browser's dblclick):
+    // 2 = word, 3 = whole line, and dragging on from the 2nd / 3rd click grows the selection word by
+    // word / line by line. Shift+click extends the current selection, Alt+drag selects a block.
+    const multiClickMs = 500; // Windows' default double-click time
+    const multiClickSlopPx = 4;
+    // the word / line the double / triple click started on, while its drag lasts
+    let dragUnit: { unit: "word" | "line"; origin: SelectionSpan } | null = null;
 
-      if (!lineText || point.column >= lineText.length || /\s/.test(lineText[point.column])) {
-        return null;
-      }
+    const getUnitSpan = (unit: "word" | "line", point: TerminalSelectionPoint): SelectionSpan =>
+      unit === "line"
+        ? findLineSpan(selectionRows, point.row)
+        : findWordSpan(selectionRows, point, wordDelimitersRef.current) ?? { start: point, end: point };
 
-      let start = point.column;
-      let end = point.column + 1;
-
-      while (start > 0 && !/\s/.test(lineText[start - 1])) {
-        start -= 1;
-      }
-
-      while (end < lineText.length && !/\s/.test(lineText[end])) {
-        end += 1;
-      }
-
-      return { start, end };
-    };
-
-    const selectCustomRange = (row: number, startColumn: number, endColumn: number, endRow = row) => {
-      if (endRow === row && endColumn <= startColumn) {
-        clearCustomSelection();
-        return;
-      }
-
-      terminal.clearSelection();
-      customSelectionRef.current = {
-        anchor: { row, column: startColumn },
-        focus: { row: endRow, column: endColumn },
-      };
+    const startCustomSelection = (selection: TerminalSelectionRange) => {
+      isCustomSelectingRef.current = true;
+      customSelectionRef.current = selection;
       pinCustomSelection();
       syncCustomSelectionRects();
-      scheduleSelectionCopy();
     };
 
-    const handleDoubleClick = (event: MouseEvent) => {
-      if (Date.now() < suppressNextDoubleClickUntilRef.current) {
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-        return;
-      }
+    const getBlockPointFromPointer = (event: MouseEvent | PointerEvent): TerminalSelectionPoint | null => {
+      const cell = getTerminalCellFromPointer(event);
+      return cell ? { row: terminal.buffer.active.viewportY + cell.row, column: cell.column } : null;
+    };
 
+    // Clicks are handled on pointerdown; only keep xterm from selecting a word of its own.
+    const handleDoubleClick = (event: MouseEvent) => {
       if (!isTerminalPointerEvent(event)) {
         return;
       }
 
-      const point = getSelectablePointFromPointer(event);
-
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
-
-      if (!point) {
-        clearCustomSelection();
-        return;
-      }
-
-      if (event.detail >= 4) {
-        selectCustomRange(point.row, 0, getLineTextLength(point.row));
-        return;
-      }
-
-      const wordRange = getWordSelectionRange(point);
-
-      if (!wordRange) {
-        clearCustomSelection();
-        return;
-      }
-
-      selectCustomRange(point.row, wordRange.start, wordRange.end);
     };
 
     const handlePointerDown = (event: PointerEvent) => {
@@ -1407,39 +1414,49 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       event.stopImmediatePropagation();
       terminal.focus();
       terminal.clearSelection();
+      dragUnit = null;
 
       if (!point) {
-        customClickTrackerRef.current = { lastAt: 0, row: -1, count: 0 };
+        customClickTrackerRef.current = { lastAt: 0, x: 0, y: 0, count: 0 };
         clearCustomSelection();
         return;
       }
 
       const previousClick = customClickTrackerRef.current;
-      const clickCount = previousClick.row === point.row && now - previousClick.lastAt <= 450 ? previousClick.count + 1 : 1;
-      customClickTrackerRef.current = { lastAt: now, row: point.row, count: clickCount };
+      const isRepeat = now - previousClick.lastAt <= multiClickMs
+        && Math.abs(event.clientX - previousClick.x) <= multiClickSlopPx
+        && Math.abs(event.clientY - previousClick.y) <= multiClickSlopPx;
+      // a 4th click starts over with a single click
+      const clickCount = isRepeat ? (previousClick.count % 3) + 1 : 1;
+      customClickTrackerRef.current = { lastAt: now, x: event.clientX, y: event.clientY, count: clickCount };
 
-      if (clickCount >= 3) {
-        isCustomSelectingRef.current = false;
-        suppressNextDoubleClickUntilRef.current = now + 500;
-        customClickTrackerRef.current = { lastAt: 0, row: -1, count: 0 };
-        // the whole line, also when the terminal wrapped it onto several rows
-        const buffer = terminal.buffer.active;
-        let firstRow = point.row;
-        while (firstRow > 0 && buffer.getLine(firstRow)?.isWrapped) {
-          firstRow -= 1;
+      const current = customSelectionRef.current;
+      if (clickCount === 1 && event.shiftKey && current && !current.block) {
+        // Shift+click: from the far end of the current selection to here
+        const range = getOrderedSelection();
+        if (range) {
+          const anchor = comparePoints(point, range.start) < 0 ? range.end : range.start;
+          const focus = getSelectablePointFromPointer(event, anchor) ?? point;
+          startCustomSelection({ anchor, focus });
+          return;
         }
-        let lastRow = point.row;
-        while (buffer.getLine(lastRow + 1)?.isWrapped) {
-          lastRow += 1;
-        }
-        selectCustomRange(firstRow, 0, getLineTextLength(lastRow), lastRow);
+      }
+
+      if (clickCount === 1 && event.altKey) {
+        const blockPoint = getBlockPointFromPointer(event) ?? point;
+        startCustomSelection({ anchor: blockPoint, focus: blockPoint, block: true });
         return;
       }
 
-      isCustomSelectingRef.current = true;
-      customSelectionRef.current = { anchor: point, focus: point };
-      pinCustomSelection();
-      syncCustomSelectionRects();
+      if (clickCount >= 2) {
+        const unit = clickCount === 2 ? "word" : "line";
+        const origin = getUnitSpan(unit, point);
+        dragUnit = { unit, origin };
+        startCustomSelection({ anchor: origin.start, focus: origin.end });
+        return;
+      }
+
+      startCustomSelection({ anchor: point, focus: point });
     };
 
     const handlePointerMove = (event: PointerEvent) => {
@@ -1459,13 +1476,23 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       event.stopPropagation();
       event.stopImmediatePropagation();
 
-      const focus = getSelectablePointFromPointer(event, currentSelection.anchor);
+      let next: TerminalSelectionRange | null = null;
+      if (currentSelection.block) {
+        const focus = getBlockPointFromPointer(event);
+        next = focus ? { ...currentSelection, focus } : null;
+      } else if (dragUnit) {
+        const point = getSelectablePointFromPointer(event);
+        next = point ? extendSpan(dragUnit.origin, getUnitSpan(dragUnit.unit, point)) : null;
+      } else {
+        const focus = getSelectablePointFromPointer(event, currentSelection.anchor);
+        next = focus ? { ...currentSelection, focus } : null;
+      }
 
-      if (!focus) {
+      if (!next) {
         return;
       }
 
-      customSelectionRef.current = { ...currentSelection, focus };
+      customSelectionRef.current = next;
       pinCustomSelection();
       syncCustomSelectionRects();
     };
