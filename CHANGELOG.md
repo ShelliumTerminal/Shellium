@@ -7,6 +7,8 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-11-14
+
 ### Added
 - Block (column) selection: Alt+drag selects a rectangle - the same columns of every row - and
   copies one line per row, e.g. a single column of a query result.
