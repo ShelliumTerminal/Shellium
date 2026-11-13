@@ -7,6 +7,8 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-11-14
+
 ### Added
 - Options > Terminal > Scroll to bottom on output (on by default), as in SecureCRT: when you have
   scrolled up less than one screen, new output (`tail -f`, a running script) brings the view back
