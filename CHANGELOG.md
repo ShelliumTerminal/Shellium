@@ -7,6 +7,12 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 
 ## [Unreleased]
 
+### Fixed
+- Copying a long line that the terminal wrapped onto several rows (an ssh key, a long command)
+  put a line break at the end of every row, so pasting it ran several broken commands. The rows of
+  one line are now copied as one line; real line breaks stay. A triple click selects the whole
+  wrapped line instead of one row.
+
 ## [2.3.0] - 2026-11-13
 
 ### Added

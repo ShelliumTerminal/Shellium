@@ -827,16 +827,33 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
         return "";
       }
 
+      const buffer = terminal.buffer.active;
       const lines: string[] = [];
+      // A long line (an ssh key, a long command) that the terminal wrapped onto several rows is one
+      // line: its rows are joined without line breaks, so pasting it runs one command, not several.
+      let current = "";
+      let continues = false;
 
       for (let row = range.start.row; row <= range.end.row; row += 1) {
-        const line = getLineText(row);
+        const wrapsOn = row < range.end.row && Boolean(buffer.getLine(row + 1)?.isWrapped);
+        // keep the spaces at the end of a row that continues: they belong to the text
+        const line = wrapsOn ? buffer.getLine(row)?.translateToString(false) ?? "" : getLineText(row);
         const startColumn = row === range.start.row ? range.start.column : 0;
         const endColumn = row === range.end.row ? range.end.column : line.length;
+        const piece = endColumn > startColumn ? line.slice(startColumn, Math.min(endColumn, line.length)) : "";
 
-        if (endColumn > startColumn) {
-          lines.push(line.slice(startColumn, Math.min(endColumn, line.length)).trimEnd());
+        if (wrapsOn) {
+          current += piece;
+          continues = true;
+          continue;
         }
+
+        current += piece.trimEnd();
+        if (current || (!continues && endColumn > startColumn)) {
+          lines.push(current);
+        }
+        current = "";
+        continues = false;
       }
 
       return normalizeSelectionText(lines.join("\n"));
@@ -1311,8 +1328,8 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       return { start, end };
     };
 
-    const selectCustomRange = (row: number, startColumn: number, endColumn: number) => {
-      if (endColumn <= startColumn) {
+    const selectCustomRange = (row: number, startColumn: number, endColumn: number, endRow = row) => {
+      if (endRow === row && endColumn <= startColumn) {
         clearCustomSelection();
         return;
       }
@@ -1320,7 +1337,7 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       terminal.clearSelection();
       customSelectionRef.current = {
         anchor: { row, column: startColumn },
-        focus: { row, column: endColumn },
+        focus: { row: endRow, column: endColumn },
       };
       pinCustomSelection();
       syncCustomSelectionRects();
@@ -1405,7 +1422,17 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
         isCustomSelectingRef.current = false;
         suppressNextDoubleClickUntilRef.current = now + 500;
         customClickTrackerRef.current = { lastAt: 0, row: -1, count: 0 };
-        selectCustomRange(point.row, 0, getLineTextLength(point.row));
+        // the whole line, also when the terminal wrapped it onto several rows
+        const buffer = terminal.buffer.active;
+        let firstRow = point.row;
+        while (firstRow > 0 && buffer.getLine(firstRow)?.isWrapped) {
+          firstRow -= 1;
+        }
+        let lastRow = point.row;
+        while (buffer.getLine(lastRow + 1)?.isWrapped) {
+          lastRow += 1;
+        }
+        selectCustomRange(firstRow, 0, getLineTextLength(lastRow), lastRow);
         return;
       }
 
