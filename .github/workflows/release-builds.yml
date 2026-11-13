@@ -1,0 +1,90 @@
+# macOS and Linux installers for a release, built on GitHub's runners (the Windows installer is
+# still built locally with `pnpm build`).
+#
+# - Pushing a tag vX.Y.Z builds that tag and attaches Shellium-Mac-X.Y.Z-Installer.dmg and
+#   Shellium-Linux-X.Y.Z.AppImage to the GitHub release vX.Y.Z. If that release does not exist yet,
+#   a draft is created: publish it (add the Windows installer and the notes) instead of a new one.
+# - Run it by hand (Actions > Release builds > Run workflow) to build the chosen branch for an
+#   existing release, e.g. after a failed run. package.json's version must match the tag.
+#
+# The macOS app is not notarized and only signed ad hoc (scripts/after-pack-mac.cjs): users open it
+# the first time with Control-click > Open.
+name: Release builds
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release to attach the installers to, e.g. v2.5.0"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-builds-${{ inputs.tag || github.ref_name }}
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS (universal dmg)
+            os: macos-14
+            builder: --mac dmg --universal
+            files: release/*/Shellium-Mac-*.dmg
+          - name: Linux (AppImage x64)
+            os: ubuntu-22.04
+            builder: --linux AppImage --x64
+            files: release/*/Shellium-Linux-*.AppImage
+    runs-on: ${{ matrix.os }}
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version matches the tag
+        run: |
+          version="v$(node -p "require('./package.json').version")"
+          if [ "$version" != "$TAG" ]; then
+            echo "package.json is $version, the release is $TAG" >&2
+            exit 1
+          fi
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.10.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec tsc --noEmit
+      - run: pnpm exec vite build
+
+      - name: Package
+        run: pnpm exec electron-builder ${{ matrix.builder }} --publish never
+        env:
+          # no Developer ID certificate: do not look for one in the runner's keychain
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}-installer
+          path: ${{ matrix.files }}
+          if-no-files-found: error
+
+      - name: Attach to the GitHub release
+        shell: bash
+        run: |
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --draft --verify-tag --title "Shellium ${TAG#v}" --notes "Draft created by the Release builds workflow: add the Windows installer and the notes, then publish." || true
+          fi
+          gh release upload "$TAG" ${{ matrix.files }} --clobber

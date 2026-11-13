@@ -21,10 +21,22 @@
     "node_modules/safer-buffer/**/*",
     "node_modules/tweetnacl/**/*"
   ],
+  "afterPack": "scripts/after-pack-mac.cjs",
   "mac": {
     "icon": "build/icon.icns",
+    // No Apple Developer ID yet: no signing by electron-builder, the afterPack hook signs ad hoc.
+    "identity": null,
+    // ssh2's optional native crypto addon is built once; keep it as is in the universal app (ssh2
+    // falls back to its JavaScript code where the addon cannot load).
+    "x64ArchFiles": "**/*.node",
+    "category": "public.app-category.developer-tools",
     "target": [
-      "dmg"
+      {
+        "target": "dmg",
+        "arch": [
+          "universal"
+        ]
+      }
     ],
     "artifactName": "Shellium-Mac-${version}-Installer.${ext}"
   },
@@ -50,6 +62,7 @@
   },
   "linux": {
     "icon": "build/icon.png",
+    "category": "Development",
     "target": [
       "AppImage"
     ],
