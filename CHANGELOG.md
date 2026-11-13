@@ -24,6 +24,11 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
   box drawing after them stay aligned.
 
 ### Fixed
+- The terminal froze in `vim`: after opening a file the keys seemed to do nothing and the tab showed
+  no more output until it was closed (other tabs kept working). Typical after `su - oracle` on
+  RHEL / Oracle Linux, where `vi` is full vim for normal users but not for root. vim asks the
+  terminal about its cursor on start, and the installed build of the terminal failed on that
+  question (a build setting broke one of its functions); the build no longer changes it.
 - Selecting text while output keeps coming: the selection stayed in place on the screen and the new
   lines ran through it (once the scrollback was full). It now moves with its text and goes away when
   that text leaves the scrollback. While the mouse button is held to select, the view stands still;

@@ -11,6 +11,13 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(appVersion),
   },
+  build: {
+    // The renderer only runs in Electron 30's Chromium 124: no need to lower modern syntax to Vite's
+    // es2020 default. Lowering broke xterm.js - esbuild 0.21 turned "let r; ...(r ||= {})" in its
+    // DECRQM handler into an assignment to an undeclared variable. The ReferenceError stopped the
+    // tab's output for good as soon as full vim (oracle's "vi") asked "ESC[?12$p" on start.
+    target: 'chrome124',
+  },
   plugins: [
     react(),
     electron({
