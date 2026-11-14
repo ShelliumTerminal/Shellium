@@ -34,7 +34,7 @@ jobs:
       matrix:
         include:
           - name: macOS (universal dmg)
-            os: macos-14
+            os: macos-latest
             builder: --mac dmg --universal
             files: release/*/Shellium-Mac-*.dmg
           - name: Linux (AppImage x64)
