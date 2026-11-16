@@ -7,6 +7,8 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 
 ## [Unreleased]
 
+## [2.6.1] - 2026-11-16
+
 ### Changed
 - The user@host:port in the status bar copies with one click: click the user name, the host or
   the port to copy it ("Copied" shows for a moment). The arrow next to it (or a right-click) opens
