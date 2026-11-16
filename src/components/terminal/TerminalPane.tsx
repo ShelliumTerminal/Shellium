@@ -1620,6 +1620,13 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
         return true;
       }
 
+      // A dialog, menu or popup over the terminal owns its own clicks and text selection (About,
+      // host key prompts, the status bar's connection card...), even when it is not in the list of
+      // windows that block the terminal.
+      if (event.target instanceof Element && event.target.closest('[role="dialog"], [role="menu"], [aria-modal="true"]')) {
+        return false;
+      }
+
       const rect = container.getBoundingClientRect();
       return event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
     };

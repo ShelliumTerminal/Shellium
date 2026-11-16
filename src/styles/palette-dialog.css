@@ -13,7 +13,6 @@
   inset: 0;
   z-index: 50;
   background: var(--ui-backdrop);
-  backdrop-filter: blur(3px);
 }
 
 .shellium-shell .pl-dialog {

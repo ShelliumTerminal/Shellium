@@ -210,7 +210,7 @@ function App() {
   const findEnvironment = (environmentId: string | undefined) =>
     environmentId ? options.environments.find((environment) => environment.id === environmentId) ?? null : null;
   const isSecurityGateVisible = security.isStatusLoading || security.isSetupRequired || security.isLocked;
-  const isTerminalInteractionBlocked = !canUseSecureData || isPaletteOpen || Boolean(renameTab) || Boolean(pendingClose) || Boolean(fontDialog) || Boolean(credentialPrompt) || Boolean(transferWizard) || isScriptButtonEditorOpen || Boolean(scriptButtonContextMenu) || isScriptButtonOverflowMenuOpen;
+  const isTerminalInteractionBlocked = !canUseSecureData || isPaletteOpen || Boolean(renameTab) || Boolean(pendingClose) || Boolean(fontDialog) || Boolean(credentialPrompt) || Boolean(transferWizard) || isScriptButtonEditorOpen || Boolean(scriptButtonContextMenu) || isScriptButtonOverflowMenuOpen || isAboutOpen || connectionPrompts.length > 0;
   const activeSession = sessions.find((session) => session.id === activeSessionId) ?? null;
   const activeEnvironment = activeSession ? findEnvironment(activeSession.host.environmentId) : null;
 

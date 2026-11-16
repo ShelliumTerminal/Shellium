@@ -12,6 +12,11 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
   the port to copy it ("Copied" shows for a moment). The arrow next to it (or a right-click) opens
   a card with all of them and the ssh command (`ssh -p 2222 oracle@db01`), each with its own copy
   button. Replaces the right-click menu of 2.6.0.
+- Connect to host no longer blurs the window behind it (it is only dimmed).
+
+### Fixed
+- Text in Help › About (and in the host key prompts) could not be selected: dragging over it
+  selected text in the terminal behind instead.
 
 ## [2.6.0] - 2026-11-16
 
