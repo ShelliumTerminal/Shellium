@@ -27,8 +27,25 @@ concurrency:
   group: release-builds-${{ inputs.tag || github.ref_name }}
 
 jobs:
+  # One job makes sure the release exists before the builds attach to it. When both builds created
+  # it themselves, they raced and could make two drafts for one tag (v2.6.0).
+  release:
+    name: Draft release
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Create the draft if there is no release yet
+        run: |
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --draft --verify-tag --title "Shellium ${TAG#v}" --notes "Draft created by the Release builds workflow: add the Windows installer and the notes, then publish."
+          fi
+
   build:
     name: ${{ matrix.name }}
+    needs: release
     strategy:
       fail-fast: false
       matrix:
@@ -83,8 +100,4 @@ jobs:
 
       - name: Attach to the GitHub release
         shell: bash
-        run: |
-          if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" --draft --verify-tag --title "Shellium ${TAG#v}" --notes "Draft created by the Release builds workflow: add the Windows installer and the notes, then publish." || true
-          fi
-          gh release upload "$TAG" ${{ matrix.files }} --clobber
+        run: gh release upload "$TAG" ${{ matrix.files }} --clobber
