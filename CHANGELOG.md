@@ -7,6 +7,8 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-11-16
+
 ### Added
 - Split view: up to four sessions side by side in one tab. Right-click a tab (or a pane's title
   row): Split Right / Split Down open the same host again in a new pane, Split with Session… lets
