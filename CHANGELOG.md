@@ -7,6 +7,12 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 
 ## [Unreleased]
 
+### Changed
+- The user@host:port in the status bar copies with one click: click the user name, the host or
+  the port to copy it ("Copied" shows for a moment). The arrow next to it (or a right-click) opens
+  a card with all of them and the ssh command (`ssh -p 2222 oracle@db01`), each with its own copy
+  button. Replaces the right-click menu of 2.6.0.
+
 ## [2.6.0] - 2026-11-16
 
 ### Added

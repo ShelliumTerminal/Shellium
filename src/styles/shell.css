@@ -831,7 +831,161 @@
 }
 
 .shellium-shell .sh-status-endpoint {
+  gap: 0;
   font-family: var(--ui-mono);
+}
+
+/* user@host:port: every part copies itself on a click (StatusEndpoint.tsx) */
+.shellium-shell .sh-endpoint-part {
+  position: relative;
+  height: 20px;
+  padding: 0 3px;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer !important;
+}
+
+.shellium-shell .sh-endpoint-part:hover {
+  background: var(--ui-accent-soft);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .sh-endpoint-part.copied {
+  color: var(--ui-ok);
+}
+
+.shellium-shell .sh-endpoint-sep {
+  color: var(--ui-text-faint);
+}
+
+.shellium-shell .sh-endpoint-toast {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  z-index: 61;
+  padding: 3px 8px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-r-sm);
+  background: var(--ui-surface-2);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  color: var(--ui-ok);
+  font-family: var(--ui-sans);
+  font-weight: 600;
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: sh-endpoint-toast 1.4s ease forwards;
+}
+
+@keyframes sh-endpoint-toast {
+  0% { opacity: 0; transform: translate(-50%, 3px); }
+  12%, 75% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; }
+}
+
+.shellium-shell .sh-endpoint-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 3px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: transparent;
+  color: var(--ui-text-faint);
+  cursor: pointer !important;
+}
+
+.shellium-shell .sh-endpoint-more:hover,
+.shellium-shell .sh-endpoint-more.open {
+  background: var(--ui-surface-2);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .sh-endpoint-card {
+  position: fixed;
+  z-index: 60;
+  width: 340px;
+  padding: 6px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-r-lg);
+  background: var(--ui-surface-1);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  font-family: var(--ui-sans);
+  font-size: var(--ui-fs-xs);
+}
+
+.shellium-shell .sh-endpoint-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px 8px;
+  border-bottom: 1px solid var(--ui-border);
+  margin-bottom: 4px;
+}
+
+.shellium-shell .sh-endpoint-card-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ui-text-strong);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shellium-shell .sh-endpoint-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 26px;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 2px 0 6px;
+  border-radius: var(--ui-r-sm);
+}
+
+.shellium-shell .sh-endpoint-row:hover {
+  background: var(--ui-surface-2);
+}
+
+.shellium-shell .sh-endpoint-label {
+  color: var(--ui-text-muted);
+}
+
+.shellium-shell .sh-endpoint-value {
+  overflow: hidden;
+  color: var(--ui-text-strong);
+  font-family: var(--ui-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: text;
+}
+
+.shellium-shell .sh-endpoint-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-r-sm);
+  background: transparent;
+  color: var(--ui-text-muted);
+  cursor: pointer !important;
+}
+
+.shellium-shell .sh-endpoint-copy:hover {
+  background: var(--ui-accent-soft);
+  color: var(--ui-text-strong);
+}
+
+.shellium-shell .sh-endpoint-copy.copied {
+  color: var(--ui-ok);
 }
 
 .shellium-shell .sh-status-dot {
