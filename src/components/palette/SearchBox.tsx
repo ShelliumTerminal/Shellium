@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { CornerDownLeft, Search, Zap } from "lucide-react";
 import type { KeyboardEventHandler } from "react";
 
 type SearchBoxProps = {
@@ -6,6 +6,8 @@ type SearchBoxProps = {
   onChange: (value: string) => void;
   matchCount?: number;
   onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
+  /** Nothing matches but the text reads as user@host:port: offered as a quick connect (Enter). */
+  quickConnect?: { label: string; onConnect(): void } | null;
 };
 
 export default function SearchBox({
@@ -13,6 +15,7 @@ export default function SearchBox({
   onChange,
   matchCount,
   onKeyDown,
+  quickConnect,
 }: SearchBoxProps) {
   return (
     <div className="pl-search">
@@ -30,6 +33,18 @@ export default function SearchBox({
         <span className="pl-search-count">
           {matchCount === 1 ? "1 match" : `${matchCount} matches`}
         </span>
+      )}
+      {quickConnect && (
+        <button
+          type="button"
+          className="pl-quick-connect"
+          title={`Connect to ${quickConnect.label} without saving it (Enter)`}
+          onClick={quickConnect.onConnect}
+        >
+          <Zap size={13} aria-hidden="true" />
+          Quick connect
+          <CornerDownLeft size={12} aria-hidden="true" />
+        </button>
       )}
     </div>
   );

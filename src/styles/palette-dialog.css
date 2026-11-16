@@ -749,3 +749,27 @@
 .shellium-shell .pl-icon-btn-star.active svg {
   fill: currentColor;
 }
+
+/* "user@host:port" with no match: connect without saving (Enter) */
+.shellium-shell .pl-quick-connect {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  margin-left: 8px;
+  padding: 0 8px;
+  border: 1px solid var(--ui-accent);
+  border-radius: var(--ui-r-sm);
+  background: var(--ui-accent-soft);
+  color: var(--ui-text);
+  font: inherit;
+  font-size: var(--ui-fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.shellium-shell .pl-quick-connect:hover {
+  background: var(--ui-accent);
+  color: #fff;
+}

@@ -2,6 +2,7 @@ import { FolderPlus, KeyRound, Plus, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
 
+import { formatQuickConnect, parseQuickConnect, quickConnectHost } from "../../app/quickConnect";
 import SearchBox from "./SearchBox";
 import ConnectionTree, { buildSearchGroups } from "./ConnectionTree";
 import type { ConnectionTreeHandle } from "./ConnectionTree";
@@ -474,7 +475,19 @@ useEffect(() => {
     setSelectedNode({ type: "host", id: host.id });
   };
 
+  const quickConnectTarget = !isLoading && matchCount === 0 ? parseQuickConnect(search) : null;
+  const connectQuick = () => {
+    if (quickConnectTarget) {
+      onConnect(quickConnectHost(quickConnectTarget));
+    }
+  };
+
   const handleSearchKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
+    if (event.key === "Enter" && quickConnectTarget) {
+      event.preventDefault();
+      connectQuick();
+      return;
+    }
     treeRef.current?.handleKeyDown(event);
   };
 
@@ -504,7 +517,13 @@ useEffect(() => {
           </button>
         </div>
 
-        <SearchBox value={search} onChange={setSearch} onKeyDown={handleSearchKeyDown} matchCount={matchCount} />
+        <SearchBox
+          value={search}
+          onChange={setSearch}
+          onKeyDown={handleSearchKeyDown}
+          matchCount={matchCount}
+          quickConnect={quickConnectTarget ? { label: formatQuickConnect(quickConnectTarget), onConnect: connectQuick } : null}
+        />
 
         {storageError && <div className="pl-alert pl-alert-error">{storageError}</div>}
 

@@ -2,6 +2,7 @@ import { KeyRound, X } from "lucide-react";
 import type { Host } from "../palette/types";
 import { clampCredentialDialogFrame, createDefaultCredentialDialogFrame, frameStyle, useDialogFrame } from "../../app/dialogFrame";
 import { useEscapeLayer } from "../../app/escapeLayers";
+import { isQuickConnectHost } from "../../app/quickConnect";
 
 const createFrame = () => clampCredentialDialogFrame(createDefaultCredentialDialogFrame());
 
@@ -24,6 +25,8 @@ type CredentialDialogProps = {
 /** Asks for the SSH password of a host that has none saved. */
 export default function CredentialDialog({ prompt, error, onChange, onSubmit, onCancel }: CredentialDialogProps) {
   useEscapeLayer(onCancel);
+  // a quick-connect host is not in the vault: there is nothing to save the password into
+  const canSave = !isQuickConnectHost(prompt.host);
   const { frame, onHeaderPointerDown } = useDialogFrame(createFrame, clampCredentialDialogFrame);
 
   return (
@@ -53,7 +56,11 @@ export default function CredentialDialog({ prompt, error, onChange, onSubmit, on
           </button>
         </header>
         <div className="md-body">
-          <p className="md-text">No password is saved for <strong>{prompt.host.name}</strong>. Enter it to connect.</p>
+          <p className="md-text">
+            {canSave
+              ? <>No password is saved for <strong>{prompt.host.name}</strong>. Enter it to connect.</>
+              : <>Quick connect to <strong>{prompt.host.name}</strong>: nothing is saved.</>}
+          </p>
           <label className="md-field">
             <span>Username</span>
             <input
@@ -74,7 +81,7 @@ export default function CredentialDialog({ prompt, error, onChange, onSubmit, on
               onChange={(event) => onChange({ ...prompt, password: event.target.value })}
             />
           </label>
-          <label className="md-check">
+          {canSave && <label className="md-check">
             <input
               className="sh-switch"
               type="checkbox"
@@ -83,7 +90,7 @@ export default function CredentialDialog({ prompt, error, onChange, onSubmit, on
               onChange={(event) => onChange({ ...prompt, savePassword: event.target.checked })}
             />
             <span>Save password in the vault</span>
-          </label>
+          </label>}
           {error && <div className="md-alert" role="alert">{error}</div>}
         </div>
         <div className="md-actions">

@@ -7,6 +7,24 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 
 ## [Unreleased]
 
+### Added
+- Split view: up to four sessions side by side in one tab. Right-click a tab (or a pane's title
+  row): Split Right / Split Down open the same host again in a new pane, Split with Session… lets
+  you pick another saved host. Every pane has its own SSH connection, SFTP, recording and
+  protection; the one you click is the active pane (blue frame) that the status bar, script buttons
+  and toolbar work on. Drag the line between panes to resize them. Drag a pane by its title row to
+  move it: drop it on a side of another pane to put it there, or on the middle to swap the two.
+  Moving a pane keeps its connection and output. Drag a tab onto the terminal of
+  another tab to add it there as a pane (the drop zone shows which side), and use Move to New Tab
+  to take a pane out again. Each pane has a title row with its environment color and a close
+  button; a tab with a Production pane is marked as Production. The tab's close button closes all
+  of its panes, after asking.
+- Quick connect: type `user@host:port` (or `user@host`, `host:port`, an IP address) in the search
+  of Connect to host. When no saved host matches, a Quick connect button appears next to the match
+  count, and Enter connects. Nothing is saved: the host is not added to the list or to recent
+  connections, and the password prompt does not offer to store the password.
+- Right-click user@host:port in the status bar: Copy Hostname, Copy Username, Copy Port.
+
 ## [2.5.0] - 2026-11-14
 
 ### Added

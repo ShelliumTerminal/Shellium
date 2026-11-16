@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { Circle, Clock3, Gauge, Lock } from "lucide-react";
 import type { Session } from "../palette/types";
 import { useTerminalView } from "../../app/terminalViewStore";
@@ -6,6 +7,7 @@ import { getSessionTitle } from "../../app/sessionModel";
 import { EnvironmentBadge } from "../common/environments";
 import { connectShortcutLabel } from "../../app/platform";
 import SftpTransferStatus from "./SftpTransferStatus";
+import { useEscapeLayer } from "../../app/escapeLayers";
 
 type SessionInfo = Awaited<ReturnType<NonNullable<typeof window.shellium>["terminal"]["info"]>>;
 
@@ -106,6 +108,37 @@ export default function StatusBar({ activeSession, sessions, notice, onOpenSftp,
   const latency = info?.latencyMs;
   const latencyTone = latency === undefined ? "" : latency >= 250 ? " sh-status-bad" : latency >= 100 ? " sh-status-slow" : "";
 
+  // right-click on user@host:port: copy one part of it
+  const [endpointMenu, setEndpointMenu] = useState<{ x: number; y: number } | null>(null);
+  const closeEndpointMenu = () => setEndpointMenu(null);
+  useEscapeLayer(closeEndpointMenu, Boolean(endpointMenu));
+  useEffect(() => {
+    if (!endpointMenu) {
+      return;
+    }
+    const close = () => setEndpointMenu(null);
+    window.addEventListener("pointerdown", close);
+    window.addEventListener("blur", close);
+    window.addEventListener("resize", close);
+    return () => {
+      window.removeEventListener("pointerdown", close);
+      window.removeEventListener("blur", close);
+      window.removeEventListener("resize", close);
+    };
+  }, [endpointMenu]);
+  useEffect(() => setEndpointMenu(null), [activeSession?.id]);
+
+  const openEndpointMenu = (event: ReactMouseEvent<HTMLSpanElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setEndpointMenu({ x: event.clientX, y: event.clientY });
+  };
+
+  const copyEndpointPart = (text: string) => {
+    setEndpointMenu(null);
+    void window.shellium?.clipboard.writeText(text).catch(() => undefined);
+  };
+
   return (
     <footer className="sh-statusbar" aria-label="Session status">
       <span className={`sh-status-item sh-status-main sh-status-${activeSession?.status ?? "idle"}`}>
@@ -118,7 +151,11 @@ export default function StatusBar({ activeSession, sessions, notice, onOpenSftp,
         <>
           <span className="sh-status-item sh-status-session" title={getSessionTitle(activeSession)}>{getSessionTitle(activeSession)}</span>
           <EnvironmentBadge environmentId={activeSession.host.environmentId} />
-          <span className="sh-status-item sh-status-endpoint">
+          <span
+            className="sh-status-item sh-status-endpoint"
+            title="Right-click to copy the host name, user name or port"
+            onContextMenu={openEndpointMenu}
+          >
             {activeSession.host.username ? `${activeSession.host.username}@` : ""}{activeSession.host.hostname}:{activeSession.host.port || 22}
           </span>
           <span className="sh-status-item sh-status-p2">{activeSession.host.x11?.enabled ? "X11 on" : "X11 off"}</span>
@@ -169,6 +206,27 @@ export default function StatusBar({ activeSession, sessions, notice, onOpenSftp,
       )}
       <span className="sh-status-item sh-status-p1">{sessions.length} session{sessions.length === 1 ? "" : "s"}</span>
       {!activeSession && <span className="sh-status-item sh-status-hint">{connectShortcutLabel} connect</span>}
+      {endpointMenu && activeSession && (
+        <div
+          className="sh-context-menu"
+          role="menu"
+          aria-label="Copy connection details"
+          // opens upward from the status bar
+          style={{ left: endpointMenu.x, bottom: window.innerHeight - endpointMenu.y }}
+          onPointerDown={(event) => event.stopPropagation()}
+          onContextMenu={(event) => event.preventDefault()}
+        >
+          <button type="button" role="menuitem" onClick={() => copyEndpointPart(activeSession.host.hostname)}>
+            Copy Hostname
+          </button>
+          <button type="button" role="menuitem" disabled={!activeSession.host.username} onClick={() => copyEndpointPart(activeSession.host.username)}>
+            Copy Username
+          </button>
+          <button type="button" role="menuitem" onClick={() => copyEndpointPart(String(activeSession.host.port || 22))}>
+            Copy Port
+          </button>
+        </div>
+      )}
     </footer>
   );
 }

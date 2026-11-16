@@ -10,7 +10,16 @@ export type TabContextMenuState = {
 type TabContextMenuProps = {
   menu: TabContextMenuState;
   session: Session;
-  sessionCount: number;
+  /** Open tabs (a split tab counts once). */
+  tabCount: number;
+  /** Panes in the tab of `session` (1 = not split). */
+  paneCount: number;
+  maxPanes: number;
+  onSplitRight(): void;
+  onSplitDown(): void;
+  onSplitWithSession(): void;
+  onMoveToNewTab(): void;
+  onCloseTab(): void;
   onRename(): void;
   onDuplicate(): void;
   onReconnect(): void;
@@ -21,8 +30,11 @@ type TabContextMenuProps = {
   onCloseOthers(): void;
 };
 
-/** Right-click menu of a session tab. */
-export default function TabContextMenu({ menu, session, sessionCount, onRename, onDuplicate, onReconnect, onToggleProtection, onToggleNotifyWhenDone, onDisconnect, onClose, onCloseOthers }: TabContextMenuProps) {
+/** Right-click menu of a session tab, or of one pane of a split tab (its title row). */
+export default function TabContextMenu({ menu, session, tabCount, paneCount, maxPanes, onSplitRight, onSplitDown, onSplitWithSession, onMoveToNewTab, onCloseTab, onRename, onDuplicate, onReconnect, onToggleProtection, onToggleNotifyWhenDone, onDisconnect, onClose, onCloseOthers }: TabContextMenuProps) {
+  const isSplit = paneCount > 1;
+  const canSplit = paneCount < maxPanes;
+  const splitTitle = canSplit ? undefined : `At most ${maxPanes} panes in a tab`;
   return (
     <div
       className="sh-context-menu"
@@ -37,6 +49,22 @@ export default function TabContextMenu({ menu, session, sessionCount, onRename, 
       <button type="button" role="menuitem" disabled={session.status === "disconnected"} onClick={onDuplicate}>
         Clone Session
       </button>
+      <div className="sh-menu-separator" role="separator" />
+      <button type="button" role="menuitem" disabled={!canSplit} title={splitTitle ?? "The same host in a new pane beside this one (its own connection)"} onClick={onSplitRight}>
+        Split Right
+      </button>
+      <button type="button" role="menuitem" disabled={!canSplit} title={splitTitle ?? "The same host in a new pane below this one (its own connection)"} onClick={onSplitDown}>
+        Split Down
+      </button>
+      <button type="button" role="menuitem" disabled={!canSplit} title={splitTitle ?? "Choose a saved session for the new pane"} onClick={onSplitWithSession}>
+        Split with Session…
+      </button>
+      {isSplit && (
+        <button type="button" role="menuitem" onClick={onMoveToNewTab}>
+          Move to New Tab
+        </button>
+      )}
+      <div className="sh-menu-separator" role="separator" />
       <button type="button" role="menuitem" disabled={session.status === "connected"} onClick={onReconnect}>
         Reconnect
       </button>
@@ -56,10 +84,22 @@ export default function TabContextMenu({ menu, session, sessionCount, onRename, 
       <button type="button" role="menuitem" disabled={session.status === "disconnected"} onClick={onDisconnect}>
         Disconnect
       </button>
-      <button type="button" role="menuitem" onClick={onClose}>
-        Close
-      </button>
-      <button type="button" role="menuitem" disabled={sessionCount <= 1} onClick={onCloseOthers}>
+      <div className="sh-menu-separator" role="separator" />
+      {isSplit ? (
+        <>
+          <button type="button" role="menuitem" onClick={onClose}>
+            Close Pane
+          </button>
+          <button type="button" role="menuitem" onClick={onCloseTab}>
+            Close Tab ({paneCount} panes)
+          </button>
+        </>
+      ) : (
+        <button type="button" role="menuitem" onClick={onClose}>
+          Close
+        </button>
+      )}
+      <button type="button" role="menuitem" disabled={tabCount <= 1} onClick={onCloseOthers}>
         Close All Others
       </button>
     </div>

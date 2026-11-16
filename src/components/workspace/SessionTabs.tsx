@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
-import { Bell, BellRing, CircleCheck, ChevronDown, Home, Plus, Settings, ShieldCheck, X } from "lucide-react";
+import { Bell, BellRing, CircleCheck, ChevronDown, Columns2, Home, Plus, Settings, ShieldCheck, X } from "lucide-react";
 import { EnvironmentBadge, environmentStyle, useEnvironments } from "../common/environments";
 import type { Session } from "../palette/types";
 import { normalizeTerminalTabSize } from "../../app/appOptions";
@@ -8,8 +8,11 @@ import type { TerminalTabPosition } from "../../app/appOptions";
 import { getSessionTitle } from "../../app/sessionModel";
 import { useTabTooltip } from "./TabTooltip";
 
+/** One tab: a session, or the panes of a split tab (the focused one names the tab). */
+export type SessionTabItem = { id: string; panes: Session[]; focused: Session };
+
 type SessionTabsProps = {
-  sessions: Session[];
+  tabs: SessionTabItem[];
   activeSessionId: string | null;
   /** Home is the shown page (no session active and the Options tab not shown). */
   isHomeActive: boolean;
@@ -19,10 +22,13 @@ type SessionTabsProps = {
   onCloseOptions(): void;
   /** null = Home. */
   onSelect(sessionId: string | null): void;
+  /** Closes the whole tab (all panes of a split tab). */
   onClose(sessionId: string): void;
   onContextMenu(event: ReactMouseEvent<HTMLDivElement>, sessionId: string): void;
-  /** Drag to reorder: move `sourceId` next to `targetId`. */
+  /** Drag to reorder: move the tab of `sourceId` next to the tab of `targetId`. */
   onMove(sourceId: string, targetId: string): void;
+  /** A tab was grabbed (before it is selected): it may be dropped onto a pane of another tab. */
+  onDragStart(sessionId: string): void;
   /** A drag ended - give the terminal its focus back. */
   onDragEnd(): void;
   position: TerminalTabPosition;
@@ -35,7 +41,7 @@ type SessionTabsProps = {
 
 /** Home + one tab per session: a strip on top, or a resizable list on the left / right. */
 export default function SessionTabs({
-  sessions,
+  tabs,
   activeSessionId,
   isHomeActive,
   optionsTab,
@@ -45,6 +51,7 @@ export default function SessionTabs({
   onClose,
   onContextMenu,
   onMove,
+  onDragStart,
   onDragEnd,
   position,
   size,
@@ -83,6 +90,7 @@ export default function SessionTabs({
 
     event.preventDefault();
     tabTooltip.hide();
+    onDragStart(sessionId);
     onSelect(sessionId);
     setDraggingSessionId(sessionId);
   };
@@ -159,19 +167,30 @@ export default function SessionTabs({
             <ChevronDown size={14} aria-hidden="true" />
           </button>
           <div className="sh-tabs-label">
-            Open sessions <span>{sessions.length}</span>
+            Open sessions <span>{tabs.length}</span>
           </div>
         </>
       )}
-      {sessions.map((session) => {
-        const sessionEnvironment = session.host.environmentId
-          ? environments.find((environment) => environment.id === session.host.environmentId) ?? null
-          : null;
+      {tabs.map((tab) => {
+        const session = tab.focused;
+        const isActive = tab.panes.some((pane) => pane.id === activeSessionId);
+        const isDragging = tab.panes.some((pane) => pane.id === draggingSessionId);
+        const paneEnvironments = tab.panes.map((pane) => pane.host.environmentId
+          ? environments.find((environment) => environment.id === pane.host.environmentId) ?? null
+          : null);
+        // a split tab takes the color of a warning environment (Production) when any pane is in one
+        const sessionEnvironment = paneEnvironments.find((environment) => environment?.warn)
+          ?? paneEnvironments[tab.panes.indexOf(session)]
+          ?? null;
+        const isSplit = tab.panes.length > 1;
+        const protectedPane = tab.panes.find((pane) => pane.protection);
+        const hasActivity = !isActive && tab.panes.some((pane) => pane.hasUnreadActivity);
+        const tooltip = isSplit ? tab.panes.map(getSessionTitle).join("  |  ") : getSessionTitle(session);
 
         return (
           <div
-            key={session.id}
-            className={`sh-tab sh-tab-${session.status} ${session.hasUnreadActivity && session.id !== activeSessionId ? "has-activity" : ""} ${session.id === activeSessionId ? "active" : ""} ${session.id === draggingSessionId ? "dragging" : ""}${sessionEnvironment?.warn ? " sh-tab-warn" : ""}${session.reconnecting ? " sh-tab-reconnecting" : ""}${session.protection ? " sh-tab-protected" : ""}`}
+            key={tab.id}
+            className={`sh-tab sh-tab-${session.status} ${hasActivity ? "has-activity" : ""} ${isActive ? "active" : ""} ${isDragging ? "dragging" : ""}${sessionEnvironment?.warn ? " sh-tab-warn" : ""}${tab.panes.some((pane) => pane.reconnecting) ? " sh-tab-reconnecting" : ""}${protectedPane ? " sh-tab-protected" : ""}`}
             style={sessionEnvironment ? environmentStyle(sessionEnvironment) : undefined}
             onPointerDown={(event) => handleTabPointerDown(event, session.id)}
             onPointerEnter={() => handleTabPointerEnter(session.id)}
@@ -179,22 +198,22 @@ export default function SessionTabs({
             onContextMenu={(event) => onContextMenu(event, session.id)}
           >
             <span className="sh-tab-dot" aria-hidden="true" />
-            {session.protection && (
-              <span className="sh-tab-shield" title={session.reconnecting ? "Protected - reconnecting" : `Protected (${session.protection.tool} on the server)`}>
+            {protectedPane?.protection && (
+              <span className="sh-tab-shield" title={protectedPane.reconnecting ? "Protected - reconnecting" : `Protected (${protectedPane.protection.tool} on the server)`}>
                 <ShieldCheck size={13} aria-label="Protected" />
               </span>
             )}
-            {session.notifyWhenDone && (
+            {tab.panes.some((pane) => pane.notifyWhenDone) && (
               <span className="sh-tab-notify" title="Notify When Done: waiting for the command to finish">
                 <BellRing size={12} aria-label="Notify when done" />
               </span>
             )}
-            {session.isDone && session.id !== activeSessionId && (
+            {!isActive && tab.panes.some((pane) => pane.isDone) && (
               <span className="sh-tab-done" title="The command finished">
                 <CircleCheck size={12} aria-label="Done" />
               </span>
             )}
-            {session.hasBell && session.id !== activeSessionId && (
+            {!isActive && tab.panes.some((pane) => pane.hasBell) && (
               <span className="sh-tab-bell" title="The terminal rang its bell">
                 <Bell size={12} aria-label="Bell" />
               </span>
@@ -203,11 +222,17 @@ export default function SessionTabs({
               className="sh-tab-main"
               type="button"
               onClick={() => onSelect(session.id)}
-              {...tabTooltip.bind(getSessionTitle(session), tooltipSide, !draggingSessionId)}
+              {...tabTooltip.bind(tooltip, tooltipSide, !draggingSessionId)}
             >
               <span className="sh-tab-title">{getSessionTitle(session)}</span>
             </button>
-            <EnvironmentBadge environmentId={session.host.environmentId} />
+            {isSplit && (
+              <span className="sh-tab-panes" title={`${tab.panes.length} panes`}>
+                <Columns2 size={12} aria-hidden="true" />
+                {tab.panes.length}
+              </span>
+            )}
+            <EnvironmentBadge environmentId={sessionEnvironment?.id ?? session.host.environmentId} />
             <button
               className="sh-tab-close"
               onPointerDown={(event) => event.stopPropagation()}

@@ -47,6 +47,11 @@ import { prepareScriptForTerminal } from "./app/scriptButtonModel";
 import type { ScriptButton } from "./app/scriptButtonModel";
 import { collectVaultHosts, getSessionTitle } from "./app/sessionModel";
 import type { PendingCloseState, VaultHostSearchResult } from "./app/sessionModel";
+import { MAX_PANES, detachPane, findTabOf, layoutTree, mergeTab, movePane, moveTab, paneStyle, reconcileTabs, setSplitRatio, setTabFocus, splitPane, swapPanes, tabSessionIds } from "./app/splitLayout";
+import type { PaneEdge, SessionTab } from "./app/splitLayout";
+import SplitStage, { PaneHeader } from "./components/workspace/SplitStage";
+import { isQuickConnectHost } from "./app/quickConnect";
+import type { PaneDropEdge, TabDragState } from "./components/workspace/SplitStage";
 import { useScriptButtonLibrary } from "./app/useScriptButtonLibrary";
 import { useSecurity } from "./app/useSecurity";
 import { useSftpAutoResume } from "./app/useSftpAutoResume";
@@ -105,6 +110,27 @@ function App() {
   sessionsRef.current = sessions;
   const liveHostIds = sessions.filter((session) => session.status === "connected").map((session) => session.host.id);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  // Split view: a tab is a layout of 1-4 sessions (panes). `tabs` always matches `sessions`.
+  const [tabsState, setTabsState] = useState<SessionTab[]>([]);
+  const tabs = useMemo(() => reconcileTabs(tabsState, sessions.map((session) => session.id)), [tabsState, sessions]);
+  const tabsRef = useRef(tabs);
+  tabsRef.current = tabs;
+  useEffect(() => {
+    if (tabs !== tabsState) {
+      setTabsState(tabs);
+    }
+  }, [tabs, tabsState]);
+  const activeTab = activeSessionId ? findTabOf(tabs, activeSessionId) : null;
+  /** The panes on screen: every session of the active tab. */
+  const visibleSessionIds = useMemo(() => (activeTab ? tabSessionIds(activeTab) : []), [activeTab]);
+  const visibleSessionIdsRef = useRef<string[]>(visibleSessionIds);
+  visibleSessionIdsRef.current = visibleSessionIds;
+  /** "Split with Session…": the next session opened from the palette goes next to this pane. */
+  const pendingSplitRef = useRef<{ sessionId: string; edge: PaneEdge } | null>(null);
+  const [tabDrag, setTabDrag] = useState<TabDragState | null>(null);
+  const stageRef = useRef<HTMLElement>(null);
+  const splitLayout = useMemo(() => (activeTab && activeTab.root.kind === "split" ? layoutTree(activeTab.root) : null), [activeTab]);
+  const paneRects = useMemo(() => new Map(splitLayout?.panes.map((pane) => [pane.sessionId, pane.rect]) ?? []), [splitLayout]);
   const [vaultHosts, setVaultHosts] = useState<VaultHostSearchResult[]>([]);
   const [vaultFolders, setVaultFolders] = useState<Folder[]>([]);
   const [recentConnections, setRecentConnections] = useState<RecentConnection[]>(() => loadRecentConnections());
@@ -325,12 +351,17 @@ function App() {
       return;
     }
 
-    setSessions((current) => current.map((session) =>
-      session.id === activeSessionId && (session.hasUnreadActivity || session.hasBell || session.isDone)
-        ? { ...session, hasUnreadActivity: false, hasBell: false, isDone: false }
-        : session,
-    ));
-  }, [activeSessionId]);
+    setTabsState((current) => setTabFocus(reconcileTabs(current, sessionsRef.current.map((session) => session.id)), activeSessionId));
+    // every pane of the shown tab is being looked at
+    const visible = new Set(visibleSessionIdsRef.current);
+    visible.add(activeSessionId);
+    setSessions((current) => current.some((session) => visible.has(session.id) && (session.hasUnreadActivity || session.hasBell || session.isDone))
+      ? current.map((session) =>
+        visible.has(session.id) && (session.hasUnreadActivity || session.hasBell || session.isDone)
+          ? { ...session, hasUnreadActivity: false, hasBell: false, isDone: false }
+          : session)
+      : current);
+  }, [activeSessionId, activeTab?.id]);
 
   useEffect(() => {
     let isMounted = true;
@@ -479,8 +510,30 @@ function App() {
     protectOnConnect: options.protectNewSessions,
   });
 
+  /** A new session (own SSH connection) for `host`, as a new pane next to `targetId`. */
+  const openSessionInSplit = (host: Host, targetId: string, edge: PaneEdge) => {
+    const tab = findTabOf(tabsRef.current, targetId);
+    if (!tab || tabSessionIds(tab).length >= MAX_PANES) {
+      return false;
+    }
+    const session = createSession(host);
+    setSessions((current) => [...current, session]);
+    setTabsState(splitPane(tabsRef.current, targetId, session.id, edge));
+    setActiveSessionId(session.id);
+    return true;
+  };
+
   const openSession = (host: Host) => {
-    setRecentConnections((current) => recordRecentConnection(current, host.id));
+    if (!isQuickConnectHost(host)) {
+      setRecentConnections((current) => recordRecentConnection(current, host.id));
+    }
+
+    const pendingSplit = pendingSplitRef.current;
+    pendingSplitRef.current = null;
+    if (pendingSplit && openSessionInSplit(host, pendingSplit.sessionId, pendingSplit.edge)) {
+      setIsPaletteOpen(false);
+      return;
+    }
 
     if (!options.openDuplicateSessions) {
       const existingSession = sessions.find((session) => session.host.id === host.id);
@@ -517,6 +570,7 @@ function App() {
   };
 
   const handleCredentialPromptCancel = () => {
+    pendingSplitRef.current = null;
     setCredentialPrompt(null);
     setCredentialError(null);
     refocusTerminal();
@@ -546,7 +600,7 @@ function App() {
       password: password || undefined,
     };
 
-    if (!shouldSave) {
+    if (!shouldSave || isQuickConnectHost(nextHost)) {
       setCredentialPrompt(null);
       setCredentialError(null);
       openSession(nextHost);
@@ -592,7 +646,7 @@ function App() {
   }, []);
 
   const markSessionActivity = useCallback((sessionId: string) => {
-    if (sessionId === activeSessionIdRef.current) {
+    if (sessionId === activeSessionIdRef.current || visibleSessionIdsRef.current.includes(sessionId)) {
       return;
     }
 
@@ -614,7 +668,7 @@ function App() {
   /** Bell (BEL, e.g. `make; echo -e '\a'`): a background tab shows a bell, a background window flashes. */
   const markSessionBell = useCallback((sessionId: string) => {
     window.shellium?.app.requestAttention();
-    if (sessionId === activeSessionIdRef.current) {
+    if (sessionId === activeSessionIdRef.current || visibleSessionIdsRef.current.includes(sessionId)) {
       return;
     }
 
@@ -632,7 +686,7 @@ function App() {
     if (!session) {
       return;
     }
-    const isWatched = document.hasFocus() && sessionId === activeSessionIdRef.current;
+    const isWatched = document.hasFocus() && (sessionId === activeSessionIdRef.current || visibleSessionIdsRef.current.includes(sessionId));
     setSessions((current) => current.map((item) =>
       item.id === sessionId ? { ...item, notifyWhenDone: false, isDone: !isWatched } : item));
     if (isWatched) {
@@ -759,11 +813,17 @@ function App() {
     clearTranscriptRecordingActivities(sessionIds);
     const closeIds = new Set(sessionIds);
     const remainingSessions = sessions.filter((session) => !closeIds.has(session.id));
+    const remainingTabs = reconcileTabs(tabsRef.current, remainingSessions.map((session) => session.id));
 
     setSessions(remainingSessions);
+    setTabsState(remainingTabs);
 
     if (activeSessionId && closeIds.has(activeSessionId)) {
-      setActiveSessionId(remainingSessions[0]?.id ?? null);
+      // another pane of the same tab, else the tab that took its place, else the one before it
+      const oldIndex = tabsRef.current.findIndex((tab) => tabSessionIds(tab).includes(activeSessionId));
+      const sameTab = remainingTabs.find((tab) => tab.id === tabsRef.current[oldIndex]?.id);
+      const nextTab = sameTab ?? remainingTabs[Math.min(Math.max(oldIndex, 0), remainingTabs.length - 1)];
+      setActiveSessionId(nextTab?.focusedSessionId ?? null);
     }
   };
 
@@ -774,20 +834,36 @@ function App() {
       return;
     }
 
-    setPendingClose({ kind: "single", sessionId, title: getSessionTitle(session) });
+    const tab = findTabOf(tabsRef.current, sessionId);
+    setPendingClose({ kind: "single", sessionId, title: getSessionTitle(session), isPane: Boolean(tab && tabSessionIds(tab).length > 1) });
+    setTabContextMenu(null);
+  };
+
+  /** The tab's close button: the whole tab, every pane of a split tab. */
+  const handleCloseTab = (sessionId: string) => {
+    const tab = findTabOf(tabsRef.current, sessionId);
+    const ids = tab ? tabSessionIds(tab) : [sessionId];
+
+    if (ids.length <= 1) {
+      handleCloseSession(sessionId);
+      return;
+    }
+
+    const focused = sessions.find((session) => session.id === tab?.focusedSessionId);
+    setPendingClose({ kind: "tab", sessionIds: ids, title: focused ? getSessionTitle(focused) : "" });
     setTabContextMenu(null);
   };
 
   const handleCloseOtherSessions = (sessionId: string) => {
-    const targetSession = sessions.find((session) => session.id === sessionId);
-    const otherSessions = sessions.filter((session) => session.id !== sessionId);
+    const ownTab = findTabOf(tabsRef.current, sessionId);
+    const otherTabs = tabsRef.current.filter((tab) => tab !== ownTab);
 
-    if (!targetSession || otherSessions.length === 0) {
+    if (!ownTab || otherTabs.length === 0) {
       setTabContextMenu(null);
       return;
     }
 
-    setPendingClose({ kind: "others", sessionId, count: otherSessions.length });
+    setPendingClose({ kind: "others", sessionId, sessionIds: otherTabs.flatMap(tabSessionIds), count: otherTabs.length });
     setTabContextMenu(null);
   };
 
@@ -796,8 +872,8 @@ function App() {
       return [closeState.sessionId];
     }
 
-    if (closeState.kind === "others") {
-      return sessions.filter((session) => session.id !== closeState.sessionId).map((session) => session.id);
+    if (closeState.kind === "others" || closeState.kind === "tab") {
+      return closeState.sessionIds;
     }
 
     return sessions.map((session) => session.id);
@@ -824,7 +900,7 @@ function App() {
       return "Close Tabs";
     }
 
-    return "Close Tab";
+    return closeState.kind === "single" && closeState.isPane ? "Close Pane" : "Close Tab";
   };
 
   const getCloseConfirmBody = (closeState: PendingCloseState) => {
@@ -843,7 +919,11 @@ function App() {
     }
 
     if (closeState.kind === "single") {
-      return `Close tab "${closeState.title}"?`;
+      return closeState.isPane ? `Close pane "${closeState.title}"? Its session ends.` : `Close tab "${closeState.title}"?`;
+    }
+
+    if (closeState.kind === "tab") {
+      return `Close tab "${closeState.title}" and all ${closeState.sessionIds.length} of its panes?`;
     }
 
     if (closeState.kind === "others") {
@@ -950,14 +1030,11 @@ function App() {
 
     if (pendingClose.kind === "single") {
       closeSessionIds([pendingClose.sessionId]);
+    } else if (pendingClose.kind === "tab") {
+      closeSessionIds(pendingClose.sessionIds);
     } else if (pendingClose.kind === "others") {
-      const targetSession = sessions.find((session) => session.id === pendingClose.sessionId);
-
-      if (targetSession) {
-        clearTranscriptRecordingActivities(sessions.filter((session) => session.id !== pendingClose.sessionId).map((session) => session.id));
-        setSessions([targetSession]);
-        setActiveSessionId(targetSession.id);
-      }
+      closeSessionIds(pendingClose.sessionIds);
+      setActiveSessionId(pendingClose.sessionId);
     } else {
       clearTranscriptRecordingActivities(sessions.map((session) => session.id));
       window.shellium?.app.confirmClose();
@@ -979,6 +1056,89 @@ function App() {
     setSessions((current) => [...current, duplicate]);
     setActiveSessionId(duplicate.id);
     setTabContextMenu(null);
+  };
+
+  /** Split Right / Split Down: the same host again, in a new pane with its own connection. */
+  const handleSplitSession = (sessionId: string, edge: PaneEdge) => {
+    setTabContextMenu(null);
+    const session = sessions.find((item) => item.id === sessionId);
+    if (session) {
+      openSessionInSplit(session.host, sessionId, edge);
+    }
+  };
+
+  /** Split with Session…: pick the host in the connect palette; it opens next to this pane. */
+  const handleSplitWithSession = (sessionId: string) => {
+    setTabContextMenu(null);
+    const surface = document.querySelector<HTMLElement>(`[data-pane-session="${CSS.escape(sessionId)}"]`);
+    // the longer side of the pane is split
+    const edge: PaneEdge = surface && surface.clientHeight > surface.clientWidth ? "bottom" : "right";
+    pendingSplitRef.current = { sessionId, edge };
+    setIsPaletteOpen(true);
+  };
+
+  const handleDetachPane = (sessionId: string) => {
+    setTabContextMenu(null);
+    setTabsState(detachPane(tabsRef.current, sessionId));
+    setActiveSessionId(sessionId);
+    refocusTerminal();
+  };
+
+  const handleTabDragStart = (sessionId: string) => {
+    const sourceTab = findTabOf(tabsRef.current, sessionId);
+    if (sourceTab) {
+      setTabDrag({ sourceTabId: sourceTab.id, returnSessionId: activeSessionIdRef.current });
+    }
+  };
+
+  const handleTabDragEnd = () => {
+    setTabDrag(null);
+    bumpTerminalFocus();
+  };
+
+  /** A pane's title row was pressed and moved: drag the pane within its tab. */
+  const handlePaneDragStart = (sessionId: string) => {
+    const tab = findTabOf(tabsRef.current, sessionId);
+    if (tab) {
+      setActiveSessionId(sessionId);
+      setTabDrag({ sourceTabId: tab.id, returnSessionId: null, paneSessionId: sessionId });
+    }
+  };
+
+  // a pane drag ends wherever the button is released (the drop itself is handled by SplitStage first)
+  useEffect(() => {
+    if (!tabDrag?.paneSessionId) {
+      return;
+    }
+    document.documentElement.classList.add("sh-dragging-pane");
+    const end = () => {
+      setTabDrag(null);
+      bumpTerminalFocus();
+    };
+    window.addEventListener("pointerup", end);
+    window.addEventListener("blur", end);
+    return () => {
+      document.documentElement.classList.remove("sh-dragging-pane");
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("blur", end);
+    };
+  }, [tabDrag, bumpTerminalFocus]);
+
+  const handlePaneDrop = (sessionId: string, targetSessionId: string, edge: PaneDropEdge) => {
+    setTabsState(edge === "center"
+      ? swapPanes(tabsRef.current, sessionId, targetSessionId)
+      : movePane(tabsRef.current, sessionId, targetSessionId, edge));
+    setActiveSessionId(sessionId);
+  };
+
+  /** A tab dropped onto a pane of the shown tab: its panes join that tab on the `edge` side. */
+  const handleTabDrop = (sourceTabId: string, targetSessionId: string, edge: PaneEdge) => {
+    const source = tabsRef.current.find((tab) => tab.id === sourceTabId);
+    const next = mergeTab(tabsRef.current, sourceTabId, targetSessionId, edge);
+    if (source && next !== tabsRef.current) {
+      setTabsState(next);
+      setActiveSessionId(source.focusedSessionId);
+    }
   };
 
   const handleRenameSession = (sessionId: string) => {
@@ -1161,25 +1321,7 @@ function App() {
   }, [activeSession, scripts.activeButtons]);
 
   const moveSessionAcrossTarget = useCallback((sourceSessionId: string, targetSessionId: string) => {
-    if (sourceSessionId === targetSessionId) {
-      return;
-    }
-
-    setSessions((current) => {
-      const sourceIndex = current.findIndex((session) => session.id === sourceSessionId);
-      const targetIndex = current.findIndex((session) => session.id === targetSessionId);
-
-      if (sourceIndex < 0 || targetIndex < 0) {
-        return current;
-      }
-
-      const reorderedSessions = [...current];
-      const [movedSession] = reorderedSessions.splice(sourceIndex, 1);
-      const nextTargetIndex = reorderedSessions.findIndex((session) => session.id === targetSessionId);
-      const insertIndex = sourceIndex < targetIndex ? nextTargetIndex + 1 : nextTargetIndex;
-      reorderedSessions.splice(insertIndex, 0, movedSession);
-      return reorderedSessions;
-    });
+    setTabsState(moveTab(tabsRef.current, sourceSessionId, targetSessionId));
   }, []);
 
   const getActiveTerminalPane = () => activeSessionId ? terminalPaneRefs.current.get(activeSessionId) ?? null : null;
@@ -1237,6 +1379,15 @@ function App() {
     }, 0);
   };
 
+  const sessionById = new Map(sessions.map((session) => [session.id, session]));
+  const tabItems = tabs.flatMap((tab) => {
+    const panes = tabSessionIds(tab).map((id) => sessionById.get(id)).filter((session): session is Session => Boolean(session));
+    const focused = sessionById.get(tab.focusedSessionId) ?? panes[0];
+    return focused ? [{ id: tab.id, panes, focused }] : [];
+  });
+  const contextTab = tabContextMenu ? findTabOf(tabs, tabContextMenu.sessionId) : null;
+  const contextPaneCount = contextTab ? tabSessionIds(contextTab).length : 1;
+
   const handleTabContextMenu = (event: ReactMouseEvent<HTMLDivElement>, sessionId: string) => {
     event.preventDefault();
     event.stopPropagation();
@@ -1248,20 +1399,38 @@ function App() {
     });
   };
 
+  // A click in another pane of the split tab focuses it. On the window in the capture phase: the
+  // terminal's own pointer handlers (document, capture) stop the event before React sees it.
+  useEffect(() => {
+    if (!splitLayout) {
+      return;
+    }
+    const handlePointerDown = (event: PointerEvent) => {
+      const surface = event.target instanceof Element ? event.target.closest<HTMLElement>("[data-pane-session]") : null;
+      const sessionId = surface?.dataset.paneSession;
+      if (sessionId && sessionId !== activeSessionIdRef.current && visibleSessionIdsRef.current.includes(sessionId)) {
+        setActiveSessionId(sessionId);
+      }
+    };
+    window.addEventListener("pointerdown", handlePointerDown, true);
+    return () => window.removeEventListener("pointerdown", handlePointerDown, true);
+  }, [splitLayout]);
+
   const tabsAsStrip = options.terminalTabPosition === "top";
   const sessionTabsNode = (
     <SessionTabs
-      sessions={sessions}
+      tabs={tabItems}
       activeSessionId={activeSessionId}
       isHomeActive={activeSessionId === null && stageView === "home"}
       optionsTab={isOptionsOpen ? { active: isOptionsActive, dirty: isOptionsDirty } : null}
       onSelectOptions={openOptionsPanel}
       onCloseOptions={() => { void closeOptionsPanel(); }}
       onSelect={handleSelectTab}
-      onClose={handleCloseSession}
+      onClose={handleCloseTab}
       onContextMenu={handleTabContextMenu}
       onMove={moveSessionAcrossTarget}
-      onDragEnd={bumpTerminalFocus}
+      onDragStart={handleTabDragStart}
+      onDragEnd={handleTabDragEnd}
       position={options.terminalTabPosition}
       size={options.terminalTabSize}
       onResize={(terminalTabSize) => setOptions((current) => ({ ...current, terminalTabSize }))}
@@ -1317,7 +1486,14 @@ function App() {
         <TabContextMenu
           menu={tabContextMenu}
           session={contextSession}
-          sessionCount={sessions.length}
+          tabCount={tabs.length}
+          paneCount={contextPaneCount}
+          maxPanes={MAX_PANES}
+          onSplitRight={() => handleSplitSession(tabContextMenu.sessionId, "right")}
+          onSplitDown={() => handleSplitSession(tabContextMenu.sessionId, "bottom")}
+          onSplitWithSession={() => handleSplitWithSession(tabContextMenu.sessionId)}
+          onMoveToNewTab={() => handleDetachPane(tabContextMenu.sessionId)}
+          onCloseTab={() => handleCloseTab(tabContextMenu.sessionId)}
           onRename={() => handleRenameSession(tabContextMenu.sessionId)}
           onDuplicate={() => handleDuplicateSession(tabContextMenu.sessionId)}
           onReconnect={() => handleReconnectSession(tabContextMenu.sessionId)}
@@ -1382,13 +1558,26 @@ function App() {
                   onOverflowOpenChange={setIsScriptButtonOverflowMenuOpen}
                 />
               )}
-              <main className="sh-main-stage">
-                {sessions.map((session) => (
+              <main className={"sh-main-stage" + (splitLayout ? " sh-main-stage-split" : "")} ref={stageRef}>
+                {sessions.map((session) => {
+                  const paneRect = paneRects.get(session.id);
+                  return (
                   <section
                     key={session.id}
-                    className="sh-surface"
-                    hidden={session.id !== activeSessionId}
+                    className={"sh-surface" + (paneRect ? " sh-surface-pane" : "") + (paneRect && session.id === activeSessionId ? " sh-surface-focused" : "")}
+                    data-pane-session={session.id}
+                    hidden={!visibleSessionIds.includes(session.id)}
+                    style={paneRect ? paneStyle(paneRect) : undefined}
                   >
+                    {paneRect && (
+                      <PaneHeader
+                        session={session}
+                        isFocused={session.id === activeSessionId}
+                        onClose={handleCloseSession}
+                        onContextMenu={handleTabContextMenu}
+                        onDragStart={handlePaneDragStart}
+                      />
+                    )}
                     <TerminalPane
                       ref={(pane) => {
                         if (pane) {
@@ -1425,7 +1614,20 @@ function App() {
                       onPasteDialogBoundsChange={(bounds) => setOptions((current) => ({ ...current, pasteDialogBounds: bounds }))}
                     />
                   </section>
-                ))}
+                  );
+                })}
+                <SplitStage
+                  stageRef={stageRef}
+                  tabs={tabs}
+                  activeTab={activeTab}
+                  layout={splitLayout}
+                  onRatioChange={(splitId, ratio) => setTabsState(setSplitRatio(tabsRef.current, splitId, ratio))}
+                  onResizeEnd={bumpTerminalFocus}
+                  drag={tabDrag}
+                  onShowSession={setActiveSessionId}
+                  onDrop={handleTabDrop}
+                  onPaneDrop={handlePaneDrop}
+                />
                 {isOptionsOpen && (
                   <OptionsView
                     hidden={!isOptionsActive}
@@ -1518,7 +1720,10 @@ function App() {
       {isPaletteOpen && canUseSecureData && (
         <ConnectionPalette
           key={storageRevision}
-          onClose={() => setIsPaletteOpen(false)}
+          onClose={() => {
+            pendingSplitRef.current = null;
+            setIsPaletteOpen(false);
+          }}
           onConnect={handleConnect}
           liveHostIds={liveHostIds}
         />

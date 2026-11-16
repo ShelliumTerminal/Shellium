@@ -6,8 +6,12 @@ export type VaultHostSearchResult = {
 };
 
 export type PendingCloseState =
-  | { kind: "single"; sessionId: string; title: string }
-  | { kind: "others"; sessionId: string; count: number }
+  /** One session: a tab of its own, or one pane of a split tab (`isPane`). */
+  | { kind: "single"; sessionId: string; title: string; isPane?: boolean }
+  /** A split tab with all its panes. */
+  | { kind: "tab"; sessionIds: string[]; title: string }
+  /** Every tab except the one holding `sessionId`. */
+  | { kind: "others"; sessionId: string; sessionIds: string[]; count: number }
   | { kind: "app" };
 
 export function getSessionTitle(session: Session) {
