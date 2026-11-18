@@ -47,7 +47,7 @@ import { prepareScriptForTerminal } from "./app/scriptButtonModel";
 import type { ScriptButton } from "./app/scriptButtonModel";
 import { collectVaultHosts, getSessionTitle } from "./app/sessionModel";
 import type { PendingCloseState, VaultHostSearchResult } from "./app/sessionModel";
-import { MAX_PANES, detachPane, findTabOf, layoutTree, mergeTab, movePane, moveTab, paneStyle, reconcileTabs, setSplitRatio, setTabFocus, splitPane, swapPanes, tabSessionIds } from "./app/splitLayout";
+import { MAX_PANES, detachPane, findTabOf, layoutTree, mergeTab, movePane, moveTab, paneStyle, reconcileTabs, replacePane, setSplitRatio, setTabFocus, splitPane, swapPanes, tabSessionIds } from "./app/splitLayout";
 import type { PaneEdge, SessionTab } from "./app/splitLayout";
 import SplitStage, { PaneHeader } from "./components/workspace/SplitStage";
 import { isQuickConnectHost } from "./app/quickConnect";
@@ -510,6 +510,14 @@ function App() {
     protectOnConnect: options.protectNewSessions,
   });
 
+  /**
+   * A session that is over and holds nothing: shell closed or disconnected, not reconnecting, not
+   * protected (its tmux / screen still runs on the server), no SFTP transfer. Closes without asking;
+   * Connect may replace it.
+   */
+  const isClosedSession = (session: Session) =>
+    session.status === "disconnected" && !session.reconnecting && !session.protection && !sftpTransferRegistry[session.id]?.active;
+
   /** A new session (own SSH connection) for `host`, as a new pane next to `targetId`. */
   const openSessionInSplit = (host: Host, targetId: string, edge: PaneEdge) => {
     const tab = findTabOf(tabsRef.current, targetId);
@@ -536,18 +544,32 @@ function App() {
     }
 
     if (!options.openDuplicateSessions) {
-      const existingSession = sessions.find((session) => session.host.id === host.id);
+      // the open one, else a closed one of the same host (that one reconnects)
+      const sameHost = sessions.filter((session) => session.host.id === host.id);
+      const existingSession = sameHost.find((session) => !isClosedSession(session)) ?? sameHost[0];
 
       if (existingSession) {
-        setActiveSessionId(existingSession.id);
         setIsPaletteOpen(false);
+        if (isClosedSession(existingSession)) {
+          reconnectSession(existingSession.id);
+        } else {
+          setActiveSessionId(existingSession.id);
+        }
         return;
       }
     }
 
     const session = createSession(host);
+    const active = sessions.find((item) => item.id === activeSessionId);
 
-    setSessions((current) => [...current, session]);
+    if (options.replaceClosedTab && active && isClosedSession(active)) {
+      // the new session takes the closed one's place (its tab, or its pane in a split tab)
+      clearTranscriptRecordingActivities([active.id]);
+      setSessions((current) => [...current.filter((item) => item.id !== active.id), session]);
+      setTabsState(replacePane(tabsRef.current, active.id, session.id));
+    } else {
+      setSessions((current) => [...current, session]);
+    }
     setActiveSessionId(session.id);
     setIsPaletteOpen(false);
   };
@@ -834,9 +856,16 @@ function App() {
       return;
     }
 
+    setTabContextMenu(null);
+    if (isClosedSession(session)) {
+      // nothing left to lose (exit typed, connection gone): no question
+      closeSessionIds([sessionId]);
+      refocusTerminal();
+      return;
+    }
+
     const tab = findTabOf(tabsRef.current, sessionId);
     setPendingClose({ kind: "single", sessionId, title: getSessionTitle(session), isPane: Boolean(tab && tabSessionIds(tab).length > 1) });
-    setTabContextMenu(null);
   };
 
   /** The tab's close button: the whole tab, every pane of a split tab. */
@@ -849,9 +878,15 @@ function App() {
       return;
     }
 
+    setTabContextMenu(null);
+    if (ids.every((id) => sessions.some((session) => session.id === id && isClosedSession(session)))) {
+      closeSessionIds(ids);
+      refocusTerminal();
+      return;
+    }
+
     const focused = sessions.find((session) => session.id === tab?.focusedSessionId);
     setPendingClose({ kind: "tab", sessionIds: ids, title: focused ? getSessionTitle(focused) : "" });
-    setTabContextMenu(null);
   };
 
   const handleCloseOtherSessions = (sessionId: string) => {

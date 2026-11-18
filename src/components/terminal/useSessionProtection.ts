@@ -293,8 +293,12 @@ export function useSessionProtection({ sessionId, protection, protectOnConnect, 
     terminalRef.current?.focus();
   }, [terminalRef]);
 
+  /** A reconnect of this tab goes back into a tmux / screen session on the server. */
+  const isProtected = useCallback(() => protectionRef.current !== null, []);
+
   return {
     bar,
+    isProtected,
     connectProtection,
     handleExit,
     protect,

@@ -21,6 +21,8 @@ export type TerminalSelectionStyle = "inverse" | "highlight";
 
 export type AppOptions = {
   openDuplicateSessions: boolean;
+  /** Connect on a tab whose session is closed opens the new session in that tab's place. */
+  replaceClosedTab: boolean;
   /** New tabs start protected (tmux / screen on the server); switched on for critical periods. */
   protectNewSessions: boolean;
   uiScale: number;
@@ -113,6 +115,7 @@ const defaultTerminalAppearance: TerminalAppearance = {
 
 export const defaultOptions: AppOptions = {
   openDuplicateSessions: false,
+  replaceClosedTab: true,
   protectNewSessions: false,
   uiScale: 1,
   uiFontSize: 13,
@@ -266,6 +269,7 @@ export function normalizeAppOptions(value: unknown): AppOptions {
   return {
     ...parsedOptions,
     openDuplicateSessions: typeof parsedOptions.openDuplicateSessions === "boolean" ? parsedOptions.openDuplicateSessions : defaultOptions.openDuplicateSessions,
+    replaceClosedTab: typeof parsedOptions.replaceClosedTab === "boolean" ? parsedOptions.replaceClosedTab : defaultOptions.replaceClosedTab,
     protectNewSessions: typeof parsedOptions.protectNewSessions === "boolean" ? parsedOptions.protectNewSessions : defaultOptions.protectNewSessions,
     uiScale: normalizeUiScale(parsedOptions.uiScale),
     uiFontSize: normalizeUiFontSize(parsedOptions.uiFontSize),

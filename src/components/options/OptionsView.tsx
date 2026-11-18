@@ -53,7 +53,7 @@ const optionsCategories: Array<{ value: OptionsCategory; label: string; descript
  * custom color schemes, data / recording folders, the app password) is never reset.
  */
 const resettableOptions: Record<OptionsCategory, Array<keyof AppOptions>> = {
-  general: ["openDuplicateSessions", "sftpAutoResume", "startupAnimation"],
+  general: ["openDuplicateSessions", "replaceClosedTab","sftpAutoResume", "startupAnimation"],
   appearance: ["theme", "uiScale", "uiFontSize"],
   terminal: ["terminalAppearance", "terminalSchemeId", "terminalScrollback", "terminalScrollOnOutput", "terminalSelectionStyle", "terminalWordDelimiters", "terminalHighlights", "terminalTabPosition", "terminalTabSize", "antiIdle", "keepaliveCountMax"],
   environments: [],
@@ -283,6 +283,26 @@ export default function OptionsView({
                         setDraft((current) => ({
                           ...current,
                           openDuplicateSessions: event.target.checked,
+                        }))
+                      }
+                    />
+                  </span>
+                </label>
+                <label className="op-row">
+                  <span className="op-row-text">
+                    <strong>Replace a closed tab</strong>
+                    <span>When the tab you are on has lost its session (shell closed, disconnected), Connect opens the new session in its place instead of a new tab.</span>
+                  </span>
+                  <span className="op-row-control">
+                    <input
+                      className="sh-switch"
+                      type="checkbox"
+                      role="switch"
+                      checked={draft.replaceClosedTab}
+                      onChange={(event) =>
+                        setDraft((current) => ({
+                          ...current,
+                          replaceClosedTab: event.target.checked,
                         }))
                       }
                     />

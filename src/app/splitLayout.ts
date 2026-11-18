@@ -308,6 +308,22 @@ export function movePane(tabs: SessionTab[], sessionId: string, targetId: string
     .filter((tab): tab is SessionTab => tab !== null);
 }
 
+/** Puts the session `nextId` where the pane `sessionId` is (same tab, same place) and focuses it. */
+export function replacePane(tabs: SessionTab[], sessionId: string, nextId: string): SessionTab[] {
+  const replace = (node: PaneNode): PaneNode => {
+    if (node.kind === "pane") {
+      return node.sessionId === sessionId ? { kind: "pane", sessionId: nextId } : node;
+    }
+    const first = replace(node.first);
+    const second = replace(node.second);
+    return first === node.first && second === node.second ? node : { ...node, first, second };
+  };
+  return tabs.map((tab) => {
+    const root = replace(tab.root);
+    return root === tab.root ? tab : { ...tab, root, focusedSessionId: nextId };
+  });
+}
+
 /** Swaps two panes (a pane dropped onto the middle of another); the layout stays as it is. */
 export function swapPanes(tabs: SessionTab[], first: string, second: string): SessionTab[] {
   if (first === second) {

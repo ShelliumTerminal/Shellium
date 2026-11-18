@@ -192,6 +192,9 @@ function countContentLines(text: string) {
   return normalizePasteTextForDialog(text).replace(/\n+$/, "").split("\n").length;
 }
 
+/** Written (dim) under a session that ended; Enter in that terminal connects again. */
+const RECONNECT_HINT = "\x1b[2mPress Enter to reconnect.\x1b[22m";
+
 const BRACKETED_PASTE_START = "\x1b[200~";
 const BRACKETED_PASTE_END = "\x1b[201~";
 
@@ -212,6 +215,8 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
   // the connection effect must not run again when these change
   const protectionApiRef = useRef(protection);
   protectionApiRef.current = protection;
+  const sessionStateRef = useRef({ status: session.status, reconnecting: Boolean(session.reconnecting) });
+  sessionStateRef.current = { status: session.status, reconnecting: Boolean(session.reconnecting) };
   const fitAddonRef = useRef<FitAddon | null>(null);
   const lastDimensionsRef = useRef({ cols: 0, rows: 0 });
   const syncTerminalSizeRef = useRef<((force?: boolean) => void) | null>(null);
@@ -356,6 +361,7 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
     markTranscriptRecordingStopped();
     setIsSftpOpen(false);
     terminalRef.current?.writeln("\r\n[Disconnected]");
+    terminalRef.current?.writeln(RECONNECT_HINT);
     onStatusChange(session.id, "disconnected");
     if (session.protection) {
       protection.showNotice("info", "Disconnected. The protected session keeps running on the server; Reconnect (tab menu) goes back into it.", 12000);
@@ -1029,8 +1035,25 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       return true;
     });
 
+    // A tab whose session is over: Enter connects again in the same terminal (scrollback stays), a
+    // protected one goes back into its tmux / screen session. Other keys go nowhere.
     const dataDisposable = terminal.onData((data) => {
-      writeTerminalInput(data);
+      const state = sessionStateRef.current;
+      if (state.status !== "disconnected" || state.reconnecting) {
+        writeTerminalInput(data);
+        return;
+      }
+      if (data !== "\r") {
+        return;
+      }
+      // a second Enter before the next render must not connect twice
+      sessionStateRef.current = { ...state, status: "connecting" };
+      if (protectionApiRef.current.isProtected()) {
+        protectionApiRef.current.reconnectNow();
+      } else {
+        terminal.writeln("\r\n[Reconnecting]");
+        reconnectRef.current?.();
+      }
     });
 
     // While text is being selected with the mouse the view stands still (like SecureCRT): output that
@@ -1066,7 +1089,9 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
         markTranscriptRecordingStopped();
         terminal.writeln(`\r\n[${payload.reason}]`);
         onStatusChange(session.id, "disconnected");
-        protectionApiRef.current.handleExit(payload);
+        if (!protectionApiRef.current.handleExit(payload)) {
+          terminal.writeln(RECONNECT_HINT);
+        }
       }
     });
 
@@ -1865,21 +1890,19 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       onStatusChange(session.id, "connected");
     };
     // a protected tab that lost its connection reconnects here, keeping this terminal and its scrollback
-    reconnectRef.current = () => {
+    const connectOrReport = () => {
       connect().catch((error: unknown) => {
         const message = error instanceof Error ? error.message : "SSH connection failed";
         terminal.writeln(`\r\n${message}`);
+        if (!protectionApiRef.current.isProtected()) {   // a protected tab shows its own strip
+          terminal.writeln(RECONNECT_HINT);
+        }
         onStatusChange(session.id, "disconnected");
       });
     };
+    reconnectRef.current = connectOrReport;
 
-    const connectFrame = window.requestAnimationFrame(() => {
-      connect().catch((error: unknown) => {
-        const message = error instanceof Error ? error.message : "SSH connection failed";
-        terminal.writeln(`\r\n${message}`);
-        onStatusChange(session.id, "disconnected");
-      });
-    });
+    const connectFrame = window.requestAnimationFrame(connectOrReport);
     let resizeFrame: number | null = null;
 
     const syncTerminalSize = (force = false) => {

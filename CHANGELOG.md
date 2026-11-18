@@ -7,6 +7,19 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 
 ## [Unreleased]
 
+### Added
+- Enter in a tab whose session ended (exit typed, disconnected, connection failed) connects again
+  in the same terminal, keeping its scrollback; the terminal says "Press Enter to reconnect". A
+  protected tab goes back into its tmux / screen session.
+- Options › General › Replace a closed tab (on by default): Connect on a tab whose session has
+  ended opens the new session in that tab's place (or that pane's place in a split tab) instead of
+  a new tab.
+
+### Changed
+- Closing a tab whose session has ended no longer asks (unless it is protected or a transfer runs).
+- With Open duplicate sessions off, Connect to a host whose open tab has ended reconnects that tab
+  instead of only switching to it.
+
 ## [2.6.1] - 2026-11-16
 
 ### Changed
