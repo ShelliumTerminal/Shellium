@@ -7,6 +7,8 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-11-18
+
 ### Added
 - Enter in a tab whose session ended (exit typed, disconnected, connection failed) connects again
   in the same terminal, keeping its scrollback; the terminal says "Press Enter to reconnect". A
