@@ -4,6 +4,23 @@ An SSH and SFTP desktop client for people who work on many servers: tabs, saved 
 environment (Production, Test, ...), script buttons, and a two-pane SFTP browser. Windows, macOS and
 Linux (Electron).
 
+**Website and downloads: [shellium.app](https://shellium.app)**
+
+## Bug reports and feedback
+
+Write to **[support@shellium.app](mailto:support@shellium.app)**:
+
+- **Found a bug?** [Report it by mail](mailto:support@shellium.app?subject=Shellium%20bug%20report).
+  Say what happened, what you expected and how to make it happen again, plus the version from
+  Help › About. Please leave out host names, user names and passwords.
+- **Ideas, wishes, opinions?** [Send feedback](mailto:support@shellium.app?subject=Shellium%20feedback):
+  they are just as welcome.
+- From Shellium 2.8 on, **Help › Report a Bug** and **Help › Send Feedback** open a new mail with the
+  version filled in.
+- Security issues: please report them privately, see [SECURITY.md](SECURITY.md).
+
+Mails are read and answered on a best-effort basis (see the disclaimer below).
+
 > **Disclaimer.** Shellium is a personal project, shared in the hope that it is useful. It is
 > provided **"as is", without warranty of any kind**, and without support. The authors accept no
 > liability for any damage, data loss or downtime arising from its use. You are responsible for the
