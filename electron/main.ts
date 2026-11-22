@@ -1,6 +1,7 @@
 import type { BrowserWindow as BrowserWindowType } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
+import os from 'node:os'
 import path from 'node:path'
 import { registerAppSettingsHandlers } from './appSettings'
 import { migrateConnectionSensitiveData, registerConnectionHandlers, resetConnectionDatabase } from './connectionsDb'
@@ -14,6 +15,7 @@ import { registerSftpJobHandlers } from './sftpJobs'
 const require = createRequire(import.meta.url)
 const { app, BrowserWindow, Menu, clipboard, ipcMain, shell } = require('electron') as typeof import('electron')
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const FEEDBACK_ADDRESS = 'support@shellium.app'
 
 process.env.APP_ROOT = path.join(__dirname, '..')
 
@@ -83,6 +85,23 @@ function registerLinkAndAttentionHandlers() {
       throw new Error('Only http and https links can be opened.')
     }
     await shell.openExternal(url)
+  })
+  // Help > Report a Bug / Send Feedback: a new message in the default mail app. The address and the
+  // text are fixed here, so the renderer can never open an arbitrary mailto: link.
+  ipcMain.handle('app:sendFeedback', async (_event, kind: unknown) => {
+    const isBug = kind === 'bug'
+    const subject = isBug ? `Shellium ${app.getVersion()}: bug report` : `Shellium ${app.getVersion()}: feedback`
+    const info = `Shellium ${app.getVersion()} · ${process.platform} ${os.release()} ${process.arch} · Electron ${process.versions.electron}`
+    const body = isBug
+      ? `What happened:\n\n\nWhat you expected:\n\n\nSteps to reproduce:\n1. \n\n(Please leave out host names, user names and passwords.)\n\n${info}\n`
+      : `\n\n${info}\n`
+    const url = `mailto:${FEEDBACK_ADDRESS}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    try {
+      await shell.openExternal(url)
+      return true
+    } catch {
+      return false
+    }
   })
   // A bell in the terminal while Shellium is in the background: the taskbar button flashes until
   // the window is focused again (macOS: the Dock icon bounces once).

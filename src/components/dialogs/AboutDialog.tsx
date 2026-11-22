@@ -3,6 +3,7 @@ import { Check, Copy, X } from "lucide-react";
 import BrandMark, { BrandWordmark } from "../common/BrandMark";
 import { clampCloseConfirmFrame, createDefaultCloseConfirmFrame, frameStyle, useDialogFrame } from "../../app/dialogFrame";
 import { useEscapeLayer } from "../../app/escapeLayers";
+import { SUPPORT_ADDRESS } from "../../app/supportMail";
 
 /** Help > About Shellium: the version (from package.json at build time) and the runtime under it. */
 export default function AboutDialog({ onClose }: { onClose(): void }) {
@@ -16,6 +17,7 @@ export default function AboutDialog({ onClose }: { onClose(): void }) {
     ["Chromium", versions?.chrome ?? "-"],
     ["Node.js", versions?.node ?? "-"],
     ["Platform", `${window.shellium?.app.platform ?? "-"} ${versions?.arch ?? ""}`.trim()],
+    ["Support", SUPPORT_ADDRESS],
   ];
 
   const copyInfo = () => {

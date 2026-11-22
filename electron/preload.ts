@@ -28,6 +28,10 @@ contextBridge.exposeInMainWorld('shellium', {
     openExternal(url: string) {
       return ipcRenderer.invoke('app:openExternal', url)
     },
+    /** Opens a new mail to support (bug report or feedback); false when no mail app could be opened. */
+    sendFeedback(kind: 'bug' | 'feedback') {
+      return ipcRenderer.invoke('app:sendFeedback', kind)
+    },
     /** Flashes the taskbar button when the window is in the background. */
     requestAttention() {
       ipcRenderer.send('app:requestAttention')

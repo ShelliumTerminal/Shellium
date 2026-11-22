@@ -23,6 +23,8 @@ export type AppTitleBarActions = {
   toggleTheme(): void;
   lock(): void;
   about(): void;
+  reportBug(): void;
+  sendFeedback(): void;
   /** Protect the active tab (tmux / screen on the server), or switch that off. */
   toggleProtection(): void;
   toggleProtectNewSessions(): void;
@@ -142,6 +144,9 @@ export default function AppTitleBar({
             </button>
             {openMenu === "help" && (
               <div className="sh-menu-popover sh-menu-popover-right">
+                <button type="button" onClick={() => run(actions.reportBug)}>Report a Bug...</button>
+                <button type="button" onClick={() => run(actions.sendFeedback)}>Send Feedback...</button>
+                <div className="sh-menu-separator" aria-hidden="true" />
                 <button type="button" onClick={() => run(actions.about)}>About Shellium</button>
               </div>
             )}

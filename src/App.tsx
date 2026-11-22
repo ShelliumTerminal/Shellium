@@ -56,6 +56,7 @@ import { useScriptButtonLibrary } from "./app/useScriptButtonLibrary";
 import { useSecurity } from "./app/useSecurity";
 import { useSftpAutoResume } from "./app/useSftpAutoResume";
 import { askConfirm } from "./app/confirmDialog";
+import { openSupportMail } from "./app/supportMail";
 import { setEscapeLayersEmptyHandler, useEscapeLayer } from "./app/escapeLayers";
 import { isConnectShortcut } from "./app/platform";
 
@@ -1510,6 +1511,8 @@ function App() {
           toggleTheme: () => setOptions((current) => ({ ...current, theme: current.theme === "light" ? "dark" : "light" })),
           lock: security.lock,
           about: () => setIsAboutOpen(true),
+          reportBug: () => void openSupportMail("bug"),
+          sendFeedback: () => void openSupportMail("feedback"),
           toggleProtection: () => activeSessionId && handleToggleProtection(activeSessionId),
           toggleProtectNewSessions: () => setOptions((current) => ({ ...current, protectNewSessions: !current.protectNewSessions })),
         }}

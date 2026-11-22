@@ -349,6 +349,8 @@ declare global {
         onCloseRequest(callback: () => void): () => void;
         confirmClose(): Promise<void>;
         openExternal(url: string): Promise<void>;
+        /** Opens a new mail to support@shellium.app; false when no mail app could be opened. */
+        sendFeedback(kind: "bug" | "feedback"): Promise<boolean>;
         requestAttention(): void;
         focusWindow(): void;
       };
