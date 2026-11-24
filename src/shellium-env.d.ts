@@ -421,6 +421,7 @@ declare global {
         connect(request: TerminalConnectRequest): Promise<void>;
         info(sessionId: string): Promise<{
           term: string;
+          encoding?: string;
           connectedAt?: number;
           bytesIn: number;
           bytesOut: number;

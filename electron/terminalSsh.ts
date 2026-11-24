@@ -7,7 +7,6 @@ import { existsSync, readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
-import { StringDecoder } from "node:string_decoder";
 import { getSettingsPath } from "./storageConfig";
 import { listLocalPlaces } from "./localPlaces";
 import { askUser, type ConnectionPromptTarget } from "./connectionPrompts";
@@ -15,6 +14,9 @@ import { withConnectionDatabase } from "./connectionsDb";
 import { checkHostKey, describeHostKey, touchHostKey, trustHostKey } from "./knownHosts";
 import type { HostKeyCheck, HostKeyInfo } from "./knownHosts";
 import { normalizeConnectionKeepalive } from "../src/components/common/antiIdleModel";
+import { DEFAULT_TERMINAL_ENCODING, DEFAULT_TERMINAL_TYPE, normalizeHostTerminal, terminalEncodingLabel } from "../src/components/common/hostTerminalModel";
+import type { HostTerminalSettings, TerminalEncoding } from "../src/components/common/hostTerminalModel";
+import { createTerminalDecoder, encodeForTerminal } from "./terminalEncoding";
 import type { ConnectionKeepalive } from "../src/components/common/antiIdleModel";
 import {
   PROBE_COMMAND, PROTECT_OFF_MARKER, USER_MARKER, attachHint, createMarkerCarry, execCommand, isValidProtection, parseProbe, parseState, protectionName, runExec,
@@ -47,6 +49,8 @@ type Host = {
   x11?: HostX11Options;
   /** Allow SHA-1 key exchange, ssh-rsa/ssh-dss host keys, CBC ciphers (old servers only). */
   legacyAlgorithms?: boolean;
+  /** Own character set / TERM / Backspace (connect dialog > Terminal). */
+  terminal?: HostTerminalSettings;
 };
 
 type TerminalConnectRequest = {
@@ -114,7 +118,7 @@ type SshStream = {
   on(event: "exit", listener: (code: number | null, signal?: string) => void): SshStream;
   on(event: "close" | "end", listener: () => void): SshStream;
   on(event: "error", listener: (error: Error) => void): SshStream;
-  write(data: string): void;
+  write(data: string | Buffer): void;
   setWindow(rows: number, cols: number, height: number, width: number): void;
   end(): void;
 };
@@ -214,6 +218,8 @@ type TerminalSession = {
   stream?: SshStream;
   webContents: WebContents;
   pendingWrites: string[];
+  /** The host's character set: the shell's bytes are decoded with it and typed text encoded. */
+  encoding: TerminalEncoding;
   pendingResize?: { cols: number; rows: number };
   exitSent: boolean;
   /** Last data in either direction, for the anti-idle string. */
@@ -240,6 +246,8 @@ type TerminalSession = {
 /** Connection details for the status bar; read by the window once a second (terminal:info). */
 export type TerminalSessionInfo = {
   term: string;
+  /** Character set label for the status bar ("UTF-8", "ISO-8859-9"...). */
+  encoding: string;
   /** When the shell opened. */
   connectedAt?: number;
   bytesIn: number;
@@ -255,7 +263,6 @@ export type TerminalSessionInfo = {
   hostKeyFingerprint?: string;
 };
 
-const TERMINAL_TYPE = "xterm-256color";
 const LATENCY_INTERVAL_MS = 10_000;
 /** A protected tab whose ping waits this long counts the connection as lost (checked at each ping). */
 const PROTECTED_STALL_MS = 20_000;
@@ -688,13 +695,17 @@ export function registerTerminalHandlers() {
     // session down - the retry reuses the same session id.
     let awaitingLegacyDecision = false;
     const keepalive = normalizeConnectionKeepalive(request.keepalive);
+    const hostTerminal = normalizeHostTerminal(request.host.terminal);
+    const termType = hostTerminal?.termType ?? DEFAULT_TERMINAL_TYPE;
+    const encoding = hostTerminal?.encoding ?? DEFAULT_TERMINAL_ENCODING;
     const terminalSession: TerminalSession = {
       client,
       webContents: sender,
       pendingWrites: [],
+      encoding,
       exitSent: false,
       lastActivityAt: Date.now(),
-      info: { term: TERMINAL_TYPE, bytesIn: 0, bytesOut: 0 },
+      info: { term: termType, encoding: terminalEncodingLabel(encoding), bytesIn: 0, bytesOut: 0 },
     };
     sessions.set(request.sessionId, terminalSession);
 
@@ -766,7 +777,7 @@ export function registerTerminalHandlers() {
           startLatencyPings(request.sessionId, terminalSession);
           // A multi-byte UTF-8 character (ğ, ş, box drawing, CJK) split across two packets must not turn
           // into two U+FFFD: the decoder keeps the incomplete bytes until the rest arrives.
-          const decoder = new StringDecoder("utf8");
+          const decoder = createTerminalDecoder(terminalSession.encoding);
           // Our protection markers (OSC 7337) split across packets are held back until they are whole.
           const markerCarry = createMarkerCarry((text) => handleText(text));
           const handleText = (incoming: string) => {
@@ -828,7 +839,7 @@ export function registerTerminalHandlers() {
         const openShell = (enableX11: boolean) => {
           client.shell(
             {
-              term: TERMINAL_TYPE,
+              term: termType,
               cols: request.cols,
               rows: request.rows,
               ...x11Request(enableX11),
@@ -895,7 +906,7 @@ export function registerTerminalHandlers() {
           }
           client.exec(
             execCommand(open),
-            { pty: { term: TERMINAL_TYPE, cols: request.cols, rows: request.rows }, ...x11Request(enableX11) },
+            { pty: { term: termType, cols: request.cols, rows: request.rows }, ...x11Request(enableX11) },
             (error, stream) => {
               if (!isCurrentSession(request.sessionId, terminalSession)) {
                 stream?.end();
@@ -1378,11 +1389,12 @@ function writeToSession(sessionId: string, data: string) {
   }
 
   appendTerminalRecording(sessionId, "input", data);
-  session.info.bytesOut += Buffer.byteLength(data, "utf8");
   session.lastActivityAt = Date.now();
 
   if (session.stream) {
-    session.stream.write(data);
+    const encoded = encodeForTerminal(data, session.encoding);
+    session.info.bytesOut += Buffer.byteLength(encoded);
+    session.stream.write(encoded);
     return;
   }
 
@@ -1403,7 +1415,7 @@ function startAntiIdle(session: TerminalSession, keepalive: ConnectionKeepalive)
       return;
     }
     session.lastActivityAt = Date.now();
-    session.stream.write(antiIdle.text);
+    session.stream.write(encodeForTerminal(antiIdle.text, session.encoding));
   }, 1000);
 }
 
@@ -1838,7 +1850,9 @@ function flushPendingWrites(session: TerminalSession) {
   }
 
   for (const data of session.pendingWrites) {
-    session.stream.write(data);
+    const encoded = encodeForTerminal(data, session.encoding);
+    session.info.bytesOut += Buffer.byteLength(encoded);
+    session.stream.write(encoded);
   }
 
   session.pendingWrites = [];

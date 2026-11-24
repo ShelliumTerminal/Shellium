@@ -161,7 +161,7 @@ export default function StatusBar({ activeSession, sessions, notice, onOpenSftp,
       )}
       {activeSession && view && (
         <>
-          <span className="sh-status-item sh-status-p3">{info?.term ?? "xterm-256color"} · UTF-8</span>
+          <span className="sh-status-item sh-status-p3">{info?.term ?? "xterm-256color"} · {info?.encoding ?? "UTF-8"}</span>
           <span className="sh-status-item sh-status-p2" title="Terminal size: columns × rows">{view.cols}×{view.rows}</span>
           <span className="sh-status-item sh-status-p2 sh-status-cursor" title="Cursor: line and column on the screen">Ln {view.cursorRow}, Col {view.cursorCol}</span>
         </>

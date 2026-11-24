@@ -1086,7 +1086,7 @@ function mergeFolders(
           ...(has("description") ? { description: host.description } : {}),
           ...(has("tags") ? { tags: host.tags } : {}),
           ...(has("environment") ? { environmentId: host.environmentId } : {}),
-          ...(has("options") ? { x11: host.x11, legacyAlgorithms: host.legacyAlgorithms, antiIdle: host.antiIdle, terminalSchemeId: host.terminalSchemeId } : {}),
+          ...(has("options") ? { x11: host.x11, legacyAlgorithms: host.legacyAlgorithms, antiIdle: host.antiIdle, terminalSchemeId: host.terminalSchemeId, terminal: host.terminal } : {}),
           ...(has("password") && host.password ? { password: host.password } : {}),
         });
         counts.hostsUpdated += 1;
@@ -1239,7 +1239,8 @@ function hostDifferences(existing: Host, incoming: Host, envMap: Map<string, str
   if (has("environment") && (existing.environmentId ?? "") !== (incomingEnv ?? "")) differences.push("environment");
   if (has("options") && (!!existing.legacyAlgorithms !== !!incoming.legacyAlgorithms || JSON.stringify(existing.x11 ?? null) !== JSON.stringify(incoming.x11 ?? null)
     || JSON.stringify(existing.antiIdle ?? null) !== JSON.stringify(incoming.antiIdle ?? null)
-    || (existing.terminalSchemeId ?? "") !== (incoming.terminalSchemeId ?? ""))) {
+    || (existing.terminalSchemeId ?? "") !== (incoming.terminalSchemeId ?? "")
+    || JSON.stringify(existing.terminal ?? null) !== JSON.stringify(incoming.terminal ?? null))) {
     differences.push("options");
   }
   if (has("password") && incoming.password && incoming.password !== existing.password) differences.push("password");

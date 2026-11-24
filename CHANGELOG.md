@@ -16,6 +16,11 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 - Options › Terminal › Keep full-screen output (on by default, as in SecureCRT): what vi, less or
   top showed stays on screen after they exit, and the screen before them goes to the scrollback.
 - Options › Terminal › Backspace sends: DEL (^?) or ^H for older Unix / AIX servers.
+- Per-host terminal settings (connect dialog › Terminal, which also holds the color scheme):
+  character encoding (UTF-8, ISO-8859-9 / Windows-1254 Turkish, ISO-8859-1 / -15 / Windows-1252),
+  terminal type (TERM: xterm-256color, xterm, xterm-color, vt220, vt100, linux) and Backspace.
+  The status bar shows the session's TERM and encoding. They travel in .shellium files with the
+  other connection options.
 
 ### Changed
 - Script buttons are now called commands: the toolbar button is Commands, Tools › Command

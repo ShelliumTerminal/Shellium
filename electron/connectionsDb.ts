@@ -6,6 +6,8 @@ import { decryptDatabaseData, decryptSensitiveValue, encryptDatabaseData, encryp
 import { ensureKnownHostsTable, mergeKnownHosts, readLegacyKnownHostsFile } from "./knownHosts";
 import { normalizeAntiIdle, normalizeHostAntiIdle } from "../src/components/common/antiIdleModel";
 import type { AntiIdleOptions } from "../src/components/common/antiIdleModel";
+import { normalizeHostTerminal } from "../src/components/common/hostTerminalModel";
+import type { HostTerminalSettings } from "../src/components/common/hostTerminalModel";
 
 type HostX11Options = {
   enabled?: boolean;
@@ -35,6 +37,8 @@ export type Host = {
   antiIdle?: AntiIdleOptions;
   /** Own terminal color scheme id; absent = the environment's or the Options default. */
   terminalSchemeId?: string;
+  /** Own character set / TERM / Backspace; absent = the defaults. */
+  terminal?: HostTerminalSettings;
 };
 
 const terminalSchemeIdPattern = /^[a-z0-9-]{1,64}$/;
@@ -108,6 +112,7 @@ type NodeRow = {
   tagsJson: string | null;
   x11Json: string | null;
   antiIdleJson: string | null;
+  terminalJson: string | null;
   terminalScheme: string | null;
   legacyAlgorithms: number;
   environmentId: string | null;
@@ -317,6 +322,7 @@ async function openDatabase(): Promise<Database> {
   ensureColumn(db, "connection_nodes", "favorite", "INTEGER NOT NULL DEFAULT 0");
   ensureColumn(db, "connection_nodes", "anti_idle_json", "TEXT");
   ensureColumn(db, "connection_nodes", "terminal_scheme", "TEXT");
+  ensureColumn(db, "connection_nodes", "terminal_json", "TEXT");
   ensureColumn(db, "script_buttons", "color", "TEXT NOT NULL DEFAULT 'green'");
   ensureColumn(db, "script_buttons", "show_tooltip", "INTEGER NOT NULL DEFAULT 1");
   ensureKnownHostsTable(db);
@@ -388,7 +394,7 @@ function ensureDefaultScriptButtonCategory(db: Database) {
 export function readFolders(db: Database): Folder[] {
   const result = db.exec(`
     SELECT id, parent_id, type, name, hostname, port, username, password, description, tags_json, x11_json, sort_order,
-      legacy_algorithms, environment_id, favorite, anti_idle_json, terminal_scheme
+      legacy_algorithms, environment_id, favorite, anti_idle_json, terminal_scheme, terminal_json
     FROM connection_nodes
     ORDER BY parent_id IS NOT NULL, parent_id, sort_order, name
   `);
@@ -415,6 +421,7 @@ export function readFolders(db: Database): Folder[] {
     favorite: Number(value[14] ?? 0),
     antiIdleJson: value[15] === null || value[15] === undefined ? null : String(value[15]),
     terminalScheme: schemeIdOrNull(value[16]),
+    terminalJson: value[17] === null || value[17] === undefined ? null : String(value[17]),
   }));
 
   return rowsToTree(rows);
@@ -439,8 +446,8 @@ function replaceConnectionRows(db: Database, rows: NodeRow[]) {
   const statement = db.prepare(`
     INSERT INTO connection_nodes (
       id, parent_id, type, name, hostname, port, username, password, description, tags_json, x11_json, sort_order,
-      legacy_algorithms, environment_id, favorite, anti_idle_json, terminal_scheme
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      legacy_algorithms, environment_id, favorite, anti_idle_json, terminal_scheme, terminal_json
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   try {
@@ -463,6 +470,7 @@ function replaceConnectionRows(db: Database, rows: NodeRow[]) {
         row.favorite,
         row.antiIdleJson,
         row.terminalScheme,
+        row.terminalJson,
       ]);
     });
   } finally {
@@ -639,6 +647,7 @@ function rowsToTree(rows: NodeRow[]): Folder[] {
       ...(row.favorite === 1 ? { favorite: true } : {}),
       ...parseAntiIdle(row.antiIdleJson),
       ...(row.terminalScheme ? { terminalSchemeId: row.terminalScheme } : {}),
+      ...parseHostTerminal(row.terminalJson),
     };
 
     hostsByParent.set(row.parentId, [...(hostsByParent.get(row.parentId) ?? []), host]);
@@ -668,6 +677,7 @@ function treeToRows(folders: Folder[], parentId: string | null = null): NodeRow[
       x11Json: null,
       antiIdleJson: null,
       terminalScheme: null,
+      terminalJson: null,
       legacyAlgorithms: 0,
       environmentId: null,
       favorite: 0,
@@ -689,6 +699,7 @@ function treeToRows(folders: Folder[], parentId: string | null = null): NodeRow[
       x11Json: stringifyX11Options(host.x11),
       antiIdleJson: host.antiIdle ? JSON.stringify(normalizeAntiIdle(host.antiIdle)) : null,
       terminalScheme: schemeIdOrNull(host.terminalSchemeId),
+      terminalJson: normalizeHostTerminal(host.terminal) ? JSON.stringify(normalizeHostTerminal(host.terminal)) : null,
       legacyAlgorithms: host.legacyAlgorithms ? 1 : 0,
       environmentId: host.environmentId ?? null,
       favorite: host.favorite ? 1 : 0,
@@ -733,6 +744,18 @@ function normalizeX11Options(value: unknown): HostX11Options | undefined {
     screen: typeof options.screen === "number" && Number.isFinite(options.screen) ? Math.max(0, Math.floor(options.screen)) : 0,
     trusted: Boolean(options.trusted),
   };
+}
+
+function parseHostTerminal(json: string | null): { terminal?: HostTerminalSettings } {
+  if (!json) {
+    return {};
+  }
+  try {
+    const terminal = normalizeHostTerminal(JSON.parse(json));
+    return terminal ? { terminal } : {};
+  } catch {
+    return {};
+  }
 }
 
 function parseAntiIdle(json: string | null): { antiIdle?: AntiIdleOptions } {
@@ -836,6 +859,7 @@ function normalizeHosts(value: unknown[]): Host[] {
       ...(host.favorite === true ? { favorite: true } : {}),
       ...(normalizeHostAntiIdle(host.antiIdle) ? { antiIdle: normalizeHostAntiIdle(host.antiIdle) } : {}),
       ...(schemeIdOrNull(host.terminalSchemeId) ? { terminalSchemeId: host.terminalSchemeId } : {}),
+      ...(normalizeHostTerminal(host.terminal) ? { terminal: normalizeHostTerminal(host.terminal) } : {}),
     };
   });
 }

@@ -455,7 +455,7 @@ const MAP_ROWS: { target: Exclude<TransferMappingTarget, "folder">; label: strin
   { target: "protocol", label: "Protocol", hint: "Entries that are not SSH (RDP, Telnet...) are left out" },
 ];
 
-const HOST_FIELD_LABEL = { name: "name", description: "description", tags: "tags", environment: "environment", options: "connection options (X11, anti-idle, legacy algorithms)", password: "the password" } as const;
+const HOST_FIELD_LABEL = { name: "name", description: "description", tags: "tags", environment: "environment", options: "connection options (X11, anti-idle, terminal, legacy algorithms)", password: "the password" } as const;
 
 function listText(items: string[]) {
   return items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;

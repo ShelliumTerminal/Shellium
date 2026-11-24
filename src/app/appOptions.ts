@@ -4,6 +4,7 @@ import type { PasteDialogBounds, TerminalAppearance, TerminalFontStyle } from ".
 import { clampLargeDialogFrame, createDefaultScriptEditorFrame } from "./dialogFrame";
 import { defaultAntiIdle, defaultKeepaliveCountMax, normalizeAntiIdle, normalizeKeepaliveCountMax } from "../components/common/antiIdleModel";
 import type { AntiIdleOptions } from "../components/common/antiIdleModel";
+import type { BackspaceKey } from "../components/common/hostTerminalModel";
 import type { DialogFrame } from "./dialogFrame";
 import { builtInTerminalSchemes, defaultTerminalSchemeId, findTerminalScheme, isSchemeId, normalizeCustomSchemes } from "../components/common/terminalSchemeModel";
 import type { TerminalScheme } from "../components/common/terminalSchemeModel";
@@ -18,7 +19,7 @@ export type ScriptButtonBarPosition = "bottom" | "top" | "left" | "right";
 export type TerminalTabPosition = "top" | "left" | "right";
 /** "inverse": selected cells swap to inverted colors; "highlight": a tinted layer. */
 export type TerminalSelectionStyle = "inverse" | "highlight";
-export type TerminalBackspaceKey = "del" | "ctrl-h";
+export type TerminalBackspaceKey = BackspaceKey;
 
 export type AppOptions = {
   openDuplicateSessions: boolean;

@@ -772,3 +772,13 @@
   background: var(--ui-accent);
   color: #fff;
 }
+
+/* connect dialog > Terminal: encoding / TERM / Backspace under the color scheme */
+.shellium-shell .pl-terminal-grid {
+  margin-top: 14px;
+}
+
+.shellium-shell .pl-terminal-grid + .pl-hint {
+  display: block;
+  margin-top: 10px;
+}

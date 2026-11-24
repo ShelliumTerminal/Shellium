@@ -53,6 +53,7 @@ import SplitStage, { PaneHeader } from "./components/workspace/SplitStage";
 import { isQuickConnectHost } from "./app/quickConnect";
 import type { PaneDropEdge, TabDragState } from "./components/workspace/SplitStage";
 import { useScriptButtonLibrary } from "./app/useScriptButtonLibrary";
+import { BackspaceDefaultContext } from "./components/common/hostTerminalDefaults";
 import { useSecurity } from "./app/useSecurity";
 import { useSftpAutoResume } from "./app/useSftpAutoResume";
 import { askConfirm } from "./app/confirmDialog";
@@ -1479,6 +1480,7 @@ function App() {
     <EnvironmentsContext.Provider value={options.environments}>
     <AntiIdleDefaultsContext.Provider value={antiIdleDefaults}>
     <TerminalSchemesContext.Provider value={terminalSchemeSettings}>
+    <BackspaceDefaultContext.Provider value={options.terminalBackspaceKey}>
     <div
       className="shellium-shell"
       data-theme={options.theme}
@@ -1634,7 +1636,7 @@ function App() {
                       wordDelimiters={options.terminalWordDelimiters}
                       scrollOnOutput={options.terminalScrollOnOutput}
                       keepFullScreenOutput={options.terminalKeepFullScreenOutput}
-                      backspaceKey={options.terminalBackspaceKey}
+                      backspaceKey={session.host.terminal?.backspace ?? options.terminalBackspaceKey}
                       highlights={options.terminalHighlights}
                       onCommandDone={handleCommandDone}
                       recordingDirectory={options.terminalRecordingDirectory}
@@ -1797,6 +1799,7 @@ function App() {
       <ConfirmHost blocked={isSecurityGateVisible} />
       <EditContextMenu />
     </div>
+    </BackspaceDefaultContext.Provider>
     </TerminalSchemesContext.Provider>
     </AntiIdleDefaultsContext.Provider>
     </EnvironmentsContext.Provider>

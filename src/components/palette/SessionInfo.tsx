@@ -10,6 +10,9 @@ import { defaultAntiIdle, normalizeAntiIdle } from "../common/antiIdleModel";
 import type { AntiIdleOptions } from "../common/antiIdleModel";
 import { SchemePreview, SchemeSelect, useTerminalSchemes } from "../common/TerminalSchemes";
 import { resolveTerminalScheme } from "../common/terminalSchemeModel";
+import { DEFAULT_TERMINAL_TYPE, isTerminalEncoding, isTerminalType, normalizeHostTerminal, terminalEncodingLabel, terminalEncodings, terminalTypes } from "../common/hostTerminalModel";
+import type { BackspaceKey, TerminalEncoding, TerminalType } from "../common/hostTerminalModel";
+import { backspaceLabel, useBackspaceDefault } from "../common/hostTerminalDefaults";
 import type { Folder, Host } from "./types";
 
 type AuthMode = "password" | "ask";
@@ -38,6 +41,12 @@ type HostDraft = {
   antiIdle: AntiIdleOptions;
   /** "" = follow the environment / Options default. */
   terminalSchemeId: string;
+  /** "" = UTF-8. */
+  terminalEncoding: TerminalEncoding | "";
+  /** "" = Options > Terminal > Backspace sends. */
+  terminalBackspace: BackspaceKey | "";
+  /** "" = xterm-256color. */
+  terminalType: TerminalType | "";
 };
 
 type SessionInfoProps = {
@@ -84,6 +93,9 @@ const emptyHostDraft: HostDraft = {
   antiIdleCustom: false,
   antiIdle: defaultAntiIdle,
   terminalSchemeId: "",
+  terminalEncoding: "",
+  terminalBackspace: "",
+  terminalType: "",
 };
 
 const hostFormId = "pl-host-form";
@@ -112,6 +124,9 @@ function hostToDraft(host: Host): HostDraft {
     antiIdleCustom: Boolean(host.antiIdle),
     antiIdle: host.antiIdle ?? defaultAntiIdle,
     terminalSchemeId: host.terminalSchemeId ?? "",
+    terminalEncoding: host.terminal?.encoding ?? "",
+    terminalBackspace: host.terminal?.backspace ?? "",
+    terminalType: host.terminal?.termType ?? "",
   };
 }
 
@@ -140,6 +155,11 @@ function draftToHostFields(draft: HostDraft): Omit<Host, "id"> {
     favorite: draft.favorite || undefined,
     antiIdle: draft.antiIdleCustom ? normalizeAntiIdle(draft.antiIdle) : undefined,
     terminalSchemeId: draft.terminalSchemeId || undefined,
+    terminal: normalizeHostTerminal({
+      encoding: draft.terminalEncoding || undefined,
+      backspace: draft.terminalBackspace || undefined,
+      termType: draft.terminalType || undefined,
+    }),
   };
 }
 
@@ -560,7 +580,7 @@ function HostFields({ draft, autoFocus, onChange }: HostFieldsProps) {
         )}
       </FoldSection>
 
-      <TerminalColorsSection draft={draft} onChange={onChange} />
+      <TerminalSection draft={draft} onChange={onChange} />
 
       <AntiIdleSection draft={draft} onChange={onChange} />
 
@@ -580,16 +600,23 @@ function HostFields({ draft, autoFocus, onChange }: HostFieldsProps) {
   );
 }
 
-function TerminalColorsSection({ draft, onChange }: { draft: HostDraft; onChange: (patch: Partial<HostDraft>) => void }) {
+function TerminalSection({ draft, onChange }: { draft: HostDraft; onChange: (patch: Partial<HostDraft>) => void }) {
   const { custom, defaultId } = useTerminalSchemes();
   const environments = useEnvironments();
+  const backspaceDefault = useBackspaceDefault();
   const environment = environments.find((item) => item.id === draft.environmentId);
   const inherited = resolveTerminalScheme(undefined, environment?.terminalSchemeId, defaultId, custom);
   const effective = resolveTerminalScheme(draft.terminalSchemeId || undefined, environment?.terminalSchemeId, defaultId, custom);
   const source = environment?.terminalSchemeId && inherited.id === environment.terminalSchemeId ? `${environment.name} environment` : "Options default";
+  const summary = [
+    effective.name,
+    terminalEncodingLabel(draft.terminalEncoding || undefined),
+    draft.terminalType || DEFAULT_TERMINAL_TYPE,
+    ...(draft.terminalBackspace ? [`Backspace ${draft.terminalBackspace === "ctrl-h" ? "^H" : "^?"}`] : []),
+  ].join(" · ");
 
   return (
-    <FoldSection label="Terminal colors" summary={draft.terminalSchemeId ? effective.name : `${effective.name} (${source})`}>
+    <FoldSection label="Terminal" summary={summary}>
       <div className="pl-scheme">
         <label className="pl-field">
           <span>Color scheme</span>
@@ -598,10 +625,51 @@ function TerminalColorsSection({ draft, onChange }: { draft: HostDraft; onChange
             onChange={(terminalSchemeId) => onChange({ terminalSchemeId })}
             inheritLabel={`Same as ${source} · ${inherited.name}`}
           />
-          <small className="pl-hint">Takes effect for new sessions of this host. Production hosts can get a scheme of their own in Options › Environments.</small>
+          <small className="pl-hint">Production hosts can get a scheme of their own in Options › Environments.</small>
         </label>
         <SchemePreview scheme={effective} />
       </div>
+      <div className="pl-grid pl-terminal-grid">
+        <label className="pl-field">
+          <span>Character encoding</span>
+          <select
+            value={draft.terminalEncoding}
+            onChange={(event) => onChange({ terminalEncoding: isTerminalEncoding(event.target.value) && event.target.value !== "utf-8" ? event.target.value : "" })}
+          >
+            <option value="">Default · UTF-8</option>
+            {terminalEncodings.filter((item) => item.value !== "utf-8").map((item) => (
+              <option key={item.value} value={item.value}>{item.label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="pl-field">
+          <span>Terminal type (TERM)</span>
+          <select
+            value={draft.terminalType}
+            onChange={(event) => onChange({ terminalType: isTerminalType(event.target.value) && event.target.value !== DEFAULT_TERMINAL_TYPE ? event.target.value : "" })}
+          >
+            <option value="">Default · {DEFAULT_TERMINAL_TYPE}</option>
+            {terminalTypes.filter((item) => item.value !== DEFAULT_TERMINAL_TYPE).map((item) => (
+              <option key={item.value} value={item.value}>{item.label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="pl-field">
+          <span>Backspace sends</span>
+          <select
+            value={draft.terminalBackspace}
+            onChange={(event) => onChange({ terminalBackspace: event.target.value === "del" || event.target.value === "ctrl-h" ? event.target.value : "" })}
+          >
+            <option value="">Same as Options · {backspaceLabel(backspaceDefault)}</option>
+            <option value="del">{backspaceLabel("del")}</option>
+            <option value="ctrl-h">{backspaceLabel("ctrl-h")}</option>
+          </select>
+        </label>
+      </div>
+      <small className="pl-hint">
+        Colors, encoding and terminal type take effect for new sessions of this host; Backspace at once. Choose an
+        encoding other than UTF-8 only when the server&apos;s locale uses it (Turkish letters show wrong otherwise).
+      </small>
     </FoldSection>
   );
 }

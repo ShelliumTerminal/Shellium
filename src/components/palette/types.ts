@@ -1,4 +1,5 @@
 import type { AntiIdleOptions } from "../common/antiIdleModel";
+import type { HostTerminalSettings } from "../common/hostTerminalModel";
 
 export type HostX11Options = {
   enabled?: boolean;
@@ -31,6 +32,8 @@ export type Host = {
   antiIdle?: AntiIdleOptions;
   /** Own terminal color scheme; absent = the environment's scheme or the Options default. */
   terminalSchemeId?: string;
+  /** Own character set / TERM / Backspace (connect dialog > Terminal); absent = the defaults. */
+  terminal?: HostTerminalSettings;
 };
 
 export type Folder = {
