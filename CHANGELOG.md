@@ -7,6 +7,9 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 
 ## [Unreleased]
 
+## [2.8.0] - 2026-11-24
+
+
 ### Added
 - Help › Report a Bug and Help › Send Feedback open a new mail to support@shellium.app in the
   default mail app, with the Shellium version and OS filled in (no mail app: the address can be
