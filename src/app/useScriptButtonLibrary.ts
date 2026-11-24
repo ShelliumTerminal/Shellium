@@ -59,7 +59,7 @@ export function useScriptButtonLibrary(canUseSecureData: boolean, storageRevisio
         setCategories(fallback);
         setSelectedCategoryId(fallback[0]?.id ?? null);
         setIsLoaded(true);
-        setError(loadError instanceof Error ? loadError.message : "Script buttons could not be loaded.");
+        setError(loadError instanceof Error ? loadError.message : "Commands could not be loaded.");
       });
 
     return () => {
@@ -74,7 +74,7 @@ export function useScriptButtonLibrary(canUseSecureData: boolean, storageRevisio
 
     const library = normalizeScriptButtonLibrary({ categories });
     window.shellium?.scriptButtons.save(library).catch((saveError: unknown) => {
-      setError(saveError instanceof Error ? saveError.message : "Script buttons could not be saved.");
+      setError(saveError instanceof Error ? saveError.message : "Commands could not be saved.");
     });
   }, [canUseSecureData, isLoaded, categories]);
 
@@ -109,9 +109,9 @@ export function useScriptButtonLibrary(canUseSecureData: boolean, storageRevisio
     const buttonCount = category?.buttons.length ?? 0;
 
     const confirmed = await askConfirm({
-      title: "Delete category",
-      body: `Delete the script category "${category?.name ?? "this category"}"${buttonCount > 0 ? ` and its ${buttonCount} button${buttonCount === 1 ? "" : "s"}` : ""}?`,
-      confirmLabel: "Delete category",
+      title: "Delete group",
+      body: `Delete the group "${category?.name ?? "this group"}"${buttonCount > 0 ? ` and its ${buttonCount} command${buttonCount === 1 ? "" : "s"}` : ""}?`,
+      confirmLabel: "Delete group",
       tone: "danger",
     });
     if (!confirmed) {
@@ -167,8 +167,8 @@ export function useScriptButtonLibrary(canUseSecureData: boolean, storageRevisio
       .find((item) => item.id === buttonId);
 
     const confirmed = await askConfirm({
-      title: "Delete script button",
-      body: `Delete the script button "${button?.label ?? "this button"}"?`,
+      title: "Delete command",
+      body: `Delete the command "${button?.label ?? "this command"}"?`,
       confirmLabel: "Delete",
       tone: "danger",
     });

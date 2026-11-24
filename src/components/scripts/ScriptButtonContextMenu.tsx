@@ -19,7 +19,7 @@ export default function ScriptButtonContextMenu({ menu, onModify, onMoveUp, onMo
       className="sh-context-menu"
       style={{ top: menu.y, left: menu.x }}
       role="menu"
-      aria-label="Script button actions"
+      aria-label="Command actions"
       onClick={(event) => event.stopPropagation()}
     >
       <button type="button" role="menuitem" onClick={onModify}>

@@ -44,7 +44,7 @@ const optionsCategories: Array<{ value: OptionsCategory; label: string; descript
   { value: "terminal", label: "Terminal", description: "Terminal font, scrollback and tabs.", icon: SquareTerminal },
   { value: "environments", label: "Environments", description: "Production, test and other environments you tag hosts with.", icon: Flag },
   { value: "x11", label: "X11", description: "Local X server used for X11 forwarding.", icon: Monitor },
-  { value: "scriptButtons", label: "Script Buttons", description: "Script button bar placement.", icon: LayoutGrid },
+  { value: "scriptButtons", label: "Command Bar", description: "Where the command bar sits.", icon: LayoutGrid },
   { value: "security", label: "Security", description: "Master password and encryption of local data.", icon: ShieldCheck },
 ];
 
@@ -253,7 +253,7 @@ export default function OptionsView({
                 <div className="op-row">
                   <div className="op-row-text">
                     <strong>Export / import</strong>
-                    <span>Move connections, script buttons and settings to another Shellium in an encrypted file, or hosts to / from CSV.</span>
+                    <span>Move connections, commands and settings to another Shellium in an encrypted file, or hosts to / from CSV.</span>
                   </div>
                   <div className="op-row-control">
                     <button className="sh-btn sh-btn-secondary sh-btn-sm" type="button" onClick={() => onOpenTransfer("export")}>
@@ -838,8 +838,8 @@ export default function OptionsView({
             {category === "scriptButtons" && (
               <label className="op-row">
                 <span className="op-row-text">
-                  <strong>Script button bar</strong>
-                  <span>Where the script button bar is docked on the main screen.</span>
+                  <strong>Command bar</strong>
+                  <span>Where the command bar is docked on the main screen.</span>
                 </span>
                 <span className="op-row-control">
                   <select
@@ -867,7 +867,7 @@ export default function OptionsView({
                 <div className="op-row">
                   <div className="op-row-text">
                     <strong>Data protection</strong>
-                    <span>Saved hosts and script commands are encrypted and require the master password before Shellium data loads.</span>
+                    <span>Saved hosts and commands are encrypted and require the master password before Shellium data loads.</span>
                   </div>
                   <div className="op-row-control">
                     {security.status?.enabled ? (

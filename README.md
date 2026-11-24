@@ -1,7 +1,7 @@
 # Shellium
 
 An SSH and SFTP desktop client for people who work on many servers: tabs, saved hosts grouped by
-environment (Production, Test, ...), script buttons, and a two-pane SFTP browser. Windows, macOS and
+environment (Production, Test, ...), a command bar, and a two-pane SFTP browser. Windows, macOS and
 Linux (Electron).
 
 **Website and downloads: [shellium.app](https://shellium.app)**
@@ -37,7 +37,7 @@ Mails are read and answered on a best-effort basis (see the disclaimer below).
   (VPN, Wi-Fi, sleep) does not kill what runs in it; the tab reconnects into the same session.
 - **SFTP**: two panes, multi-select, folder transfers, a queue with pause / resume, resume after a
   dropped connection, chmod, edit in a local editor, drag and drop.
-- **Script buttons**: send strings or multi-line commands with one click, in categories.
+- **Commands**: saved commands (one line or many) sent to the terminal with one click from the command bar, in groups (Command Manager).
 - **Import / export**: encrypted `.shellium` files, CSV host lists, and XML exports of other tools
   with a field-mapping step.
 - Terminal color schemes, X11 forwarding, anti-idle, session recording, find in terminal,

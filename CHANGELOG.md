@@ -18,6 +18,9 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 - Options › Terminal › Backspace sends: DEL (^?) or ^H for older Unix / AIX servers.
 
 ### Changed
+- Script buttons are now called commands: the toolbar button is Commands, Tools › Command
+  Manager edits them, they sit in the command bar in groups (were categories), and "send string"
+  is the command text. Saved buttons and .shellium files are unchanged.
 - Find opens with Ctrl+Shift+F. Ctrl+F goes to the server again (bash, less, vim).
 - PageUp / PageDown go to the server (less, vim, mc, top page with them); Shift+PageUp /
   Shift+PageDown scroll the scrollback, as in SecureCRT.

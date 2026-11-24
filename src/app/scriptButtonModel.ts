@@ -74,7 +74,7 @@ export function normalizeScriptButtonLibrary(value: unknown): ScriptButtonLibrar
 
     const category = item as Partial<ScriptButtonCategory>;
     const id = typeof category.id === "string" && category.id.trim() ? category.id : `script-category-${categoryIndex}`;
-    const name = typeof category.name === "string" && category.name.trim() ? category.name.trim() : `Category ${categoryIndex + 1}`;
+    const name = typeof category.name === "string" && category.name.trim() ? category.name.trim() : `Group ${categoryIndex + 1}`;
     const buttonInput = Array.isArray(category.buttons) ? category.buttons : [];
 
     return [{

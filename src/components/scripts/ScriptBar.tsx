@@ -189,18 +189,18 @@ export default function ScriptBar({
   return (
     <nav
       className={`sh-scriptbar sh-scriptbar-at-${position} ${isHorizontal ? "sh-scriptbar-h" : "sh-scriptbar-v"}`}
-      aria-label="Script buttons" style={barStyle} ref={barRef}>
+      aria-label="Command bar" style={barStyle} ref={barRef}>
       {!isHorizontal && (
         <button
           className="sh-scriptbar-resizer"
           type="button"
-          aria-label="Resize script button bar"
+          aria-label="Resize command bar"
           onPointerDown={handleResizePointerDown}
         />
       )}
       <select
         className="sh-scriptbar-category"
-        aria-label="Script button category"
+        aria-label="Command group"
         value={library.selectedCategory?.id ?? ""}
         onChange={(event) => {
           library.setSelectedCategoryId(event.target.value);
@@ -213,7 +213,7 @@ export default function ScriptBar({
           </option>
         ))}
       </select>
-      {activeButtons.length === 0 && <span className="sh-scriptbar-empty">No script buttons in this category</span>}
+      {activeButtons.length === 0 && <span className="sh-scriptbar-empty">No commands in this group</span>}
       {visibleButtons.map((button) => (
         <button
           key={button.id}
@@ -245,7 +245,7 @@ export default function ScriptBar({
             {overflowButtons.length} more
           </button>
           {isOverflowOpen && (
-            <div className="sh-scriptbar-menu" style={overflowMenuStyle} role="menu" aria-label="More script buttons">
+            <div className="sh-scriptbar-menu" style={overflowMenuStyle} role="menu" aria-label="More commands">
               {overflowButtons.map((button) => (
                 <button
                   key={button.id}

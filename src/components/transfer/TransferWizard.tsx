@@ -334,7 +334,7 @@ function ExportWizard({ onClose }: { onClose(): void }) {
           </div>
         )}
         <div className="tw-group">
-          <span className="tw-group-title">Script buttons</span>
+          <span className="tw-group-title">Commands</span>
           {sources.scriptCategories.map((category) => (
             <CheckRow
               key={category.id}
@@ -346,7 +346,7 @@ function ExportWizard({ onClose }: { onClose(): void }) {
                 setCategories(next);
               }}
               label={category.name}
-              detail={plural(category.buttonCount, "button")}
+              detail={plural(category.buttonCount, "command")}
             />
           ))}
         </div>
@@ -414,7 +414,7 @@ function ExportWizard({ onClose }: { onClose(): void }) {
           <ul className="tw-list">
             {result.csvHosts !== undefined && <li>{plural(result.csvHosts, "host")}</li>}
             {result.hostCount !== undefined && <li>{plural(result.hostCount, "host")}, {result.includesPasswords ? "saved passwords included" : "no passwords"}</li>}
-            {!!result.scriptButtonCount && <li>{plural(result.scriptButtonCount, "script button")}</li>}
+            {!!result.scriptButtonCount && <li>{plural(result.scriptButtonCount, "command")}</li>}
             {!!result.environmentCount && <li>{plural(result.environmentCount, "environment")}</li>}
             {result.settings && <li>Options</li>}
             {!!result.knownHostCount && <li>{plural(result.knownHostCount, "trusted host key")}</li>}
@@ -783,7 +783,7 @@ function ImportWizard({ onClose, onDataChanged }: { onClose(): void; onDataChang
         )}
         {summary.scriptCategories && summary.scriptCategories.length > 0 && (
           <div className="tw-group">
-            <span className="tw-group-title">Script buttons</span>
+            <span className="tw-group-title">Commands</span>
             {summary.scriptCategories.map((category) => (
               <CheckRow
                 key={category.id}
@@ -795,7 +795,7 @@ function ImportWizard({ onClose, onDataChanged }: { onClose(): void; onDataChang
                   setCategories(next);
                 }}
                 label={category.name}
-                detail={plural(category.buttonCount, "button")}
+                detail={plural(category.buttonCount, "command")}
               />
             ))}
           </div>
@@ -828,7 +828,7 @@ function ImportWizard({ onClose, onDataChanged }: { onClose(): void; onDataChang
             </label>
             <label className="tw-radio">
               <input type="radio" name="tw-mode" checked={modeReplace} onChange={() => setModeReplace(true)} />
-              <span><strong>Replace</strong><small>The selected connections and script buttons replace everything here (restore on a new machine).</small></span>
+              <span><strong>Replace</strong><small>The selected connections and commands replace everything here (restore on a new machine).</small></span>
             </label>
           </div>
         )}
@@ -862,7 +862,7 @@ function ImportWizard({ onClose, onDataChanged }: { onClose(): void; onDataChang
             <AlertTriangle size={14} aria-hidden="true" />
             <span>
               {preview.hosts.replacedCount > 0 && `All ${plural(preview.hosts.replacedCount, "host")} here will be replaced by the ${preview.hosts.new} from the file. `}
-              {preview.scripts.replacedCount > 0 && `All ${plural(preview.scripts.replacedCount, "script button")} here will be replaced by the ${preview.scripts.new} from the file. `}
+              {preview.scripts.replacedCount > 0 && `All ${plural(preview.scripts.replacedCount, "command")} here will be replaced by the ${preview.scripts.new} from the file. `}
               Saved passwords of hosts that are in both are kept when the file has none.
             </span>
           </div>
@@ -878,7 +878,7 @@ function ImportWizard({ onClose, onDataChanged }: { onClose(): void; onDataChang
             )}
             {categories.size > 0 && (
               <li>
-                <strong>{plural(preview.scripts.new, "new script button")}</strong>
+                <strong>{plural(preview.scripts.new, "new command")}</strong>
                 {preview.scripts.unchanged > 0 && ` · ${preview.scripts.unchanged} already here, identical`}
               </li>
             )}
@@ -912,8 +912,8 @@ function ImportWizard({ onClose, onDataChanged }: { onClose(): void; onDataChang
         )}
         {scriptConflicts > 0 && (
           <ConflictBlock
-            title={`${plural(scriptConflicts, "script button")} already exist${scriptConflicts === 1 ? "s" : ""} with a different script`}
-            hint="Same category and label. Update overwrites the script and its color."
+            title={`${plural(scriptConflicts, "command")} already exist${scriptConflicts === 1 ? "s" : ""} with a different text`}
+            hint="Same group and label. Update overwrites the command text and its color."
             decision={scriptDecision}
             onDecision={setScriptDecision}
           >
@@ -956,14 +956,14 @@ function ImportWizard({ onClose, onDataChanged }: { onClose(): void; onDataChang
         <div>
           <strong>{undone ? "Import undone" : "Import complete"}</strong>
           {undone ? (
-            <p className="md-text">Connections, script buttons, trusted keys and options are back to how they were before the import.</p>
+            <p className="md-text">Connections, commands, trusted keys and options are back to how they were before the import.</p>
           ) : (
             <ul className="tw-list">
               {(result.hostsAdded + result.hostsUpdated + result.hostsSkipped) > 0 && (
                 <li>Hosts: {result.hostsAdded} added{result.hostsUpdated > 0 && `, ${result.hostsUpdated} updated`}{result.hostsSkipped > 0 && `, ${result.hostsSkipped} skipped`}</li>
               )}
               {(result.scriptsAdded + result.scriptsUpdated + result.scriptsSkipped) > 0 && (
-                <li>Script buttons: {result.scriptsAdded} added{result.scriptsUpdated > 0 && `, ${result.scriptsUpdated} updated`}{result.scriptsSkipped > 0 && `, ${result.scriptsSkipped} skipped`}</li>
+                <li>Commands: {result.scriptsAdded} added{result.scriptsUpdated > 0 && `, ${result.scriptsUpdated} updated`}{result.scriptsSkipped > 0 && `, ${result.scriptsSkipped} skipped`}</li>
               )}
               {result.environmentsAdded.length > 0 && <li>Environments added: {result.environmentsAdded.join(", ")}</li>}
               {result.knownHosts && <li>Trusted host keys: {result.knownHosts.added} added{result.knownHosts.conflicts > 0 && `, ${result.knownHosts.conflicts} kept`}</li>}

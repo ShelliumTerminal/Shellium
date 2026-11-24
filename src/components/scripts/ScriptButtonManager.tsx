@@ -88,7 +88,7 @@ function draftFromButton(button: ScriptButton | null | undefined): ScriptButtonD
     : emptyButtonDraft;
 }
 
-/** Tools > Script Buttons: categories, buttons (drag to reorder) and the button editor. */
+/** Tools > Command Manager: categories, buttons (drag to reorder) and the button editor. */
 export default function ScriptButtonManager({ library, initialFrame, onFrameChange, onButtonContextMenu, onClose }: ScriptButtonManagerProps) {
   useEscapeLayer(onClose);
   const [frame, setFrame] = useState<DialogFrame>(() => centerLargeDialogFrame(initialFrame));
@@ -262,13 +262,13 @@ export default function ScriptButtonManager({ library, initialFrame, onFrameChan
   const canAddButton = Boolean(selectedScriptCategory && scriptButtonDraft.label.trim() && scriptButtonDraft.script.trim());
 
   return (
-    <section className="sb-overlay" aria-label="Script button manager">
+    <section className="sb-overlay" aria-label="Command Manager">
       <div className="sb-dialog" role="dialog" aria-modal="true" aria-labelledby="script-button-editor-title" style={frameStyle(frame, true)}>
         <header className="sb-header" onPointerDown={(event) => startFrameDrag(event, frame, (next) => setFrame(clampLargeDialogFrame(next)))}>
           <div className="sb-title">
-            <strong id="script-button-editor-title">Script Buttons</strong>
+            <strong id="script-button-editor-title">Command Manager</strong>
             <span>
-              {totalScriptButtons === 1 ? "1 button" : `${totalScriptButtons} buttons`} in {scriptButtonCategories.length === 1 ? "1 category" : `${scriptButtonCategories.length} categories`} · drag to reorder
+              {totalScriptButtons === 1 ? "1 command" : `${totalScriptButtons} commands`} in {scriptButtonCategories.length === 1 ? "1 group" : `${scriptButtonCategories.length} groups`} · drag to reorder
             </span>
           </div>
           <div className="sb-header-actions">
@@ -279,9 +279,9 @@ export default function ScriptButtonManager({ library, initialFrame, onFrameChan
         </header>
     
         <div className="sb-body" style={{ "--sb-categories-w": `${paneWidths.categories}px`, "--sb-editor-w": `${paneWidths.editor}px` } as CSSProperties}>
-          <aside className="sb-categories" aria-label="Script button categories">
-            <div className="sb-pane-label">Categories</div>
-            <div className="sb-category-list" role="listbox" aria-label="Categories">
+          <aside className="sb-categories" aria-label="Command groups">
+            <div className="sb-pane-label">Groups</div>
+            <div className="sb-category-list" role="listbox" aria-label="Groups">
               {scriptButtonCategories.map((category) => (
                 <button
                   key={category.id}
@@ -309,17 +309,17 @@ export default function ScriptButtonManager({ library, initialFrame, onFrameChan
               <input
                 className="sb-input"
                 value={categoryDraft.name}
-                placeholder="New category"
-                aria-label="New script category name"
+                placeholder="New group"
+                aria-label="New group name"
                 onChange={(event) => setCategoryDraft({ name: event.target.value })}
               />
-              <button type="submit" className="sb-icon-btn sb-icon-btn-boxed" title="Add category" aria-label="Add category" disabled={!categoryDraft.name.trim()}>
+              <button type="submit" className="sb-icon-btn sb-icon-btn-boxed" title="Add group" aria-label="Add group" disabled={!categoryDraft.name.trim()}>
                 <Plus size={15} />
               </button>
             </form>
           </aside>
     
-          <button type="button" className="sb-resizer" aria-label="Resize categories" title="Drag to resize - double-click resets"
+          <button type="button" className="sb-resizer" aria-label="Resize groups" title="Drag to resize - double-click resets"
             onPointerDown={(event) => startPaneResize(event, "categories")} onDoubleClick={() => resetPaneWidth("categories")} />
           <div className="sb-buttons">
             {selectedScriptCategory ? (
@@ -327,8 +327,8 @@ export default function ScriptButtonManager({ library, initialFrame, onFrameChan
                 <input
                   className="sb-category-title"
                   value={categoryEditName}
-                  aria-label="Category name"
-                  title="Rename category"
+                  aria-label="Group name"
+                  title="Rename group"
                   onChange={(event) => setCategoryEditName(event.target.value)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" && isCategoryEditDirty) {
@@ -350,28 +350,28 @@ export default function ScriptButtonManager({ library, initialFrame, onFrameChan
                     <button
                       type="button"
                       className="sb-icon-btn sb-icon-btn-danger"
-                      title="Delete category"
-                      aria-label="Delete category"
+                      title="Delete group"
+                      aria-label="Delete group"
                       onClick={() => library.deleteCategory(selectedScriptCategory.id)}
                     >
                       <Trash2 size={15} />
                     </button>
                     <button type="button" className="sh-btn sh-btn-secondary sh-btn-sm" onClick={() => setSelectedScriptButtonId(null)}>
                       <Plus size={14} />
-                      New button
+                      New command
                     </button>
                   </>
                 )}
               </div>
             ) : (
               <div className="sb-category-head">
-                <span className="sb-muted">Create a category to add buttons.</span>
+                <span className="sb-muted">Create a group to add commands.</span>
               </div>
             )}
-            <div className="sb-button-list" aria-label="Script buttons" tabIndex={0} onKeyDown={handleScriptButtonListKeyDown}>
+            <div className="sb-button-list" aria-label="Commands" tabIndex={0} onKeyDown={handleScriptButtonListKeyDown}>
               {library.error && <div className="sb-alert">{library.error}</div>}
               {selectedScriptCategory && activeScriptButtons.length === 0 && (
-                <div className="sb-empty">No buttons in this category yet.</div>
+                <div className="sb-empty">No commands in this group yet.</div>
               )}
               {activeScriptButtons.map((button, index) => (
                 <button
@@ -405,7 +405,7 @@ export default function ScriptButtonManager({ library, initialFrame, onFrameChan
                   <span className="sh-script-dot" style={getScriptButtonStatusStyle(button.color)} aria-hidden="true" />
                   <span className="sb-row-main">
                     <span className="sb-row-title">{button.label}</span>
-                    <span className="sb-row-script">{button.script || "No send string"}</span>
+                    <span className="sb-row-script">{button.script || "No command text"}</span>
                   </span>
                 </button>
               ))}
@@ -429,8 +429,8 @@ export default function ScriptButtonManager({ library, initialFrame, onFrameChan
           >
             <div className="sb-editor-scroll">
               <div className="sb-editor-head">
-                <strong>{isEditingButton ? "Edit button" : "New button"}</strong>
-                <span>{isEditingButton ? `In ${selectedScriptCategory?.name ?? ""}` : selectedScriptCategory ? `Adds to ${selectedScriptCategory.name}` : "Select a category first"}</span>
+                <strong>{isEditingButton ? "Edit command" : "New command"}</strong>
+                <span>{isEditingButton ? `In ${selectedScriptCategory?.name ?? ""}` : selectedScriptCategory ? `Adds to ${selectedScriptCategory.name}` : "Select a group first"}</span>
               </div>
     
               <label className="sb-field">
@@ -439,14 +439,14 @@ export default function ScriptButtonManager({ library, initialFrame, onFrameChan
                   className="sb-input"
                   value={editorDraft.label}
                   placeholder="e.g. db_stat"
-                  aria-label={isEditingButton ? "Script button label" : "New script button label"}
+                  aria-label={isEditingButton ? "Command label" : "New command label"}
                   onChange={(event) => setEditorDraft((current) => ({ ...current, label: event.target.value }))}
                 />
               </label>
     
               <div className="sb-field">
                 <span>Color</span>
-                <div className="sb-swatches" role="radiogroup" aria-label="Button color">
+                <div className="sb-swatches" role="radiogroup" aria-label="Command color">
                   {scriptButtonColorOptions.map((option) => (
                     <button
                       key={option.value}
@@ -464,12 +464,12 @@ export default function ScriptButtonManager({ library, initialFrame, onFrameChan
               </div>
     
               <label className="sb-field">
-                <span>Send string</span>
+                <span>Command text</span>
                 <textarea
                   className="sb-input sb-textarea"
                   value={editorDraft.script}
                   placeholder="Command with \r, \n, \t, \p tokens"
-                  aria-label={isEditingButton ? "Script button send string" : "New script button send string"}
+                  aria-label={isEditingButton ? "Command text" : "New command text"}
                   rows={6}
                   wrap="soft"
                   spellCheck={false}
@@ -500,8 +500,8 @@ export default function ScriptButtonManager({ library, initialFrame, onFrameChan
                   onChange={(event) => setEditorDraft((current) => ({ ...current, showTooltip: event.target.checked }))}
                 />
                 <span>
-                  Show the send string as a tooltip
-                  <small>Turn off for buttons that type a password.</small>
+                  Show the command text as a tooltip
+                  <small>Turn off for commands that type a password.</small>
                 </span>
               </label>
     
@@ -510,7 +510,7 @@ export default function ScriptButtonManager({ library, initialFrame, onFrameChan
                 <div className="sb-preview">
                   <span className="sh-script" style={getScriptButtonStatusStyle(editorDraft.color)}>
                     <span className="sh-script-dot" aria-hidden="true" />
-                    <span className="sh-script-label">{editorDraft.label.trim() || "Button"}</span>
+                    <span className="sh-script-label">{editorDraft.label.trim() || "Command"}</span>
                   </span>
                 </div>
               </div>
@@ -537,7 +537,7 @@ export default function ScriptButtonManager({ library, initialFrame, onFrameChan
                   <span className="sb-spacer" />
                   <button type="submit" className="sh-btn sh-btn-primary sh-btn-sm" disabled={!canAddButton}>
                     <Plus size={14} />
-                    Add button
+                    Add command
                   </button>
                 </>
               )}
@@ -547,7 +547,7 @@ export default function ScriptButtonManager({ library, initialFrame, onFrameChan
         <button
           className="sb-resize"
           type="button"
-          aria-label="Resize script button manager"
+          aria-label="Resize Command Manager"
           onPointerDown={(event) => startFrameDrag(event, frame, (next) => setFrame(clampLargeDialogFrame(next)), "resize")}
         />
       </div>

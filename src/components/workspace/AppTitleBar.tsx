@@ -1,4 +1,4 @@
-import { Check, Circle, Clipboard, Copy, FolderOpen, Lock, Moon, Search, SearchCode, Settings, Shield, ShieldCheck, Square, SquarePen, Sun } from "lucide-react";
+import { Check, Circle, Clipboard, Copy, FolderOpen, Lock, Moon, Search, SearchCode, Settings, Shield, ShieldCheck, Square, SquareChevronRight, Sun } from "lucide-react";
 import type { SessionProtection } from "../palette/types";
 import type { ThemeMode } from "../../app/appOptions";
 import { useEscapeLayer } from "../../app/escapeLayers";
@@ -133,7 +133,7 @@ export default function AppTitleBar({
                   Protect New Sessions
                 </button>
                 <div className="sh-menu-separator" aria-hidden="true" />
-                <button type="button" onClick={() => run(actions.manageButtons)}>Script Buttons...</button>
+                <button type="button" onClick={() => run(actions.manageButtons)}>Command Manager...</button>
                 <button type="button" onClick={() => run(actions.options)}>Options...</button>
               </div>
             )}
@@ -181,9 +181,9 @@ export default function AppTitleBar({
             {isRecording ? <Square size={13} /> : <Circle size={14} />}
             {isRecordingStarting ? "Starting…" : isRecording ? "Stop recording" : "Record"}
           </button>
-          <button type="button" className="sh-tool" onClick={actions.manageButtons}>
-            <SquarePen size={15} />
-            Scripts
+          <button type="button" className="sh-tool" onClick={actions.manageButtons} title="Command Manager: saved commands sent to the terminal with one click">
+            <SquareChevronRight size={15} />
+            Commands
           </button>
           <span className="sh-divider" aria-hidden="true" />
           <button
