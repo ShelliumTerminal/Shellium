@@ -11,6 +11,26 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 - Help › Report a Bug and Help › Send Feedback open a new mail to support@shellium.app in the
   default mail app, with the Shellium version and OS filled in (no mail app: the address can be
   copied). Help › About shows the address too.
+- Find in the terminal: match whole word and regular expression, every match highlighted (also in
+  the scrollbar), the count kept up to date while output arrives.
+- Options › Terminal › Keep full-screen output (on by default, as in SecureCRT): what vi, less or
+  top showed stays on screen after they exit, and the screen before them goes to the scrollback.
+- Options › Terminal › Backspace sends: DEL (^?) or ^H for older Unix / AIX servers.
+
+### Changed
+- Find opens with Ctrl+Shift+F. Ctrl+F goes to the server again (bash, less, vim).
+- PageUp / PageDown go to the server (less, vim, mc, top page with them); Shift+PageUp /
+  Shift+PageDown scroll the scrollback, as in SecureCRT.
+- Find starts at the latest output and Enter goes to older matches (Shift+Enter: newer). Spaces at
+  the start or end of the search text count.
+
+### Fixed
+- Turkish characters, box drawing and other non-ASCII text could show as � in large output (cat of
+  a big file): a character split across two network packets was decoded in two halves.
+- Find highlighted the wrong line once there was scrollback, missed text in long lines the terminal
+  wrapped, and was off by some columns after wide characters (CJK, emoji) or a Turkish İ.
+- Full-screen programs (top, vim, mc) could draw parts of the screen at the wrong column: a line
+  feed from the server was treated as a new line.
 
 ## [2.7.0] - 2026-11-18
 

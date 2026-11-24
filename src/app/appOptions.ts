@@ -18,6 +18,7 @@ export type ScriptButtonBarPosition = "bottom" | "top" | "left" | "right";
 export type TerminalTabPosition = "top" | "left" | "right";
 /** "inverse": selected cells swap to inverted colors; "highlight": a tinted layer. */
 export type TerminalSelectionStyle = "inverse" | "highlight";
+export type TerminalBackspaceKey = "del" | "ctrl-h";
 
 export type AppOptions = {
   openDuplicateSessions: boolean;
@@ -39,6 +40,13 @@ export type AppOptions = {
   terminalWordDelimiters: string;
   /** New output brings the view back down when it is scrolled back less than one screen (SecureCRT). */
   terminalScrollOnOutput: boolean;
+  /**
+   * Full-screen programs (vi, less, top) draw on the normal screen instead of the alternate one, so
+   * what they showed stays on screen and in the scrollback after they exit (SecureCRT's behavior).
+   */
+  terminalKeepFullScreenOutput: boolean;
+  /** What the Backspace key sends: DEL (^?, Linux default) or ^H (some older Unix / AIX setups). */
+  terminalBackspaceKey: TerminalBackspaceKey;
   /** Colors for matches in terminal output (ORA- errors, warnings...), the same for every session. */
   terminalHighlights: HighlightOptions;
   terminalTabPosition: TerminalTabPosition;
@@ -127,6 +135,8 @@ export const defaultOptions: AppOptions = {
   terminalSelectionStyle: "inverse",
   terminalWordDelimiters: defaultWordDelimiters,
   terminalScrollOnOutput: true,
+  terminalKeepFullScreenOutput: true,
+  terminalBackspaceKey: "del",
   terminalHighlights: defaultHighlightOptions,
   terminalTabPosition: "top",
   terminalTabSize: 248,
@@ -281,6 +291,8 @@ export function normalizeAppOptions(value: unknown): AppOptions {
     terminalWordDelimiters: normalizeWordDelimiters(parsedOptions.terminalWordDelimiters),
     terminalHighlights: normalizeHighlightOptions(parsedOptions.terminalHighlights),
     terminalScrollOnOutput: typeof parsedOptions.terminalScrollOnOutput === "boolean" ? parsedOptions.terminalScrollOnOutput : defaultOptions.terminalScrollOnOutput,
+    terminalKeepFullScreenOutput: typeof parsedOptions.terminalKeepFullScreenOutput === "boolean" ? parsedOptions.terminalKeepFullScreenOutput : defaultOptions.terminalKeepFullScreenOutput,
+    terminalBackspaceKey: parsedOptions.terminalBackspaceKey === "ctrl-h" ? "ctrl-h" : "del",
     terminalTabPosition: normalizeTerminalTabPosition(parsedOptions.terminalTabPosition),
     terminalTabSize: normalizeTerminalTabSize(parsedOptions.terminalTabSize),
     scriptButtonBarPosition: normalizeScriptButtonBarPosition(parsedOptions.scriptButtonBarPosition),

@@ -105,7 +105,7 @@ export default function AppTitleBar({
               <div className="sh-menu-popover">
                 <button type="button" disabled={!hasActiveSession} onClick={() => run(actions.copy)}>Copy</button>
                 <button type="button" disabled={!hasActiveSession || isInteractionBlocked} onClick={() => run(actions.paste)}>Paste</button>
-                <button type="button" disabled={!hasActiveSession} onClick={() => run(actions.find)}>Find</button>
+                <button type="button" disabled={!hasActiveSession} onClick={() => run(actions.find)}>Find (Ctrl+Shift+F)</button>
               </div>
             )}
           </div>
@@ -164,7 +164,7 @@ export default function AppTitleBar({
           <button type="button" className="sh-icon-btn" title="Paste into the terminal" aria-label="Paste" onClick={actions.paste} disabled={!hasActiveSession || isInteractionBlocked}>
             <Clipboard size={16} />
           </button>
-          <button type="button" className="sh-icon-btn" title="Find in the terminal" aria-label="Find" onClick={actions.find} disabled={!hasActiveSession}>
+          <button type="button" className="sh-icon-btn" title="Find in the terminal (Ctrl+Shift+F)" aria-label="Find" onClick={actions.find} disabled={!hasActiveSession}>
             <SearchCode size={16} />
           </button>
           <span className="sh-divider" aria-hidden="true" />

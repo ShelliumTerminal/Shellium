@@ -774,7 +774,7 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  width: min(380px, calc(100% - 32px));
+  width: min(460px, calc(100% - 32px));
   height: 38px;
   padding: 0 4px 0 10px;
   border: 1px solid var(--ui-border-strong);
@@ -822,6 +822,15 @@
   font-variant-numeric: tabular-nums;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.shellium-shell .tf-status-none {
+  color: var(--ui-danger);
+}
+
+.shellium-shell .tf-word {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .shellium-shell .tf-btn {

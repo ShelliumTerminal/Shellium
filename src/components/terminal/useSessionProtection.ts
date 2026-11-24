@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { MutableRefObject } from "react";
 import type { Terminal } from "@xterm/xterm";
 import type { SessionProtection } from "../palette/types";
+import { isFullScreenProgram } from "./terminalScreenMode";
 
 /**
  * A protected tab (electron/sessionProtection.ts): switching protection on and off, and reconnecting on
@@ -32,7 +33,7 @@ export function atShellPrompt(terminal: Terminal | null) {
     return false;
   }
   const buffer = terminal.buffer.active;
-  if (buffer.type === "alternate") {
+  if (isFullScreenProgram(terminal)) {
     return false; // vim, less, top...
   }
   const line = buffer.getLine(buffer.baseY + buffer.cursorY)?.translateToString(true) ?? "";

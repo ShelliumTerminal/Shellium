@@ -1633,6 +1633,8 @@ function App() {
                       selectionStyle={options.terminalSelectionStyle}
                       wordDelimiters={options.terminalWordDelimiters}
                       scrollOnOutput={options.terminalScrollOnOutput}
+                      keepFullScreenOutput={options.terminalKeepFullScreenOutput}
+                      backspaceKey={options.terminalBackspaceKey}
                       highlights={options.terminalHighlights}
                       onCommandDone={handleCommandDone}
                       recordingDirectory={options.terminalRecordingDirectory}

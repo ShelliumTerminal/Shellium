@@ -55,7 +55,7 @@ const optionsCategories: Array<{ value: OptionsCategory; label: string; descript
 const resettableOptions: Record<OptionsCategory, Array<keyof AppOptions>> = {
   general: ["openDuplicateSessions", "replaceClosedTab","sftpAutoResume", "startupAnimation"],
   appearance: ["theme", "uiScale", "uiFontSize"],
-  terminal: ["terminalAppearance", "terminalSchemeId", "terminalScrollback", "terminalScrollOnOutput", "terminalSelectionStyle", "terminalWordDelimiters", "terminalHighlights", "terminalTabPosition", "terminalTabSize", "antiIdle", "keepaliveCountMax"],
+  terminal: ["terminalAppearance", "terminalSchemeId", "terminalScrollback", "terminalScrollOnOutput", "terminalKeepFullScreenOutput", "terminalBackspaceKey", "terminalSelectionStyle", "terminalWordDelimiters", "terminalHighlights", "terminalTabPosition", "terminalTabSize", "antiIdle", "keepaliveCountMax"],
   environments: [],
   x11: ["x11ServerMode", "x11ExecutablePath"],
   scriptButtons: ["scriptButtonBarPosition", "scriptButtonBarSize"],
@@ -501,6 +501,50 @@ export default function OptionsView({
                         }))
                       }
                     />
+                  </span>
+                </label>
+                <label className="op-row">
+                  <span className="op-row-text">
+                    <strong>Keep full-screen output</strong>
+                    <span>
+                      What vi, less or top showed stays on screen after they exit, and what was on screen before goes
+                      to the scrollback (like SecureCRT). Off: the screen comes back as it was before the program.
+                    </span>
+                  </span>
+                  <span className="op-row-control">
+                    <input
+                      className="sh-switch"
+                      type="checkbox"
+                      role="switch"
+                      checked={draft.terminalKeepFullScreenOutput}
+                      onChange={(event) =>
+                        setDraft((current) => ({
+                          ...current,
+                          terminalKeepFullScreenOutput: event.target.checked,
+                        }))
+                      }
+                    />
+                  </span>
+                </label>
+                <label className="op-row">
+                  <span className="op-row-text">
+                    <strong>Backspace sends</strong>
+                    <span>DEL (^?) suits Linux. Choose ^H when Backspace prints ^H or does nothing on a server (older Unix, AIX).</span>
+                  </span>
+                  <span className="op-row-control">
+                    <select
+                      className="op-select"
+                      value={draft.terminalBackspaceKey}
+                      onChange={(event) =>
+                        setDraft((current) => ({
+                          ...current,
+                          terminalBackspaceKey: event.target.value === "ctrl-h" ? "ctrl-h" : "del",
+                        }))
+                      }
+                    >
+                      <option value="del">DEL (^?)</option>
+                      <option value="ctrl-h">Ctrl+H (^H)</option>
+                    </select>
                   </span>
                 </label>
                 <label className="op-row">

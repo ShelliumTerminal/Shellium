@@ -17,12 +17,15 @@ import { useAntiIdleDefaults } from "../common/AntiIdleFields";
 import { resolveConnectionKeepalive } from "../common/antiIdleModel";
 import type { SftpActivity } from "../files/SftpBrowser";
 import { terminalFontStack } from "../../app/appOptions";
-import type { TerminalSelectionStyle } from "../../app/appOptions";
+import type { TerminalBackspaceKey, TerminalSelectionStyle } from "../../app/appOptions";
 import { setTerminalView } from "../../app/terminalViewStore";
 import { useEscapeLayer } from "../../app/escapeLayers";
 import ProtectionBar from "./ProtectionBar";
 import { useSessionProtection } from "./useSessionProtection";
 import { findTerminalLinks } from "./terminalLinks";
+import { isFullScreenProgram, trackAlternateScreen } from "./terminalScreenMode";
+import { createTerminalFind, findPatternError } from "./terminalFind";
+import type { TerminalFind, TerminalFindOptions, TerminalFindResults } from "./terminalFind";
 import type { TerminalLink } from "./terminalLinks";
 import { comparePoints, extendSpan, findLineSpan, findWordSpan, getBlockBounds, getBlockText } from "./terminalSelection";
 import type { SelectionRows, SelectionSpan } from "./terminalSelection";
@@ -83,6 +86,10 @@ type TerminalPaneProps = {
   wordDelimiters: string;
   /** Output brings the view down when it is scrolled back less than one screen (SecureCRT). */
   scrollOnOutput: boolean;
+  /** vi / less / top draw on the normal screen, so their output stays after they exit (SecureCRT). */
+  keepFullScreenOutput: boolean;
+  /** What Backspace sends: DEL (^?) or ^H. */
+  backspaceKey: TerminalBackspaceKey;
   /** Highlight rules for new output (Options > Terminal), the same for every session. */
   highlights: HighlightOptions;
   /** The command running now (or the next one) finished: its prompt is back (Notify When Done). */
@@ -103,12 +110,6 @@ type TerminalPaneProps = {
   onReconnectingChange(sessionId: string, reconnecting: boolean): void;
   pasteDialogBounds: PasteDialogBounds;
   onPasteDialogBoundsChange(bounds: PasteDialogBounds): void;
-};
-
-type FindMatch = {
-  line: number;
-  column: number;
-  length: number;
 };
 
 type TerminalSelectionPoint = {
@@ -198,7 +199,7 @@ const RECONNECT_HINT = "\x1b[2mPress Enter to reconnect.\x1b[22m";
 const BRACKETED_PASTE_START = "\x1b[200~";
 const BRACKETED_PASTE_END = "\x1b[201~";
 
-const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function TerminalPane({ session, isActive, uiScale, terminalAppearance, terminalScheme, scrollback, selectionStyle, wordDelimiters, scrollOnOutput, highlights, onCommandDone, recordingDirectory, focusVersion, isInteractionBlocked, reconnectToken = 0, onStatusChange, onActivity, onBell, onNotice, onSftpTransferActivityChange, onTranscriptRecordingActivityChange, onCloseSession, onProtectionChange, onReconnectingChange, pasteDialogBounds: storedPasteDialogBounds, onPasteDialogBoundsChange }, ref) {
+const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function TerminalPane({ session, isActive, uiScale, terminalAppearance, terminalScheme, scrollback, selectionStyle, wordDelimiters, scrollOnOutput, keepFullScreenOutput, backspaceKey, highlights, onCommandDone, recordingDirectory, focusVersion, isInteractionBlocked, reconnectToken = 0, onStatusChange, onActivity, onBell, onNotice, onSftpTransferActivityChange, onTranscriptRecordingActivityChange, onCloseSession, onProtectionChange, onReconnectingChange, pasteDialogBounds: storedPasteDialogBounds, onPasteDialogBoundsChange }, ref) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const reconnectRef = useRef<(() => void) | null>(null);
@@ -237,6 +238,10 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
   wordDelimitersRef.current = wordDelimiters;
   const scrollOnOutputRef = useRef(scrollOnOutput);
   scrollOnOutputRef.current = scrollOnOutput;
+  const keepFullScreenOutputRef = useRef(keepFullScreenOutput);
+  keepFullScreenOutputRef.current = keepFullScreenOutput;
+  const backspaceKeyRef = useRef(backspaceKey);
+  backspaceKeyRef.current = backspaceKey;
   const highlightsRef = useRef(highlights);
   highlightsRef.current = highlights;
   const rescanHighlightsRef = useRef<(() => void) | null>(null);
@@ -247,7 +252,8 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
   const commandWatchRef = useRef<{ noteInput(text: string): void; beginScript(): void; endScript(): void } | null>(null);
   const findPanelRef = useRef<HTMLFormElement | null>(null);
   const findInputRef = useRef<HTMLInputElement | null>(null);
-  const findMatchIndexRef = useRef(-1);
+  const terminalFindRef = useRef<TerminalFind | null>(null);
+  const clearCustomSelectionRef = useRef<() => void>(() => undefined);
   const terminalAppearanceRef = useRef(terminalAppearance);
   const isInteractionBlockedRef = useRef(isInteractionBlocked);
   const [pendingPaste, setPendingPaste] = useState<string | null>(null);
@@ -256,6 +262,10 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
   const [findQuery, setFindQuery] = useState("");
   const [findStatus, setFindStatus] = useState("");
   const [isFindCaseSensitive, setIsFindCaseSensitive] = useState(false);
+  const [isFindWholeWord, setIsFindWholeWord] = useState(false);
+  const [isFindRegex, setIsFindRegex] = useState(false);
+  const findQueryRef = useRef("");
+  findQueryRef.current = findQuery;
   const [isTranscriptRecording, setIsTranscriptRecording] = useState(false);
   const [isTranscriptRecordingStarting, setIsTranscriptRecordingStarting] = useState(false);
   const [transcriptRecordingPath, setTranscriptRecordingPath] = useState("");
@@ -329,6 +339,9 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
   }), []);
 
   const openFindPanel = useCallback(() => {
+    // a fresh search starts at the bottom (the latest output), not at an old match
+    terminalFindRef.current?.clear();
+    setFindStatus("");
     setIsFindOpen(true);
     window.setTimeout(() => {
       findInputRef.current?.focus();
@@ -339,6 +352,7 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
   openFindRef.current = openFindPanel;
 
   const closeFindPanel = () => {
+    terminalFindRef.current?.clear();
     setIsFindOpen(false);
     setFindStatus("");
     terminalRef.current?.focus();
@@ -367,8 +381,6 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       protection.showNotice("info", "Disconnected. The protected session keeps running on the server; Reconnect (tab menu) goes back into it.", 12000);
     }
   };
-
-  const getLineText = (lineIndex: number) => terminalRef.current?.buffer.active.getLine(lineIndex)?.translateToString(true) ?? "";
 
   const getTerminalTranscript = () => {
     const terminal = terminalRef.current;
@@ -477,69 +489,43 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
 
   toggleRecordingRef.current = toggleTranscriptRecording;
   void transcriptRecordingPath;
-  const collectFindMatches = (query: string) => {
-    const terminal = terminalRef.current;
-    const matches: FindMatch[] = [];
-    const needle = isFindCaseSensitive ? query : query.toLowerCase();
+  const findOptions: TerminalFindOptions = { caseSensitive: isFindCaseSensitive, wholeWord: isFindWholeWord, regex: isFindRegex };
 
-    if (!terminal || !needle) {
-      return matches;
-    }
-
-    for (let line = 0; line < terminal.buffer.active.length; line += 1) {
-      const rawLineText = getLineText(line);
-      const haystack = isFindCaseSensitive ? rawLineText : rawLineText.toLowerCase();
-      let column = haystack.indexOf(needle);
-
-      while (column !== -1) {
-        matches.push({ line, column, length: query.length });
-        column = haystack.indexOf(needle, column + Math.max(needle.length, 1));
-      }
-    }
-
-    return matches;
-  };
-
-  const revealFindMatch = (match: FindMatch) => {
-    const terminal = terminalRef.current;
-
-    if (!terminal) {
+  /**
+   * "older" goes up the scrollback (Enter), "newer" down (Shift+Enter). `incremental` (typing) keeps
+   * the current match while it still fits. The query is not trimmed: " ORA-" finds what it says.
+   */
+  const runFind = (direction: "older" | "newer", incremental = false, query = findQuery, options = findOptions) => {
+    const terminalFind = terminalFindRef.current;
+    if (!terminalFind) {
       return;
     }
-
-    terminal.scrollToLine(match.line);
-    window.setTimeout(() => {
-      const row = Math.max(0, Math.min(terminal.rows - 1, match.line - terminal.buffer.active.viewportY));
-      terminal.select(match.column, row, match.length);
-      findInputRef.current?.focus({ preventScroll: true });
-    }, 0);
-  };
-
-  const findInTerminal = (direction: 1 | -1 = 1) => {
-    const query = findQuery.trim();
-
     if (!query) {
+      terminalFind.clear();
       setFindStatus("");
-      findMatchIndexRef.current = -1;
       return;
     }
-
-    const matches = collectFindMatches(query);
-
-    if (matches.length === 0) {
+    if (findPatternError(query, options)) {
+      terminalFind.clear();
+      setFindStatus("Invalid pattern");
+      return;
+    }
+    // the match is shown with xterm's selection: an older selection of ours would be copied instead
+    clearCustomSelectionRef.current();
+    if (!terminalFind.find(query, options, direction, incremental)) {
       setFindStatus("No matches");
-      findMatchIndexRef.current = -1;
-      return;
     }
-
-    const nextIndex = direction > 0
-      ? (findMatchIndexRef.current + 1) % matches.length
-      : (findMatchIndexRef.current <= 0 ? matches.length - 1 : findMatchIndexRef.current - 1);
-
-    findMatchIndexRef.current = nextIndex;
-    revealFindMatch(matches[nextIndex]);
-    setFindStatus(`${nextIndex + 1} of ${matches.length}`);
   };
+
+  const changeFindOptions = (next: Partial<TerminalFindOptions>) => {
+    const options = { ...findOptions, ...next };
+    setIsFindCaseSensitive(options.caseSensitive);
+    setIsFindWholeWord(options.wholeWord);
+    setIsFindRegex(options.regex);
+    runFind("older", true, findQuery, options);
+    findInputRef.current?.focus({ preventScroll: true });
+  };
+
   const writeToTerminal = (text: string) => {
     if (!text) {
       return;
@@ -772,7 +758,11 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       cursorBlink: true,
       // xterm's default hollow box lost its top and bottom edges on some screens ("| |")
       cursorInactiveStyle: "none",
-      convertEol: true,
+      // Off, as in any real terminal: the server's pty already sends CR LF, and a bare LF is "cursor
+      // down" (terminfo cud1) that full-screen programs (top, vim, mc) use to move without a CR.
+      convertEol: false,
+      // With "keep full-screen output", a cleared screen (vi starting, `clear`) goes to the scrollback.
+      scrollOnEraseInDisplay: keepFullScreenOutputRef.current,
       // terminal.unicode (Unicode 11 widths) is a proposed API in xterm 6
       allowProposedApi: true,
       fontFamily: terminalFontStack(initialAppearance.fontFamily),
@@ -814,6 +804,20 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
     document.fonts?.addEventListener("loadingdone", handleFontsLoaded);
 
     const bellDisposable = terminal.onBell(() => onBellRef.current(session.id));
+
+    // vi / less / top: kept on the normal screen when "keep full-screen output" is on (SecureCRT)
+    const alternateScreenDisposable = trackAlternateScreen(terminal, () => keepFullScreenOutputRef.current);
+
+    const showFindResults = ({ index, count, limited }: TerminalFindResults) => {
+      const total = limited ? `${count}+` : String(count);
+      if (count === 0) {
+        setFindStatus(findQueryRef.current ? "No matches" : "");
+      } else {
+        setFindStatus(index >= 0 ? `${index + 1} of ${total}` : `${total} matches`);
+      }
+    };
+    const terminalFind = createTerminalFind(terminal, showFindResults);
+    terminalFindRef.current = terminalFind;
 
     const writeClipboardText = (text: string) => {
       window.shellium?.clipboard.writeText(text).catch(() => undefined);
@@ -999,7 +1003,8 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       const isCopy = modifier && event.shiftKey && key === "c";
       const isPaste = (modifier && event.shiftKey && key === "v")
         || (event.shiftKey && !modifier && !event.altKey && event.key === "Insert");
-      const isFind = modifier && key === "f";
+      // Ctrl+F stays the remote side's (bash forward-char, less / vim page down), as in SecureCRT.
+      const isFind = modifier && event.shiftKey && !event.altKey && key === "f";
 
       // Returning false only stops xterm; the browser would still run its own default for the key.
       // For Shift+Insert / Ctrl+Shift+V that is a native paste into xterm's textarea, whose "paste"
@@ -1022,13 +1027,19 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
         return false;
       }
 
-      if (event.key === "PageUp") {
-        terminal.scrollPages(-1);
+      // Shift+PageUp / PageDown scroll the scrollback; plain PageUp / PageDown go to the server (less,
+      // vim, mc, top page with them), as in SecureCRT.
+      const isScrollKey = event.shiftKey && !modifier && !event.altKey && (event.key === "PageUp" || event.key === "PageDown");
+      if (isScrollKey) {
+        event.preventDefault();
+        terminal.scrollPages(event.key === "PageUp" ? -1 : 1);
         return false;
       }
 
-      if (event.key === "PageDown") {
-        terminal.scrollPages(1);
+      if (event.key === "Backspace" && !modifier && !event.altKey && backspaceKeyRef.current === "ctrl-h") {
+        event.preventDefault();
+        // through onData like any key, so a closed tab ignores it as well
+        terminal.input("\x08");
         return false;
       }
 
@@ -1361,6 +1372,7 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       flushHeldOutput();
       setCustomSelectionRects([]);
     };
+    clearCustomSelectionRef.current = clearCustomSelection;
 
     const followCustomSelection = () => {
       const selection = customSelectionRef.current;
@@ -1437,7 +1449,7 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       highlightFrame = null;
       const buffer = terminal.buffer.active;
       const cursorRow = buffer.baseY + buffer.cursorY;
-      if (buffer.type === "alternate" || highlightRules.length === 0) {
+      if (isFullScreenProgram(terminal) || highlightRules.length === 0) {
         highlightScanFrom = cursorRow;
         return;
       }
@@ -1531,7 +1543,7 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
     const looksLikePrompt = (text: string) => text.trim().length > 0 && text.trim().length <= 120 && /[$#>%\]]$/.test(text.trimEnd());
 
     const startCommand = (prompt: string, firstRow: number, startedAt: number) => {
-      if (terminal.buffer.active.type === "alternate" || !prompt.trim() || (runningCommand && !looksLikePrompt(prompt))) {
+      if (isFullScreenProgram(terminal) || !prompt.trim() || (runningCommand && !looksLikePrompt(prompt))) {
         return;
       }
       const line = getLogicalLine(firstRow).text.trimEnd();
@@ -1583,7 +1595,7 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
     };
 
     const checkCommandDone = () => {
-      if (!runningCommand || scriptPrompt !== null || terminal.buffer.active.type === "alternate") {
+      if (!runningCommand || scriptPrompt !== null || isFullScreenProgram(terminal)) {
         return;
       }
       // a marker that left the scrollback (hours of output) lies above the cursor in any case
@@ -1893,7 +1905,7 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
     const connectOrReport = () => {
       connect().catch((error: unknown) => {
         const message = error instanceof Error ? error.message : "SSH connection failed";
-        terminal.writeln(`\r\n${message}`);
+        terminal.writeln(`\r\n${message.replace(/\r?\n/g, "\r\n")}`);
         if (!protectionApiRef.current.isProtected()) {   // a protected tab shows its own strip
           terminal.writeln(RECONNECT_HINT);
         }
@@ -2011,6 +2023,9 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
       document.fonts?.removeEventListener("loadingdone", handleFontsLoaded);
       linkProviderDisposable.dispose();
       bellDisposable.dispose();
+      alternateScreenDisposable.dispose();
+      terminalFind.dispose();
+      terminalFindRef.current = null;
       markTranscriptRecordingStopped();
       window.shellium?.terminal.disconnect(session.id);
       terminal.dispose();
@@ -2030,6 +2045,11 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
 
     terminal.options.scrollback = scrollback;
   }, [scrollback]);
+  useEffect(() => {
+    if (terminalRef.current) {
+      terminalRef.current.options.scrollOnEraseInDisplay = keepFullScreenOutput;
+    }
+  }, [keepFullScreenOutput]);
   useEffect(() => {
     const terminal = terminalRef.current;
 
@@ -2187,7 +2207,7 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
           role="search"
           onSubmit={(event) => {
             event.preventDefault();
-            findInTerminal(1);
+            runFind("older");
           }}
         >
           <Search className="tf-icon" aria-hidden="true" size={14} />
@@ -2198,9 +2218,9 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
             aria-label="Find in terminal"
             spellCheck={false}
             onChange={(event) => {
-              setFindQuery(event.target.value);
-              setFindStatus("");
-              findMatchIndexRef.current = -1;
+              const query = event.target.value;
+              setFindQuery(query);
+              runFind("older", true, query);
             }}
             onKeyDown={(event) => {
               event.stopPropagation();
@@ -2213,30 +2233,50 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
 
               if (event.key === "Enter") {
                 event.preventDefault();
-                findInTerminal(event.shiftKey ? -1 : 1);
+                runFind(event.shiftKey ? "newer" : "older");
               }
             }}
           />
-          {findStatus && <span className="tf-status">{findStatus}</span>}
+          {findStatus && (
+            <span className={"tf-status" + (findStatus === "Invalid pattern" || findStatus === "No matches" ? " tf-status-none" : "")} aria-live="polite">
+              {findStatus}
+            </span>
+          )}
           <button
             type="button"
             className={"tf-btn tf-case" + (isFindCaseSensitive ? " active" : "")}
             aria-pressed={isFindCaseSensitive}
             title="Match case"
             aria-label="Match case"
-            onClick={() => {
-              setIsFindCaseSensitive((current) => !current);
-              setFindStatus("");
-              findMatchIndexRef.current = -1;
-            }}
+            onClick={() => changeFindOptions({ caseSensitive: !isFindCaseSensitive })}
           >
             Aa
           </button>
+          <button
+            type="button"
+            className={"tf-btn tf-case tf-word" + (isFindWholeWord ? " active" : "")}
+            aria-pressed={isFindWholeWord}
+            title="Match whole word"
+            aria-label="Match whole word"
+            onClick={() => changeFindOptions({ wholeWord: !isFindWholeWord })}
+          >
+            ab
+          </button>
+          <button
+            type="button"
+            className={"tf-btn tf-case" + (isFindRegex ? " active" : "")}
+            aria-pressed={isFindRegex}
+            title="Use regular expression"
+            aria-label="Use regular expression"
+            onClick={() => changeFindOptions({ regex: !isFindRegex })}
+          >
+            .*
+          </button>
           <span className="tf-sep" aria-hidden="true" />
-          <button type="button" className="tf-btn" onClick={() => findInTerminal(-1)} disabled={!findQuery.trim()} title="Previous match (Shift+Enter)" aria-label="Previous match">
+          <button type="submit" className="tf-btn" disabled={!findQuery} title="Previous match, older output (Enter)" aria-label="Previous match">
             <ChevronUp aria-hidden="true" size={15} />
           </button>
-          <button type="submit" className="tf-btn" disabled={!findQuery.trim()} title="Next match (Enter)" aria-label="Next match">
+          <button type="button" className="tf-btn" onClick={() => runFind("newer")} disabled={!findQuery} title="Next match, newer output (Shift+Enter)" aria-label="Next match">
             <ChevronDown aria-hidden="true" size={15} />
           </button>
           <button type="button" className="tf-btn" aria-label="Close find" title="Close (Esc)" onClick={closeFindPanel}>

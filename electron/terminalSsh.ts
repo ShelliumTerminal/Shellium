@@ -7,6 +7,7 @@ import { existsSync, readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { StringDecoder } from "node:string_decoder";
 import { getSettingsPath } from "./storageConfig";
 import { listLocalPlaces } from "./localPlaces";
 import { askUser, type ConnectionPromptTarget } from "./connectionPrompts";
@@ -16,7 +17,7 @@ import type { HostKeyCheck, HostKeyInfo } from "./knownHosts";
 import { normalizeConnectionKeepalive } from "../src/components/common/antiIdleModel";
 import type { ConnectionKeepalive } from "../src/components/common/antiIdleModel";
 import {
-  PROBE_COMMAND, PROTECT_OFF_MARKER, USER_MARKER, attachHint, execCommand, isValidProtection, parseProbe, parseState, protectionName, runExec,
+  PROBE_COMMAND, PROTECT_OFF_MARKER, USER_MARKER, attachHint, createMarkerCarry, execCommand, isValidProtection, parseProbe, parseState, protectionName, runExec,
   STOP_KEY_GAP_MS, stateCommand, stopCommand, stopKeys, typedAttachCommand, typedStartCommand,
 } from "./sessionProtection";
 import type { ProtectionOpen, ProtectionProbe, SessionProtection } from "./sessionProtection";
@@ -111,7 +112,7 @@ type X11ForwardListener = (
 type SshStream = {
   on(event: "data", listener: (data: Buffer) => void): SshStream;
   on(event: "exit", listener: (code: number | null, signal?: string) => void): SshStream;
-  on(event: "close", listener: () => void): SshStream;
+  on(event: "close" | "end", listener: () => void): SshStream;
   on(event: "error", listener: (error: Error) => void): SshStream;
   write(data: string): void;
   setWindow(rows: number, cols: number, height: number, width: number): void;
@@ -736,7 +737,8 @@ export function registerTerminalHandlers() {
     client
       .on("banner", (message) => {
         if (isCurrentSession(request.sessionId, terminalSession)) {
-          sendData(request.sessionId, `\r\n${message}\r\n`);
+          // banners (/etc/issue.net) usually end lines with a bare LF: the terminal needs CR LF
+          sendData(request.sessionId, `\r\n${message.replace(/\r?\n/g, "\r\n")}\r\n`);
         }
       })
       .on("ready", () => {
@@ -762,28 +764,43 @@ export function registerTerminalHandlers() {
           terminalSession.info.connectedAt = Date.now();
           terminalSession.info.serverSoftware = (client as unknown as { _remoteVer?: string })._remoteVer;
           startLatencyPings(request.sessionId, terminalSession);
+          // A multi-byte UTF-8 character (ğ, ş, box drawing, CJK) split across two packets must not turn
+          // into two U+FFFD: the decoder keeps the incomplete bytes until the rest arrives.
+          const decoder = new StringDecoder("utf8");
+          // Our protection markers (OSC 7337) split across packets are held back until they are whole.
+          const markerCarry = createMarkerCarry((text) => handleText(text));
+          const handleText = (incoming: string) => {
+            if (!isCurrentSession(request.sessionId, terminalSession) || terminalSession.stream !== stream) {
+              return;
+            }
+            let text = incoming;
+            if (text.includes(PROTECT_OFF_MARKER)) {
+              // the tmux / screen session typed into this shell ended: back in the plain shell
+              text = text.split(PROTECT_OFF_MARKER).join("");
+              terminalSession.protection = undefined;
+              sendProtection(request.sessionId, null);
+            }
+            const userMatch = USER_MARKER.exec(text);
+            if (userMatch) {
+              text = text.replace(USER_MARKER, "");
+              void noteProtectionUser(request.sessionId, terminalSession, userMatch[1]);
+            }
+            terminalSession.onScriptOutput?.(text);
+            if (text) {
+              sendData(request.sessionId, text);
+            }
+          };
           stream
             .on("data", (data: Buffer) => {
               if (isCurrentSession(request.sessionId, terminalSession) && terminalSession.stream === stream) {
                 terminalSession.lastActivityAt = Date.now();
                 terminalSession.info.bytesIn += data.length;
-                let text = data.toString("utf8");
-                if (text.includes(PROTECT_OFF_MARKER)) {
-                  // the tmux / screen session typed into this shell ended: back in the plain shell
-                  text = text.split(PROTECT_OFF_MARKER).join("");
-                  terminalSession.protection = undefined;
-                  sendProtection(request.sessionId, null);
-                }
-                const userMatch = USER_MARKER.exec(text);
-                if (userMatch) {
-                  text = text.replace(USER_MARKER, "");
-                  void noteProtectionUser(request.sessionId, terminalSession, userMatch[1]);
-                }
-                terminalSession.onScriptOutput?.(text);
-                if (text) {
-                  sendData(request.sessionId, text);
-                }
+                markerCarry.push(decoder.write(data));
               }
+            })
+            .on("end", () => {
+              markerCarry.push(decoder.end());
+              markerCarry.flush();
             })
             .on("exit", (code) => {
               exitSeen = true;

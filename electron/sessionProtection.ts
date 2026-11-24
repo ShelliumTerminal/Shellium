@@ -44,6 +44,62 @@ export const PROTECT_OFF_MARKER = "\x1b]7337;shellium-protect-off\x07";
 export const USER_MARKER = /\x1b\]7337;shellium-protect-user;([A-Za-z0-9._-]{1,64})\x07/;
 const USER_NAME = /^[A-Za-z0-9._-]{1,64}$/;
 
+const ESC = String.fromCharCode(0x1b);
+const BEL = String.fromCharCode(0x07);
+/** What PROTECT_OFF_MARKER and USER_MARKER start with. */
+const MARKER_PREFIX = ESC + "]7337;shellium-protect";
+const MARKER_MAX_LENGTH = 120;
+const MARKER_HOLD_MS = 100;
+
+/**
+ * Passes terminal text on, holding back a tail that may be the start of one of our markers
+ * (PROTECT_OFF_MARKER / USER_MARKER) so a marker split across two packets is still seen whole.
+ * A held tail goes out with the next text, or after a short wait if none comes.
+ */
+export function createMarkerCarry(emit: (text: string) => void) {
+  let held = "";
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  const flush = () => {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+    if (held) {
+      const text = held;
+      held = "";
+      emit(text);
+    }
+  };
+
+  const push = (incoming: string) => {
+    if (!incoming && !held) {
+      return;
+    }
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+    const text = held + incoming;
+    held = "";
+    const escape = text.lastIndexOf(ESC);
+    const tail = escape === -1 ? "" : text.slice(escape);
+    const isPartialMarker = tail.length > 0 && tail.length < MARKER_MAX_LENGTH && !tail.includes(BEL)
+      && (MARKER_PREFIX.startsWith(tail) || tail.startsWith(MARKER_PREFIX));
+    if (!isPartialMarker) {
+      emit(text);
+      return;
+    }
+    if (escape > 0) {
+      emit(text.slice(0, escape));
+    }
+    held = tail;
+    timer = setTimeout(flush, MARKER_HOLD_MS);
+  };
+
+  return { push, flush };
+}
+
 const SHELLS = new Set(["bash", "sh", "ksh", "ksh93", "mksh", "zsh", "dash", "tcsh", "csh", "fish", "-bash", "-sh", "-ksh", "-zsh"]);
 
 const TMUX_CONFIG = [
