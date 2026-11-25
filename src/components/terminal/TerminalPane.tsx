@@ -1027,9 +1027,11 @@ const TerminalPane = forwardRef<TerminalPaneHandle, TerminalPaneProps>(function 
         return false;
       }
 
-      // Shift+PageUp / PageDown scroll the scrollback; plain PageUp / PageDown go to the server (less,
-      // vim, mc, top page with them), as in SecureCRT.
-      const isScrollKey = event.shiftKey && !modifier && !event.altKey && (event.key === "PageUp" || event.key === "PageDown");
+      // PageUp / PageDown scroll the scrollback at the shell (bash would otherwise walk the command
+      // history with them); while a full-screen program runs (less, vim, mc, top) they go to it, as in
+      // SecureCRT. Shift+PageUp / PageDown always scroll.
+      const isPageKey = !modifier && !event.altKey && (event.key === "PageUp" || event.key === "PageDown");
+      const isScrollKey = isPageKey && (event.shiftKey || !isFullScreenProgram(terminal));
       if (isScrollKey) {
         event.preventDefault();
         terminal.scrollPages(event.key === "PageUp" ? -1 : 1);

@@ -7,6 +7,11 @@ features, PATCH for fixes. Every user-visible change is added under **Unreleased
 
 ## [Unreleased]
 
+### Fixed
+- PageUp / PageDown scroll the scrollback again at the shell prompt (2.8.0 sent them to the server,
+  where bash walks the command history). While a full-screen program runs (less, vim, mc, top) they
+  still go to it; Shift+PageUp / Shift+PageDown always scroll.
+
 ## [2.8.0] - 2026-11-24
 
 
